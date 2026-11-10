@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HAWME — Admin Command Center</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        hawme: {
+                            cyan: '#25F4EE',
+                            coral: '#FE2C55',
+                            darkBg: '#080808',
+                            darkSec: '#111111',
+                            darkCard: '#161616',
+                            darkBorder: '#262626',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-[#080808] text-[#F1F1F1] antialiased min-h-screen flex flex-col selection:bg-[#FE2C55] selection:text-white">
+
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col space-y-3 pointer-events-none"></div>
+
+    <!-- Admin Security Lock Overlay -->
+    <div id="admin-auth-lock" class="fixed inset-0 z-50 bg-[#080808] flex items-center justify-center p-4">
+        <div class="bg-[#111111] border border-[#262626] rounded-3xl p-8 max-w-sm w-full space-y-6 text-center shadow-2xl">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#FE2C55] to-[#25F4EE] mx-auto flex items-center justify-center p-[2px]">
+                <div class="w-full h-full bg-[#080808] rounded-[14px] flex items-center justify-center">
+                    <i data-lucide="shield-check" class="w-6 h-6 text-[#25F4EE]"></i>
+                </div>
+            </div>
+            <div>
+                <h2 class="text-xl font-black text-white">HAWME Admin Access</h2>
+                <p class="text-xs text-zinc-400 mt-1">Enter authorized passkey to manage platform transactions and accounts.</p>
+            </div>
+            <form onsubmit="handleAdminUnlock(event)" class="space-y-4">
+                <div>
+                    <input type="password" id="admin-passkey" required placeholder="Enter Admin PIN" class="w-full px-4 py-3 bg-[#181818] border border-zinc-800 rounded-xl text-center text-sm font-bold tracking-widest focus:outline-none focus:border-[#25F4EE] text-white">
+                </div>
+                <button type="submit" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#FE2C55] to-[#25F4EE] text-black font-extrabold text-xs hover:opacity-95 shadow-md">
+                    Unlock Dashboard
+                </button>
+            </form>
+            <p class="text-[10px] text-zinc-600">Default Access PIN: 2026</p>
+        </div>
+    </div>
+
+    <!-- Main Navigation Header -->
+    <header class="sticky top-0 z-40 backdrop-blur-md bg-[#080808]/90 border-b border-[#262626]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-6">
+                <div class="flex items-center space-x-3">
+                    <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#FE2C55] to-[#25F4EE] flex items-center justify-center p-[2px] shadow-sm">
+                        <div class="w-full h-full bg-[#080808] rounded-[10px] flex items-center justify-center">
+                            <span class="font-black text-transparent bg-clip-text bg-gradient-to-r from-[#FE2C55] to-[#25F4EE] text-lg tracking-tighter">H</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="font-extrabold text-lg tracking-tight leading-none text-white">HAWME</span>
+                        <span class="text-[9px] text-[#25F4EE] font-black tracking-widest uppercase">Admin Control</span>
+                    </div>
+                </div>
+
+                <!-- Desktop Admin Tabs -->
+                <nav class="hidden md:flex items-center space-x-1">
+                    <button onclick="switchAdminTab('payouts')" class="admin-tab-btn px-3.5 py-2 rounded-xl text-xs font-black bg-zinc-800 text-white" data-tab="payouts">Payments & Escrow</button>
+                    <button onclick="switchAdminTab('users')" class="admin-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-900 transition-all" data-tab="users">User Accounts</button>
+                    <button onclick="switchAdminTab('campaigns')" class="admin-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-900 transition-all" data-tab="campaigns">Offers & Moderation</button>
+                    <button onclick="switchAdminTab('challenges')" class="admin-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-900 transition-all" data-tab="challenges">Challenge Rankings</button>
+                </nav>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <div class="text-right hidden sm:block">
+                    <p class="text-xs font-bold text-white">Escrow: Hanif</p>
+                    <p class="text-[10px] text-[#25F4EE] font-mono">0996350347</p>
+                </div>
+                <button onclick="lockAdminDashboard()" class="p-2 rounded-xl border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-900" title="Lock Admin Panel">
+                    <i data-lucide="lock" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Tabs -->
+        <div class="flex md:hidden overflow-x-auto px-4 py-2 border-t border-[#262626] space-x-2 bg-[#0c0c0c]">
+            <button onclick="switchAdminTab('payouts')" class="admin-tab-btn px-3 py-1.5 rounded-lg text-xs font-black whitespace-nowrap bg-zinc-800 text-white" data-tab="payouts">Payments</button>
+            <button onclick="switchAdminTab('users')" class="admin-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap text-zinc-400" data-tab="users">Users</button>
+            <button onclick="switchAdminTab('campaigns')" class="admin-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap text-zinc-400" data-tab="campaigns">Offers</button>
+            <button onclick="switchAdminTab('challenges')" class="admin-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap text-zinc-400" data-tab="challenges">Rankings</button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 flex-grow w-full">
+        <!-- Overview Counter Stats -->
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div class="bg-[#111111] p-6 rounded-3xl border border-[#262626] shadow-sm">
+                <p class="text-xs text-zinc-400 mb-1 font-bold uppercase tracking-wider">Total Creators</p>
+                <p id="stat-total-creators" class="text-3xl font-black text-[#25F4EE]">-</p>
+            </div>
+            <div class="bg-[#111111] p-6 rounded-3xl border border-[#262626] shadow-sm">
+                <p class="text-xs text-zinc-400 mb-1 font-bold uppercase tracking-wider">Registered Companies</p>
+                <p id="stat-total-companies" class="text-3xl font-black text-[#FE2C55]">-</p>
+            </div>
+            <div class="bg-[#111111] p-6 rounded-3xl border border-[#262626] shadow-sm">
+                <p class="text-xs text-zinc-400 mb-1 font-bold uppercase tracking-wider">Marketplace Offers</p>
+                <p id="stat-total-campaigns" class="text-3xl font-black text-white">-</p>
+            </div>
+            <div class="bg-[#111111] p-6 rounded-3xl border border-[#262626] shadow-sm">
+                <p class="text-xs text-zinc-400 mb-1 font-bold uppercase tracking-wider">Pending Bank Transfers</p>
+                <p id="stat-pending-withdrawals" class="text-3xl font-black text-amber-400">-</p>
+            </div>
+        </div>
+
+        <!-- Dynamic Admin Content View -->
+        <div id="admin-view-container">
+            <!-- Injected by JavaScript -->
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-[#0c0c0c] border-t border-[#262626] py-6 text-center text-xs text-zinc-500">
+        <p>&copy; 2026 HAWME Technologies Inc. — Standalone Admin Portal</p>
+    </footer>
+
+    <!-- Firebase Application Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getFirestore, 
+            doc, 
+            getDoc, 
+            getDocs, 
+            collection, 
+            query, 
+            where, 
+            updateDoc, 
+            deleteDoc, 
+            addDoc 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCayGcfnpCAGNDph3YTyEA9_KDdD2C5Fg0",
+            authDomain: "my-tiktok-cbd6f.firebaseapp.com",
+            databaseURL: "https://my-tiktok-cbd6f-default-rtdb.firebaseio.com",
+            projectId: "my-tiktok-cbd6f",
+            storageBucket: "my-tiktok-cbd6f.firebasestorage.app",
+            messagingSenderId: "964441294320",
+            appId: "1:964441294320:web:4c8da74a0cee8ed2644935",
+            measurementId: "G-RYBWW6XB10"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Security PIN (Change this as desired)
+        const ADMIN_PIN = "2026";
+        window.currentAdminTab = 'payouts';
+
+        window.escapeHTML = function(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        };
+
+        window.showToast = function(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgCol = type === 'success' ? 'bg-[#25F4EE] text-black font-extrabold' : 'bg-[#FE2C55] text-white font-extrabold';
+            toast.className = `${bgCol} px-4 py-3 rounded-2xl shadow-xl text-xs flex items-center space-x-2 transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-auto`;
+            toast.innerHTML = `
+                <i data-lucide="${type === 'success' ? 'check-circle' : 'alert-circle'}" class="w-4 h-4 shrink-0"></i>
+                <span>${window.escapeHTML(message)}</span>
+            `;
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        };
+
+        // Passcode Protection Handlers
+        window.handleAdminUnlock = function(event) {
+            event.preventDefault();
+            const entered = document.getElementById('admin-passkey').value.trim();
+            if (entered === ADMIN_PIN) {
+                sessionStorage.setItem('hawme_admin_auth', 'unlocked');
+                document.getElementById('admin-auth-lock').classList.add('hidden');
+                window.showToast('Admin access granted', 'success');
+                loadOverallStats();
+                renderActiveTab();
+            } else {
+                window.showToast('Invalid access PIN', 'error');
+            }
+        };
+
+        window.lockAdminDashboard = function() {
+            sessionStorage.removeItem('hawme_admin_auth');
+            document.getElementById('admin-passkey').value = '';
+            document.getElementById('admin-auth-lock').classList.remove('hidden');
+        };
+
+        window.switchAdminTab = function(tab) {
+            window.currentAdminTab = tab;
+            document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+                if (btn.getAttribute('data-tab') === tab) {
+                    btn.className = 'admin-tab-btn px-3.5 py-2 rounded-xl text-xs font-black bg-zinc-800 text-white';
+                } else {
+                    btn.className = 'admin-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-900 transition-all';
+                }
+            });
+            renderActiveTab();
+        };
+
+        async function renderActiveTab() {
+            const container = document.getElementById('admin-view-container');
+            switch (window.currentAdminTab) {
+                case 'payouts':
+                    container.innerHTML = `
+                        <div class="space-y-8">
+                            <!-- Section: Creator Ethiopian Bank Withdrawals -->
+                            <div class="bg-[#111111] border border-[#262626] rounded-3xl overflow-hidden shadow-sm">
+                                <div class="px-6 py-4 border-b border-zinc-800 flex justify-between items-center">
+                                    <div>
+                                        <h3 class="font-extrabold text-sm text-white">Pending Creator Bank Transfers</h3>
+                                        <p class="text-xs text-zinc-400">Creators waiting for payout from Hanif (0996350347)</p>
+                                    </div>
+                                    <span class="text-xs text-amber-400 font-bold">Action Queue</span>
+                                </div>
+                                <div id="admin-withdrawals-list" class="divide-y divide-zinc-800">
+                                    <div class="px-6 py-8 text-center text-xs text-zinc-500">Loading withdrawal requests...</div>
+                                </div>
+                            </div>
+
+                            <!-- Section: Telebirr Incoming Company Escrow -->
+                            <div class="bg-[#111111] border border-[#262626] rounded-3xl overflow-hidden shadow-sm">
+                                <div class="px-6 py-4 border-b border-zinc-800">
+                                    <h3 class="font-extrabold text-sm text-white">Telebirr Company Escrow Deposits (0996350347 Hanif)</h3>
+                                    <p class="text-xs text-zinc-400">Verify company deposits transferred into your account</p>
+                                </div>
+                                <div id="admin-escrow-list" class="divide-y divide-zinc-800">
+                                    <div class="px-6 py-8 text-center text-xs text-zinc-500">Loading escrow transactions...</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    await loadAdminPayouts();
+                    break;
+
+                case 'users':
+                    container.innerHTML = `
+                        <div class="bg-[#111111] border border-[#262626] rounded-3xl overflow-hidden shadow-sm">
+                            <div class="px-6 py-4 border-b border-zinc-800 flex justify-between items-center">
+                                <div>
+                                    <h3 class="font-extrabold text-sm text-white">Manage User Accounts (Creators & Companies)</h3>
+                                    <p class="text-xs text-zinc-400">Delete spam, banned, or fraudulent profiles</p>
+                                </div>
+                                <span id="admin-user-count" class="text-xs text-zinc-400 font-semibold"></span>
+                            </div>
+                            <div id="admin-users-list" class="divide-y divide-zinc-800">
+                                <div class="px-6 py-8 text-center text-xs text-zinc-500">Loading registered users...</div>
+                            </div>
+                        </div>
+                    `;
+                    await loadAdminUsers();
+                    break;
+
+                case 'campaigns':
+                    container.innerHTML = `
+                        <div class="bg-[#111111] border border-[#262626] rounded-3xl overflow-hidden shadow-sm">
+                            <div class="px-6 py-4 border-b border-zinc-800 flex justify-between items-center">
+                                <div>
+                                    <h3 class="font-extrabold text-sm text-white">Moderate Offers & Campaigns</h3>
+                                    <p class="text-xs text-zinc-400">Delete or remove non-compliant promotions and challenges</p>
+                                </div>
+                            </div>
+                            <div id="admin-campaigns-list" class="divide-y divide-zinc-800">
+                                <div class="px-6 py-8 text-center text-xs text-zinc-500">Loading marketplace campaigns...</div>
+                            </div>
+                        </div>
+                    `;
+                    await loadAdminCampaigns();
+                    break;
+
+                case 'challenges':
+                    container.innerHTML = `
+                        <div class="bg-[#111111] border border-[#262626] rounded-3xl overflow-hidden shadow-sm">
+                            <div class="px-6 py-4 border-b border-zinc-800 flex justify-between items-center">
+                                <div>
+                                    <h3 class="font-extrabold text-sm text-white">Approve Challenge Leaderboard Rankings</h3>
+                                    <p class="text-xs text-zinc-400">Score challenge participant videos and assign rankings</p>
+                                </div>
+                            </div>
+                            <div id="admin-challenges-list" class="divide-y divide-zinc-800">
+                                <div class="px-6 py-8 text-center text-xs text-zinc-500">Loading challenge submissions...</div>
+                            </div>
+                        </div>
+                    `;
+                    await loadAdminChallenges();
+                    break;
+            }
+            lucide.createIcons();
+        }
+
+        // --- STATS LOADER ---
+        async function loadOverallStats() {
+            try {
+                const uSnap = await getDocs(collection(db, "users"));
+                const users = uSnap.docs.map(d => d.data());
+                document.getElementById('stat-total-creators').innerText = users.filter(u => u.role === 'creator').length;
+                document.getElementById('stat-total-companies').innerText = users.filter(u => u.role === 'company').length;
+
+                const cSnap = await getDocs(collection(db, "campaigns"));
+                document.getElementById('stat-total-campaigns').innerText = cSnap.size;
+
+                const wSnap = await getDocs(query(collection(db, "withdrawals"), where("status", "==", "Pending_Admin_Transfer")));
+                document.getElementById('stat-pending-withdrawals').innerText = wSnap.size;
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // --- TAB 1: PAYOUTS & ESCROW ---
+        async function loadAdminPayouts() {
+            // 1. Pending Bank Withdrawals
+            const wList = document.getElementById('admin-withdrawals-list');
+            try {
+                const wSnap = await getDocs(collection(db, "withdrawals"));
+                if (wSnap.empty) {
+                    wList.innerHTML = `<div class="px-6 py-8 text-center text-xs text-zinc-500">No pending withdrawal requests found.</div>`;
+                } else {
+                    wList.innerHTML = wSnap.docs.map(docSnap => {
+                        const w = docSnap.data();
+                        const isPending = w.status === 'Pending_Admin_Transfer';
+                        return `
+                            <div class="px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div class="space-y-1">
+                                    <div class="flex items-center space-x-2">
+                                        <h4 class="font-black text-sm text-white">${window.escapeHTML(w.creator_name)}</h4>
+                                        <span class="text-xs font-bold text-[#25F4EE]">${window.escapeHTML(w.creator_tiktok)}</span>
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-black ${isPending ? 'bg-amber-500/10 text-amber-400' : 'bg-emerald-500/10 text-emerald-400'}">
+                                            ${window.escapeHTML(w.status.replace(/_/g, ' '))}
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-zinc-300">Bank: <strong class="text-white">${window.escapeHTML(w.bank_name)}</strong></p>
+                                    <p class="text-xs text-zinc-400">Account Holder: <span class="text-zinc-200">${window.escapeHTML(w.account_holder)}</span> | Account #: <strong class="text-[#25F4EE] font-mono text-xs">${window.escapeHTML(w.account_number)}</strong></p>
+                                    <p class="text-xs text-emerald-400 font-extrabold">Amount: ETB ${Number(w.amount_etb || 0).toLocaleString()}</p>
+                                </div>
+                                <div>
+                                    ${isPending ? `
+                                        <button onclick="markWithdrawalCompleted('${docSnap.id}', '${w.creator_id}', ${Number(w.amount_etb)})" class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-400 to-[#25F4EE] text-black font-black text-xs hover:opacity-90 shadow-sm">
+                                            Mark as Paid to Creator
+                                        </button>
+                                    ` : `<span class="text-xs text-emerald-400 font-bold">Transfer Settled ✓</span>`}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch (e) {
+                wList.innerHTML = `<div class="px-6 py-8 text-center text-xs text-zinc-500">Error: ${e.message}</div>`;
+            }
+
+            // 2. Incoming Escrow Deposits
+            const eList = document.getElementById('admin-escrow-list');
+            try {
+                const eSnap = await getDocs(collection(db, "transactions"));
+                if (eSnap.empty) {
+                    eList.innerHTML = `<div class="px-6 py-8 text-center text-xs text-zinc-500">No company escrow transfers logged yet.</div>`;
+                } else {
+                    eList.innerHTML = eSnap.docs.map(docSnap => {
+                        const t = docSnap.data();
+                        return `
+                            <div class="px-6 py-4 flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs font-bold text-white">Deposit of <span class="text-emerald-400 font-extrabold">ETB ${Number(t.amount_etb || 0).toLocaleString()}</span></p>
+                                    <p class="text-[11px] text-zinc-400">Target Telebirr: ${window.escapeHTML(t.escrow_telebirr)}</p>
+                                    <p class="text-[10px] text-zinc-500">${new Date(t.created_at).toLocaleString()}</p>
+                                </div>
+                                <span class="px-2.5 py-1 rounded-md text-[10px] font-black bg-emerald-500/10 text-emerald-400">
+                                    ${window.escapeHTML(t.status || 'Received')}
+                                </span>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch (e) {
+                eList.innerHTML = `<div class="px-6 py-8 text-center text-xs text-zinc-500">Error: ${e.message}</div>`;
+            }
+        }
+
+        window.markWithdrawalCompleted = async function(withdrawalId, creatorId, amount) {
+            try {
+                await updateDoc(doc(db, "withdrawals", withdrawalId), {
+                    status: "Paid_To_Creator",
+                    paid_at: new Date().toISOString()
+                });
+
+                await addDoc(collection(db, "notifications"), {
+                    user_id: creatorId,
+                    message: `Your withdrawal of ETB ${amount.toLocaleString()} has been sent to your bank account by Hanif!`,
+                    read: false,
+                    created_at: new Date().toISOString()
+                });
+
+                window.showToast('Withdrawal marked as Paid! Creator notified.', 'success');
+                loadOverallStats();
+                loadAdminPayouts();
+            } catch (err) {
+                window.showToast('Failed to update withdrawal: ' + err.message, 'error');
+            }
+        };
+
+        // --- TAB 2: USER ACCOUNTS DELETION ---
+        async function loadAdminUsers() {
+            const list = document.getElementById('admin-users-list');
+            try {
+                const snap = await getDocs(collection(db, "users"));
+                if (snap.empty) {
+                    list.innerHTML = `<div class="px-6 py-8 text-center text-xs text-zinc-500">No users found.</div>`;
+                    return;
+                }
+                document.getElementById('admin-user-count').innerText = `${snap.size} Registered Account(s)`;
+
+                list.innerHTML = snap.docs.map(docSnap => {
+                    const u = docSnap.data();
+                    const isCompany = u.role === 'company';
+                    return `
+                        <div class="px-6 py-4 flex items-center justify-between">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center font-bold text-xs ${isCompany ? 'text-[#FE2C55]' : 'text-[#25F4EE]'}">
+                                    ${isCompany ? 'CO' : 'CR'}
+                                </div>
+                                <div>
+                                    <div class="flex items-center space-x-2">
+                                        <h4 class="font-extrabold text-sm text-white">${window.escapeHTML(u.name || 'User')}</h4>
+                                        <span class="text-xs text-[#25F4EE] font-semibold">${window.escapeHTML(u.tiktok_username || '')}</span>
+                                        <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase ${isCompany ? 'bg-[#FE2C55]/10 text-[#FE2C55]' : 'bg-[#25F4EE]/10 text-[#25F4EE]'}">
+                                            ${isCompany ? 'Company' : 'Creator'}
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-zinc-400">${window.escapeHTML(u.email || '')} ${!isCompany ? `• ${Number(u.followers || 0).toLocaleString()} followers` : ''}</p>
+                                </div>
+                            </div>
+                            <button onclick="deleteUserAccount('${docSnap.id}', '${window.escapeHTML(u.name)}')" class="px-3.5 py-1.5 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white font-extrabold text-xs transition-colors">
+                                Delete Account
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {
+                list.innerHTML = `<div class="px-6 py-8 text-center text-xs text-zinc-500">Error: ${e.message}</div>`;
+            }
+        }
+
+        window.deleteUserAccount = async function(userId, userName) {
+            if (!confirm(`Are you sure you want to permanently delete the account of "${userName}"?`)) return;
+            try {
+                await deleteDoc(doc(db, "users", userId));
+                window.showToast(`Account for ${userName} deleted.`, 'success');
+                loadOverallStats();
+                loadAdminUsers();
+            } catch (err) {
+                window.showToast('Failed to delete account: ' + err.message, 'error');
+            }
+        };
+
+        // --- TAB 3: CAMPAIGN / OFFER MODERATION ---
+        async function loadAdminCampaigns() {
+            const list = document.getElementById('admin-campaigns-list');
+            try {
+                const snap = await getDocs(collection(db, "campaigns"));
+                if (snap.empty) {
+                    list.innerHTML = `<div class="px-6 py-8 text-center text-xs text-zinc-500">No campaigns or offers found.</div>`;
+                    return;
+                }
+
+                list.innerHTML = snap.docs.map(docSnap => {
+                    const c = docSnap.data();
+                    return `
+                        <div class="px-6 py-4 flex items-center justify-between">
+                            <div class="flex items-center space-x-4">
+                                <img src="${window.escapeHTML(c.image_url)}" class="w-12 h-12 rounded-2xl object-cover border border-zinc-700">
+                                <div>
+                                    <div class="flex items-center space-x-2">
+                                        <h4 class="font-extrabold text-sm text-white">${window.escapeHTML(c.title)}</h4>
+                                        <span class="px-2 py-0.5 rounded text-[9px] font-black ${c.type === 'PROMOTION' ? 'bg-[#FE2C55]/10 text-[#FE2C55]' : 'bg-[#25F4EE]/10 text-[#25F4EE]'}">${window.escapeHTML(c.type)}</span>
+                                    </div>
+                                    <p class="text-xs text-zinc-400">By: <strong class="text-zinc-200">${window.escapeHTML(c.brand)}</strong> (${window.escapeHTML(c.company_tiktok || '')}) • ${window.escapeHTML(c.reward)}</p>
+                                </div>
+                            </div>
+                            <button onclick="deleteCampaignOffer('${docSnap.id}', '${window.escapeHTML(c.title)}')" class="px-3.5 py-1.5 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white font-extrabold text-xs transition-colors">
+                                Delete Offer
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {
+                list.innerHTML = `<div class="px-6 py-8 text-center text-xs text-zinc-500">Error: ${e.message}</div>`;
+            }
+        }
+
+        window.deleteCampaignOffer = async function(campaignId, title) {
+            if (!confirm(`Are you sure you want to permanently delete the offer "${title}"?`)) return;
+            try {
+                await deleteDoc(doc(db, "campaigns", campaignId));
+                window.showToast(`Offer "${title}" deleted from marketplace.`, 'success');
+                loadOverallStats();
+                loadAdminCampaigns();
+            } catch (err) {
+                window.showToast('Failed to delete offer: ' + err.message, 'error');
+            }
+        };
+
+        // --- TAB 4: CHALLENGES RANKING & APPROVAL ---
+        async function loadAdminChallenges() {
+            const list = document.getElementById('admin-challenges-list');
+            try {
+                const snap = await getDocs(collection(db, "applications"));
+                if (snap.empty) {
+                    list.innerHTML = `<div class="px-6 py-8 text-center text-xs text-zinc-500">No challenge participant submissions found.</div>`;
+                    return;
+                }
+
+                list.innerHTML = snap.docs.map(docSnap => {
+                    const a = docSnap.data();
+                    return `
+                        <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                                <h4 class="font-extrabold text-sm text-white">${window.escapeHTML(a.campaign_title)}</h4>
+                                <p class="text-xs text-zinc-400">Creator: <strong class="text-white">${window.escapeHTML(a.creator_name)}</strong> (<span class="text-[#25F4EE]">${window.escapeHTML(a.creator_tiktok)}</span>) • ${Number(a.creator_followers || 0).toLocaleString()} followers</p>
+                                ${a.pitch ? `<p class="text-xs text-zinc-400 mt-1 italic">Pitch: "${window.escapeHTML(a.pitch)}"</p>` : ''}
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <select id="rank-select-${docSnap.id}" class="bg-[#181818] border border-zinc-700 rounded-xl px-2.5 py-1.5 text-xs font-bold text-white focus:outline-none">
+                                    <option value="1">Rank 1</option>
+                                    <option value="2">Rank 2</option>
+                                    <option value="3">Rank 3</option>
+                                    <option value="4">Rank 4</option>
+                                    <option value="5">Rank 5</option>
+                                </select>
+                                <button onclick="assignChallengeRank('${docSnap.id}', '${a.creator_id}', '${window.escapeHTML(a.creator_name)}', '${window.escapeHTML(a.campaign_title)}')" class="px-3.5 py-1.5 rounded-xl bg-[#25F4EE] text-black font-extrabold text-xs hover:opacity-90">
+                                    Approve Rank
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {
+                list.innerHTML = `<div class="px-6 py-8 text-center text-xs text-zinc-500">Error: ${e.message}</div>`;
+            }
+        }
+
+        window.assignChallengeRank = async function(appId, creatorId, creatorName, campaignTitle) {
+            const rank = document.getElementById(`rank-select-${appId}`).value;
+            try {
+                await updateDoc(doc(db, "applications", appId), {
+                    challenge_rank: Number(rank),
+                    status: `Rank_${rank}_Approved`
+                });
+
+                await addDoc(collection(db, "notifications"), {
+                    user_id: creatorId,
+                    message: `Official Challenge Result: You placed Rank ${rank} for "${campaignTitle}"! Check the Leaderboard.`,
+                    read: false,
+                    created_at: new Date().toISOString()
+                });
+
+                window.showToast(`Assigned Rank ${rank} to ${creatorName}!`, 'success');
+                loadAdminChallenges();
+            } catch (err) {
+                window.showToast('Ranking error: ' + err.message, 'error');
+            }
+        };
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            if (sessionStorage.getItem('hawme_admin_auth') === 'unlocked') {
+                document.getElementById('admin-auth-lock').classList.add('hidden');
+                loadOverallStats();
+                renderActiveTab();
+            }
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>
