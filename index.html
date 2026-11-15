@@ -1,3 +1,6 @@
+Here is the complete index.html file. The app now opens with a landing page (no login required to browse), with a "Get Started" button that opens a sign-up screen. Google sign-in is available on both login and sign-up, and all game minimum bets start at 2 ETB with custom amount input.
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,22 +8,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>DOQA — Play & Win</title>
 
-  <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-
-  <!-- Supabase JS v2 via CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    /* ===== GLOBAL STYLES ===== */
     :root {
       --bg: #080810;
       --pink: #FF1685;
@@ -32,431 +27,254 @@
       --text-dim: #8A8AA0;
       --gold: #FFD700;
     }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body {
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      overflow: hidden;
+      height: 100%; background: var(--bg); color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden;
       overscroll-behavior: none;
     }
 
-    /* ===== APP FRAME ===== */
     #app-frame {
-      display: flex;
-      flex-direction: column;
-      height: 100dvh;
-      max-width: 480px;
-      margin: 0 auto;
-      position: relative;
-      background: var(--bg);
-      overflow: hidden;
+      display: flex; flex-direction: column; height: 100dvh; max-width: 480px;
+      margin: 0 auto; position: relative; background: var(--bg); overflow: hidden;
       box-shadow: 0 0 80px rgba(255,22,133,0.06);
     }
 
-    /* ===== SPLASH ===== */
     #splash {
-      position: absolute;
-      inset: 0;
-      z-index: 1000;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: var(--bg);
+      position: absolute; inset: 0; z-index: 1000; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; background: var(--bg);
       transition: opacity 0.6s ease, visibility 0.6s;
     }
-    #splash.hidden {
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-    }
+    #splash.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
     .logo-ring {
-      width: 110px;
-      height: 110px;
-      border-radius: 50%;
-      border: 3px solid transparent;
-      border-top-color: var(--pink);
-      border-right-color: var(--cyan);
+      width: 110px; height: 110px; border-radius: 50%; border: 3px solid transparent;
+      border-top-color: var(--pink); border-right-color: var(--cyan);
       animation: spin 1.2s cubic-bezier(0.68,-0.55,0.27,1.55) infinite;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
+      display: flex; align-items: center; justify-content: center; position: relative;
     }
     .logo-ring::after {
-      content: '';
-      position: absolute;
-      inset: 8px;
-      border-radius: 50%;
-      border: 2px solid transparent;
-      border-bottom-color: var(--purple);
-      border-left-color: var(--pink);
-      animation: spin 1.8s linear infinite reverse;
+      content: ''; position: absolute; inset: 8px; border-radius: 50%;
+      border: 2px solid transparent; border-bottom-color: var(--purple);
+      border-left-color: var(--pink); animation: spin 1.8s linear infinite reverse;
     }
     .logo-text {
-      font-size: 42px;
-      font-weight: 800;
+      font-size: 42px; font-weight: 800;
       background: linear-gradient(135deg, var(--pink), var(--cyan));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      letter-spacing: 2px;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; letter-spacing: 2px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* ===== AUTH SCREEN ===== */
     #auth-screen {
-      position: absolute;
-      inset: 0;
-      z-index: 900;
-      display: flex;
-      flex-direction: column;
-      padding: 32px 24px;
-      background: var(--bg);
-      overflow-y: auto;
-      transition: opacity 0.4s ease, transform 0.4s ease;
+      position: absolute; inset: 0; z-index: 900; display: none;
+      flex-direction: column; padding: 32px 24px; background: var(--bg);
+      overflow-y: auto; transition: opacity 0.4s ease, transform 0.4s ease;
     }
-    #auth-screen.hidden {
-      opacity: 0;
-      transform: translateY(20px);
-      pointer-events: none;
-    }
+    #auth-screen.visible { display: flex; }
     .auth-input {
-      width: 100%;
-      padding: 14px 16px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      color: var(--text);
-      font-size: 14px;
-      font-family: inherit;
+      width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border); border-radius: 14px; color: var(--text);
+      font-size: 14px; font-family: inherit; outline: none;
       transition: border-color 0.2s, box-shadow 0.2s;
-      outline: none;
     }
-    .auth-input:focus {
-      border-color: var(--pink);
-      box-shadow: 0 0 0 3px rgba(255,22,133,0.15);
-    }
+    .auth-input:focus { border-color: var(--pink); box-shadow: 0 0 0 3px rgba(255,22,133,0.15); }
     .auth-input::placeholder { color: var(--text-dim); }
 
     .btn-primary {
-      width: 100%;
-      padding: 15px;
-      border-radius: 14px;
-      border: none;
+      width: 100%; padding: 15px; border-radius: 14px; border: none;
       background: linear-gradient(135deg, var(--pink), var(--purple));
-      color: #fff;
-      font-weight: 700;
-      font-size: 15px;
-      font-family: inherit;
-      cursor: pointer;
-      transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+      color: #fff; font-weight: 700; font-size: 15px; font-family: inherit;
+      cursor: pointer; transition: transform 0.15s, opacity 0.2s;
       box-shadow: 0 4px 24px rgba(255,22,133,0.3);
-      position: relative;
-      overflow: hidden;
     }
     .btn-primary:active { transform: scale(0.97); }
     .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 
     .btn-secondary {
-      width: 100%;
-      padding: 14px;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.03);
-      color: var(--text);
-      font-weight: 600;
-      font-size: 14px;
-      font-family: inherit;
-      cursor: pointer;
-      transition: background 0.2s, border-color 0.2s;
+      width: 100%; padding: 14px; border-radius: 14px; border: 1px solid var(--border);
+      background: rgba(255,255,255,0.03); color: var(--text); font-weight: 600;
+      font-size: 14px; font-family: inherit; cursor: pointer;
     }
     .btn-secondary:active { background: rgba(255,255,255,0.08); }
 
-    /* ===== MAIN APP ===== */
-    #main-app {
-      display: none;
-      flex-direction: column;
-      height: 100%;
-      opacity: 0;
-      transition: opacity 0.4s ease;
+    .btn-google {
+      width: 100%; padding: 14px; border-radius: 14px; border: 1px solid var(--border);
+      background: #fff; color: #1F1F1F; font-weight: 600; font-size: 14px;
+      font-family: inherit; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; gap: 10px;
     }
-    #main-app.visible {
-      display: flex;
-      opacity: 1;
+    .btn-google:active { transform: scale(0.97); }
+    .btn-google:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* ===== LANDING ===== */
+    #landing-screen {
+      display: flex; flex-direction: column; height: 100%; opacity: 1;
+      transition: opacity 0.4s ease; overflow-y: auto;
+    }
+    #landing-screen.hidden { display: none; }
+    .hero-section {
+      padding: 60px 24px 40px; text-align: center;
+      background: radial-gradient(ellipse at top, rgba(255,22,133,0.15), transparent 70%);
+    }
+    .hero-logo {
+      font-size: 64px; font-weight: 800;
+      background: linear-gradient(135deg, var(--pink), var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; letter-spacing: 3px; margin-bottom: 12px;
+    }
+    .hero-tagline {
+      font-size: 16px; color: var(--text-dim); margin-bottom: 32px;
+    }
+    .preview-games {
+      display: flex; gap: 12px; padding: 0 24px 24px; overflow-x: auto;
+    }
+    .preview-card {
+      flex: 0 0 160px; padding: 20px 16px; border-radius: 18px;
+      background: var(--card); border: 1px solid var(--border);
     }
 
-    /* ===== HEADER ===== */
+    /* ===== MAIN APP ===== */
+    #main-app { display: none; flex-direction: column; height: 100%; opacity: 0; transition: opacity 0.4s ease; }
+    #main-app.visible { display: flex; opacity: 1; }
+
     #app-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 20px;
-      background: rgba(8,8,16,0.85);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-bottom: 1px solid var(--border);
-      z-index: 50;
-      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px; background: rgba(8,8,16,0.85);
+      backdrop-filter: blur(20px); border-bottom: 1px solid var(--border);
+      z-index: 50; flex-shrink: 0;
     }
     .balance-chip {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 7px 14px;
-      background: rgba(255,22,133,0.12);
-      border: 1px solid rgba(255,22,133,0.25);
-      border-radius: 100px;
-      font-weight: 700;
-      font-size: 13px;
-      color: var(--pink);
-      transition: transform 0.2s;
+      display: flex; align-items: center; gap: 6px; padding: 7px 14px;
+      background: rgba(255,22,133,0.12); border: 1px solid rgba(255,22,133,0.25);
+      border-radius: 100px; font-weight: 700; font-size: 13px; color: var(--pink);
     }
     .balance-chip:active { transform: scale(0.95); }
 
-    /* ===== TAB CONTENT ===== */
     #tab-content {
-      flex: 1;
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding: 16px 20px 100px;
-      scroll-behavior: smooth;
-      -webkit-overflow-scrolling: touch;
-      position: relative;
+      flex: 1; overflow-y: auto; overflow-x: hidden;
+      padding: 16px 20px 100px; scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch; position: relative;
     }
     #tab-content::-webkit-scrollbar { display: none; }
 
-    /* ===== BOTTOM NAV ===== */
     #bottom-nav {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      padding: 10px 8px 24px;
-      background: rgba(8,8,16,0.92);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border-top: 1px solid var(--border);
-      z-index: 60;
+      position: absolute; bottom: 0; left: 0; right: 0; display: flex;
+      justify-content: space-around; align-items: center; padding: 10px 8px 24px;
+      background: rgba(8,8,16,0.92); backdrop-filter: blur(24px);
+      border-top: 1px solid var(--border); z-index: 60;
     }
     .nav-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      padding: 6px 12px;
-      border-radius: 12px;
-      cursor: pointer;
-      color: var(--text-dim);
-      transition: color 0.2s, transform 0.15s;
-      position: relative;
-      border: none;
-      background: transparent;
-      font-family: inherit;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      padding: 6px 12px; border-radius: 12px; cursor: pointer;
+      color: var(--text-dim); transition: color 0.2s, transform 0.15s;
+      position: relative; border: none; background: transparent; font-family: inherit;
     }
     .nav-item:active { transform: scale(0.92); }
     .nav-item.active { color: var(--pink); }
     .nav-item.active::before {
-      content: '';
-      position: absolute;
-      top: -10px;
-      width: 20px;
-      height: 3px;
-      border-radius: 3px;
-      background: var(--pink);
-      box-shadow: 0 0 12px var(--pink);
+      content: ''; position: absolute; top: -10px; width: 20px; height: 3px;
+      border-radius: 3px; background: var(--pink); box-shadow: 0 0 12px var(--pink);
     }
     .nav-label { font-size: 10px; font-weight: 600; }
 
-    /* ===== CARDS ===== */
     .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 18px;
-      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 18px; padding: 18px; transition: transform 0.2s;
     }
-    .card-glow {
-      box-shadow: 0 0 40px rgba(255,22,133,0.06);
-    }
+    .card-glow { box-shadow: 0 0 40px rgba(255,22,133,0.06); }
     .card:active { transform: scale(0.98); }
 
     .game-card {
-      position: relative;
-      overflow: hidden;
-      border-radius: 20px;
-      padding: 22px 20px;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative; overflow: hidden; border-radius: 20px;
+      padding: 22px 20px; cursor: pointer; transition: transform 0.2s;
       border: 1px solid var(--border);
     }
     .game-card:active { transform: scale(0.97); }
     .game-card .game-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 14px;
+      width: 48px; height: 48px; border-radius: 14px; display: flex;
+      align-items: center; justify-content: center; margin-bottom: 14px;
     }
 
-    /* ===== TICKER ===== */
     .ticker-wrap {
-      overflow: hidden;
-      white-space: nowrap;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 8px 0;
+      overflow: hidden; white-space: nowrap; background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border); border-radius: 12px; padding: 8px 0;
     }
     .ticker {
-      display: inline-block;
-      animation: ticker 25s linear infinite;
-      font-size: 12px;
-      color: var(--text-dim);
-      padding-left: 100%;
+      display: inline-block; animation: ticker 25s linear infinite;
+      font-size: 12px; color: var(--text-dim); padding-left: 100%;
     }
-    @keyframes ticker {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(-100%); }
-    }
+    @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
-    /* ===== LEADERBOARD ===== */
     .leader-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 0;
+      display: flex; align-items: center; gap: 12px; padding: 10px 0;
       border-bottom: 1px solid var(--border);
     }
     .leader-row:last-child { border-bottom: none; }
     .avatar {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 14px;
-      flex-shrink: 0;
-      color: #fff;
+      width: 36px; height: 36px; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; font-weight: 700;
+      font-size: 14px; flex-shrink: 0; color: #fff;
     }
 
-    /* ===== BOTTOM SHEET ===== */
     .sheet-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      backdrop-filter: blur(4px);
-      z-index: 200;
-      opacity: 0;
-      visibility: hidden;
+      position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px); z-index: 200; opacity: 0; visibility: hidden;
       transition: opacity 0.3s, visibility 0.3s;
     }
     .sheet-overlay.open { opacity: 1; visibility: visible; }
 
     .bottom-sheet {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      max-width: 480px;
-      margin: 0 auto;
-      background: #0E0E18;
-      border-radius: 24px 24px 0 0;
-      padding: 8px 20px 32px;
-      transform: translateY(100%);
+      position: absolute; bottom: 0; left: 0; right: 0; max-width: 480px;
+      margin: 0 auto; background: #0E0E18; border-radius: 24px 24px 0 0;
+      padding: 8px 20px 32px; transform: translateY(100%);
       transition: transform 0.35s cubic-bezier(0.32,0.72,0,1);
-      max-height: 90vh;
-      overflow-y: auto;
-      z-index: 210;
+      max-height: 90vh; overflow-y: auto; z-index: 210;
       border-top: 1px solid var(--border);
     }
     .sheet-overlay.open .bottom-sheet { transform: translateY(0); }
     .sheet-handle {
-      width: 40px;
-      height: 4px;
-      border-radius: 4px;
-      background: rgba(255,255,255,0.15);
-      margin: 8px auto 16px;
+      width: 40px; height: 4px; border-radius: 4px;
+      background: rgba(255,255,255,0.15); margin: 8px auto 16px;
     }
 
-    /* ===== CHIPS ===== */
+    .sheet-back {
+      display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;
+      border-radius: 100px; background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border); color: var(--text); font-size: 12px;
+      font-weight: 600; font-family: inherit; cursor: pointer; margin-bottom: 14px;
+    }
+    .sheet-back:active { transform: scale(0.95); background: rgba(255,255,255,0.12); }
+
     .chip {
-      padding: 8px 16px;
-      border-radius: 100px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.04);
-      color: var(--text);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-family: inherit;
+      padding: 8px 16px; border-radius: 100px; border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04); color: var(--text); font-size: 13px;
+      font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit;
       white-space: nowrap;
     }
-    .chip.active {
-      background: rgba(255,22,133,0.15);
-      border-color: var(--pink);
-      color: var(--pink);
-    }
+    .chip.active { background: rgba(255,22,133,0.15); border-color: var(--pink); color: var(--pink); }
     .chip:active { transform: scale(0.94); }
 
-    /* ===== PROGRESS BAR ===== */
     .progress-track {
-      height: 8px;
-      background: rgba(255,255,255,0.06);
-      border-radius: 100px;
-      overflow: hidden;
+      height: 8px; background: rgba(255,255,255,0.06);
+      border-radius: 100px; overflow: hidden;
     }
     .progress-fill {
-      height: 100%;
-      border-radius: 100px;
+      height: 100%; border-radius: 100px;
       background: linear-gradient(90deg, var(--pink), var(--purple));
       transition: width 0.6s cubic-bezier(0.22,1,0.36,1);
     }
 
-    /* ===== TOAST ===== */
     #toast-container {
-      position: fixed;
-      top: 16px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      width: calc(100% - 40px);
-      max-width: 420px;
-      pointer-events: none;
+      position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+      z-index: 9999; display: flex; flex-direction: column; gap: 8px;
+      width: calc(100% - 40px); max-width: 420px; pointer-events: none;
     }
     .toast {
-      padding: 12px 18px;
-      border-radius: 14px;
-      background: rgba(20,20,32,0.95);
-      backdrop-filter: blur(16px);
-      border: 1px solid var(--border);
-      font-size: 13px;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      animation: toastIn 0.35s cubic-bezier(0.22,1,0.36,1);
-      pointer-events: auto;
+      padding: 12px 18px; border-radius: 14px; background: rgba(20,20,32,0.95);
+      backdrop-filter: blur(16px); border: 1px solid var(--border); font-size: 13px;
+      font-weight: 500; display: flex; align-items: center; gap: 10px;
+      animation: toastIn 0.35s cubic-bezier(0.22,1,0.36,1); pointer-events: auto;
       box-shadow: 0 8px 32px rgba(0,0,0,0.4);
     }
     .toast.success { border-color: rgba(32,217,245,0.3); }
@@ -467,296 +285,115 @@
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    /* ===== SKELETON ===== */
-    .skeleton {
-      background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite;
-      border-radius: 10px;
-    }
-    @keyframes shimmer {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
-
-    /* ===== MODAL ===== */
     .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(6px);
-      z-index: 500;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.3s, visibility 0.3s;
-      padding: 24px;
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(6px); z-index: 500; display: flex;
+      align-items: center; justify-content: center; opacity: 0; visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s; padding: 24px;
     }
     .modal-overlay.open { opacity: 1; visibility: visible; }
-
     .modal-content {
-      width: 100%;
-      max-width: 380px;
-      background: #0E0E18;
-      border-radius: 24px;
-      padding: 28px 24px;
-      border: 1px solid var(--border);
-      transform: scale(0.9);
-      transition: transform 0.3s cubic-bezier(0.22,1,0.36,1);
+      width: 100%; max-width: 380px; background: #0E0E18; border-radius: 24px;
+      padding: 28px 24px; border: 1px solid var(--border); transform: scale(0.9);
+      transition: transform 0.3s cubic-bezier(0.22,1,0.36,1); max-height: 80vh;
+      overflow-y: auto;
     }
     .modal-overlay.open .modal-content { transform: scale(1); }
 
-    /* ===== SPIN WHEEL ===== */
-    .wheel-container {
-      position: relative;
-      width: 280px;
-      height: 280px;
-      margin: 0 auto;
-    }
+    .wheel-container { position: relative; width: 280px; height: 280px; margin: 0 auto; }
     .wheel-pointer {
-      position: absolute;
-      top: -8px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 0;
-      height: 0;
-      border-left: 12px solid transparent;
-      border-right: 12px solid transparent;
-      border-top: 24px solid var(--pink);
-      filter: drop-shadow(0 0 8px var(--pink));
-      z-index: 10;
+      position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+      width: 0; height: 0; border-left: 12px solid transparent;
+      border-right: 12px solid transparent; border-top: 24px solid var(--pink);
+      filter: drop-shadow(0 0 8px var(--pink)); z-index: 10;
     }
     .wheel-svg {
-      width: 100%;
-      height: 100%;
+      width: 100%; height: 100%;
       filter: drop-shadow(0 0 20px rgba(255,22,133,0.2));
       transition: transform 4s cubic-bezier(0.17,0.67,0.1,0.99);
     }
 
-    /* ===== BINGO BOARD ===== */
-    .bingo-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 8px;
-    }
+    .bingo-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
     .bingo-cell {
-      aspect-ratio: 1;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 16px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border);
-      cursor: pointer;
-      transition: all 0.2s;
-      user-select: none;
+      aspect-ratio: 1; border-radius: 12px; display: flex; align-items: center;
+      justify-content: center; font-weight: 700; font-size: 16px;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      cursor: pointer; transition: all 0.2s; user-select: none;
     }
     .bingo-cell.selected {
-      background: rgba(255,22,133,0.15);
-      border-color: var(--pink);
-      color: var(--pink);
-      box-shadow: 0 0 16px rgba(255,22,133,0.2);
+      background: rgba(255,22,133,0.15); border-color: var(--pink);
+      color: var(--pink); box-shadow: 0 0 16px rgba(255,22,133,0.2);
     }
     .bingo-cell.matched {
-      background: rgba(255,215,0,0.2);
-      border-color: var(--gold);
-      color: var(--gold);
-      box-shadow: 0 0 20px rgba(255,215,0,0.3);
+      background: rgba(255,215,0,0.2); border-color: var(--gold);
+      color: var(--gold); box-shadow: 0 0 20px rgba(255,215,0,0.3);
     }
-    .bingo-cell.missed {
-      opacity: 0.35;
-      filter: grayscale(0.7);
-    }
+    .bingo-cell.missed { opacity: 0.35; filter: grayscale(0.7); }
 
-    /* ===== DOQA ROOM ===== */
     .room-scroll {
-      display: flex;
-      gap: 12px;
-      overflow-x: auto;
-      padding-bottom: 8px;
-      scroll-snap-type: x mandatory;
-      -webkit-overflow-scrolling: touch;
+      display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px;
+      scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
     }
     .room-scroll::-webkit-scrollbar { display: none; }
     .room-card {
-      flex: 0 0 140px;
-      scroll-snap-align: start;
-      padding: 16px;
-      border-radius: 18px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      cursor: pointer;
-      transition: transform 0.2s, border-color 0.2s;
-      position: relative;
-      overflow: hidden;
+      flex: 0 0 140px; scroll-snap-align: start; padding: 16px;
+      border-radius: 18px; background: var(--card); border: 1px solid var(--border);
+      cursor: pointer; transition: transform 0.2s; position: relative; overflow: hidden;
     }
     .room-card:active { transform: scale(0.96); }
-    .room-card.full { border-color: var(--cyan); }
-    .room-card.playing { border-color: var(--pink); box-shadow: 0 0 20px rgba(255,22,133,0.15); }
 
-    .slot-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 10px;
-    }
+    .slot-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
     .slot {
-      aspect-ratio: 1;
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 18px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border);
-      cursor: pointer;
-      transition: all 0.2s;
-      position: relative;
+      aspect-ratio: 1; border-radius: 14px; display: flex; align-items: center;
+      justify-content: center; font-weight: 700; font-size: 18px;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      cursor: pointer; transition: all 0.2s; position: relative;
     }
-    .slot.taken {
-      opacity: 0.4;
-      cursor: not-allowed;
-      background: rgba(255,255,255,0.02);
-    }
+    .slot.taken { opacity: 0.4; cursor: not-allowed; background: rgba(255,255,255,0.02); }
     .slot.mine {
-      border-color: var(--pink);
-      background: rgba(255,22,133,0.15);
-      color: var(--pink);
-      box-shadow: 0 0 20px rgba(255,22,133,0.25);
-    }
-    .slot.winner {
-      border-color: var(--gold);
-      background: rgba(255,215,0,0.2);
-      color: var(--gold);
-      box-shadow: 0 0 30px rgba(255,215,0,0.4);
-      animation: pulse-win 0.8s ease infinite alternate;
-    }
-    @keyframes pulse-win {
-      from { transform: scale(1); }
-      to { transform: scale(1.06); }
+      border-color: var(--pink); background: rgba(255,22,133,0.15);
+      color: var(--pink); box-shadow: 0 0 20px rgba(255,22,133,0.25);
     }
     .slot-avatar {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
-      font-weight: 800;
-      color: #fff;
-      position: absolute;
-      bottom: -4px;
-      right: -4px;
-      border: 2px solid #0E0E18;
+      width: 24px; height: 24px; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; font-size: 10px;
+      font-weight: 800; color: #fff; position: absolute; bottom: -4px;
+      right: -4px; border: 2px solid #0E0E18;
     }
 
-    /* ===== ADMIN ===== */
-    #admin-panel {
-      display: none;
-      flex-direction: column;
-      height: 100%;
-      background: var(--bg);
-    }
-    #admin-panel.visible { display: flex; }
-    .admin-sidebar {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      width: 260px;
-      background: #0E0E18;
-      border-right: 1px solid var(--border);
-      padding: 24px 16px;
-      transform: translateX(-100%);
-      transition: transform 0.3s;
-      z-index: 300;
-      overflow-y: auto;
-    }
-    .admin-sidebar.open { transform: translateX(0); }
-    .admin-nav-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 14px;
-      border-radius: 12px;
-      color: var(--text-dim);
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-      border: none;
-      background: transparent;
-      width: 100%;
-      text-align: left;
-      font-family: inherit;
-    }
-    .admin-nav-item:hover, .admin-nav-item.active {
-      background: rgba(255,22,133,0.1);
-      color: var(--pink);
-    }
-
-    /* ===== CONFETTI ===== */
     .confetti-piece {
-      position: fixed;
-      width: 10px;
-      height: 10px;
-      z-index: 10000;
-      pointer-events: none;
-      animation: confettiFall 2.5s ease-out forwards;
+      position: fixed; width: 10px; height: 10px; z-index: 10000;
+      pointer-events: none; animation: confettiFall 2.5s ease-out forwards;
     }
     @keyframes confettiFall {
       0% { transform: translateY(0) rotate(0deg); opacity: 1; }
       100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
     }
 
-    /* ===== RESPONSIVE ===== */
     @media (min-width: 480px) {
       #app-frame {
-        margin-top: 20px;
-        margin-bottom: 20px;
-        height: calc(100dvh - 40px);
-        border-radius: 28px;
+        margin-top: 20px; margin-bottom: 20px;
+        height: calc(100dvh - 40px); border-radius: 28px;
         border: 1px solid var(--border);
       }
     }
 
-    /* ===== UTILITY ===== */
     .text-gradient {
       background: linear-gradient(135deg, var(--pink), var(--cyan));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-    .glow-pink { box-shadow: 0 0 30px rgba(255,22,133,0.15); }
-    .glow-cyan { box-shadow: 0 0 30px rgba(32,217,245,0.15); }
 
-    /* Hide scrollbar for all elements */
     ::-webkit-scrollbar { display: none; }
     * { scrollbar-width: none; }
-
-    /* Hide spline text selection */
     .no-select { user-select: none; -webkit-user-select: none; }
 
-    /* Ribbon for demo mode */
-    #demo-ribbon {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 10000;
-      background: repeating-linear-gradient(45deg, #FF1685, #FF1685 10px, #923EFF 10px, #923EFF 20px);
-      color: #fff;
-      text-align: center;
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 2px;
-      padding: 4px 0;
-      text-transform: uppercase;
+    .divider {
+      display: flex; align-items: center; gap: 12px; margin: 20px 0;
+      color: var(--text-dim); font-size: 12px;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
     }
   </style>
 </head>
@@ -764,37 +401,110 @@
 
   <!-- ===== SPLASH ===== -->
   <div id="splash">
-    <div class="logo-ring">
-      <span class="logo-text">D</span>
-    </div>
+    <div class="logo-ring"><span class="logo-text">D</span></div>
     <div style="margin-top: 24px; font-size: 14px; color: var(--text-dim); font-weight: 500; letter-spacing: 4px;">LOADING</div>
   </div>
 
+  <!-- ===== LANDING SCREEN (shown before login) ===== -->
+  <div id="landing-screen">
+    <div class="hero-section">
+      <div class="hero-logo">DOQA</div>
+      <div class="hero-tagline">Play. Win. Repeat.</div>
+      <div style="display: flex; flex-direction: column; gap: 10px; max-width: 280px; margin: 0 auto;">
+        <button class="btn-primary" onclick="App.showAuth('signup')">Get Started</button>
+        <button class="btn-secondary" onclick="App.showAuth('login')">I already have an account</button>
+      </div>
+    </div>
+
+    <div style="padding: 0 24px; margin-bottom: 12px;">
+      <div style="font-size: 18px; font-weight: 800; margin-bottom: 4px;">Why DOQA?</div>
+      <div style="font-size: 13px; color: var(--text-dim);">Real money. Real wins. Fast payouts.</div>
+    </div>
+
+    <div class="preview-games">
+      <div class="preview-card">
+        <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(255,22,133,0.15); display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
+          <i data-lucide="disc" style="width: 22px; height: 22px; color: var(--pink);"></i>
+        </div>
+        <div style="font-weight: 700; font-size: 14px; margin-bottom: 2px;">Spin Wheel</div>
+        <div style="font-size: 11px; color: var(--text-dim);">From 2 ETB</div>
+      </div>
+      <div class="preview-card">
+        <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(32,217,245,0.15); display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
+          <i data-lucide="hash" style="width: 22px; height: 22px; color: var(--cyan);"></i>
+        </div>
+        <div style="font-weight: 700; font-size: 14px; margin-bottom: 2px;">Bingo</div>
+        <div style="font-size: 11px; color: var(--text-dim);">From 2 ETB</div>
+      </div>
+      <div class="preview-card">
+        <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(146,62,255,0.15); display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
+          <i data-lucide="users" style="width: 22px; height: 22px; color: var(--purple);"></i>
+        </div>
+        <div style="font-weight: 700; font-size: 14px; margin-bottom: 2px;">DOQA Rooms</div>
+        <div style="font-size: 11px; color: var(--text-dim);">Win 75% of pool</div>
+      </div>
+    </div>
+
+    <div style="padding: 0 24px 24px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+        <div class="card" style="padding: 14px; text-align: center;">
+          <div style="font-size: 20px; font-weight: 800; color: var(--pink);">24/7</div>
+          <div style="font-size: 10px; color: var(--text-dim); margin-top: 4px;">Support</div>
+        </div>
+        <div class="card" style="padding: 14px; text-align: center;">
+          <div style="font-size: 20px; font-weight: 800; color: var(--cyan);">Fast</div>
+          <div style="font-size: 10px; color: var(--text-dim); margin-top: 4px;">Payouts</div>
+        </div>
+        <div class="card" style="padding: 14px; text-align: center;">
+          <div style="font-size: 20px; font-weight: 800; color: var(--purple);">18+</div>
+          <div style="font-size: 10px; color: var(--text-dim); margin-top: 4px;">Only</div>
+        </div>
+      </div>
+      <div style="text-align: center; font-size: 11px; color: var(--text-dim); line-height: 1.6;">
+        Play responsibly. DOQA © 2025
+      </div>
+    </div>
+  </div>
+
   <!-- ===== AUTH SCREEN ===== -->
-  <div id="auth-screen" class="hidden">
+  <div id="auth-screen">
     <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
-      <div style="text-align: center; margin-bottom: 40px;">
-        <div style="font-size: 48px; font-weight: 800;" class="text-gradient">DOQA</div>
-        <div style="font-size: 14px; color: var(--text-dim); margin-top: 8px;">Play. Win. Repeat.</div>
+      <button class="sheet-back" style="align-self: flex-start; margin-bottom: 24px;" onclick="App.closeAuth()">
+        <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i> Back
+      </button>
+
+      <div style="text-align: center; margin-bottom: 28px;">
+        <div style="font-size: 40px; font-weight: 800;" class="text-gradient">DOQA</div>
+        <div style="font-size: 13px; color: var(--text-dim); margin-top: 6px;">Play. Win. Repeat.</div>
       </div>
 
       <!-- Login Form -->
-      <div id="login-form">
-        <div style="margin-bottom: 16px;">
+      <div id="login-form" style="display: none;">
+        <div style="font-size: 22px; font-weight: 800; margin-bottom: 20px;">Sign In</div>
+        <div style="margin-bottom: 14px;">
           <input type="email" id="login-email" class="auth-input" placeholder="Email address" autocomplete="email">
         </div>
-        <div style="margin-bottom: 24px; position: relative;">
+        <div style="margin-bottom: 20px;">
           <input type="password" id="login-password" class="auth-input" placeholder="Password" autocomplete="current-password">
         </div>
         <button class="btn-primary" id="btn-login" onclick="App.handleLogin()">Sign In</button>
+
+        <div class="divider">or</div>
+
+        <button class="btn-google" id="btn-google-login" onclick="App.handleGoogleLogin()">
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+          Continue with Google
+        </button>
+
         <div style="display: flex; justify-content: space-between; margin-top: 16px;">
           <button class="text-gradient" style="background: none; border: none; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;" onclick="App.showForgotPassword()">Forgot password?</button>
-          <button class="text-gradient" style="background: none; border: none; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;" onclick="App.showSignUp()">Create account</button>
+          <button class="text-gradient" style="background: none; border: none; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;" onclick="App.switchAuth('signup')">Create account</button>
         </div>
       </div>
 
-      <!-- Sign Up Form (hidden by default) -->
-      <div id="signup-form" style="display: none;">
+      <!-- Sign Up Form -->
+      <div id="signup-form">
+        <div style="font-size: 22px; font-weight: 800; margin-bottom: 20px;">Create Account</div>
         <div style="margin-bottom: 12px;">
           <input type="text" id="signup-name" class="auth-input" placeholder="Full name" autocomplete="name">
         </div>
@@ -818,14 +528,21 @@
           <label for="signup-age" style="font-size: 12px; color: var(--text-dim); line-height: 1.4;">I am 18+ and accept Terms & Responsible Gambling</label>
         </div>
         <button class="btn-primary" id="btn-signup" onclick="App.handleSignUp()">Create Account</button>
-        <button class="btn-secondary" style="margin-top: 12px;" onclick="App.showLogin()">Back to Sign In</button>
+
+        <div class="divider">or</div>
+
+        <button class="btn-google" id="btn-google-signup" onclick="App.handleGoogleSignup()">
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+          Continue with Google
+        </button>
+
+        <button class="btn-secondary" style="margin-top: 12px;" onclick="App.switchAuth('login')">Already have an account? Sign in</button>
       </div>
     </div>
   </div>
 
   <!-- ===== MAIN APP ===== -->
   <div id="main-app" class="no-select">
-    <!-- Header -->
     <div id="app-header">
       <div style="font-size: 22px; font-weight: 800;" class="text-gradient">DOQA</div>
       <div class="balance-chip" id="header-balance" onclick="App.navigate('wallet')">
@@ -834,11 +551,9 @@
       </div>
     </div>
 
-    <!-- Tab Content -->
     <div id="tab-content">
       <!-- HOME TAB -->
       <div id="tab-home" class="tab-pane">
-        <!-- Hero Banner -->
         <div class="game-card" style="background: linear-gradient(135deg, rgba(255,22,133,0.15), rgba(146,62,255,0.1)); margin-bottom: 20px; border-color: rgba(255,22,133,0.2);">
           <div style="font-size: 12px; color: var(--pink); font-weight: 700; letter-spacing: 1px; margin-bottom: 6px;">WELCOME BONUS</div>
           <div style="font-size: 22px; font-weight: 800; margin-bottom: 4px;">Play & Win Big</div>
@@ -846,37 +561,35 @@
           <button class="btn-primary" style="width: auto; padding: 10px 24px; font-size: 13px;" onclick="App.openDepositSheet()">Deposit Now</button>
         </div>
 
-        <!-- Winners Ticker -->
         <div class="ticker-wrap" style="margin-bottom: 20px;">
-          <div class="ticker" id="winners-ticker">
+          <div class="ticker">
             🏆 Da***t won 450 ETB &nbsp;•&nbsp; 🏆 Sa***m won 1,200 ETB &nbsp;•&nbsp; 🏆 Ab***l won 320 ETB &nbsp;•&nbsp; 🏆 Ha***w won 890 ETB &nbsp;•&nbsp; 🏆 Me***n won 2,100 ETB
           </div>
         </div>
 
-        <!-- Game Cards -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <div style="font-size: 16px; font-weight: 700;">Games</div>
           <button style="background: none; border: none; color: var(--pink); font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;" onclick="App.navigate('games')">See all</button>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
-          <div class="game-card" style="background: linear-gradient(135deg, rgba(255,22,133,0.08), rgba(255,22,133,0.02));" onclick="App.navigate('games'); App.openGame('spin')">
+          <div class="game-card" style="background: linear-gradient(135deg, rgba(255,22,133,0.08), rgba(255,22,133,0.02));" onclick="App.openGame('spin')">
             <div class="game-icon" style="background: rgba(255,22,133,0.15);">
               <i data-lucide="disc" style="width: 24px; height: 24px; color: var(--pink);"></i>
             </div>
             <div style="font-weight: 700; font-size: 15px;">Spin Wheel</div>
-            <div style="font-size: 12px; color: var(--text-dim); margin-top: 2px;">Up to 5x</div>
+            <div style="font-size: 12px; color: var(--text-dim); margin-top: 2px;">From 2 ETB</div>
           </div>
-          <div class="game-card" style="background: linear-gradient(135deg, rgba(32,217,245,0.08), rgba(32,217,245,0.02));" onclick="App.navigate('games'); App.openGame('bingo')">
+          <div class="game-card" style="background: linear-gradient(135deg, rgba(32,217,245,0.08), rgba(32,217,245,0.02));" onclick="App.openGame('bingo')">
             <div class="game-icon" style="background: rgba(32,217,245,0.15);">
               <i data-lucide="hash" style="width: 24px; height: 24px; color: var(--cyan);"></i>
             </div>
             <div style="font-weight: 700; font-size: 15px;">Bingo</div>
-            <div style="font-size: 12px; color: var(--text-dim); margin-top: 2px;">Up to 500x</div>
+            <div style="font-size: 12px; color: var(--text-dim); margin-top: 2px;">From 2 ETB</div>
           </div>
         </div>
 
-        <div class="game-card" style="background: linear-gradient(135deg, rgba(146,62,255,0.08), rgba(146,62,255,0.02)); margin-bottom: 24px;" onclick="App.navigate('games'); App.openGame('doqa')">
+        <div class="game-card" style="background: linear-gradient(135deg, rgba(146,62,255,0.08), rgba(146,62,255,0.02)); margin-bottom: 24px;" onclick="App.openGame('doqa')">
           <div style="display: flex; align-items: center; gap: 16px;">
             <div class="game-icon" style="background: rgba(146,62,255,0.15); margin-bottom: 0;">
               <i data-lucide="users" style="width: 24px; height: 24px; color: var(--purple);"></i>
@@ -889,7 +602,6 @@
           </div>
         </div>
 
-        <!-- Leaderboard -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <div style="font-size: 16px; font-weight: 700;">Leaderboard</div>
           <div style="font-size: 11px; color: var(--text-dim);">Today</div>
@@ -921,7 +633,6 @@
           </div>
         </div>
 
-        <!-- Announcements -->
         <div style="margin-top: 24px; margin-bottom: 12px; font-size: 16px; font-weight: 700;">Announcements</div>
         <div class="card" style="padding: 16px 18px; margin-bottom: 12px;">
           <div style="display: flex; gap: 12px; align-items: flex-start;">
@@ -947,7 +658,6 @@
       <div id="tab-games" class="tab-pane" style="display: none;">
         <div style="font-size: 22px; font-weight: 800; margin-bottom: 20px;">Games</div>
 
-        <!-- Spin Wheel Card -->
         <div class="game-card" style="background: linear-gradient(135deg, rgba(255,22,133,0.12), rgba(255,22,133,0.03)); margin-bottom: 16px; border-color: rgba(255,22,133,0.2);" onclick="App.openGame('spin')">
           <div style="display: flex; align-items: center; gap: 16px;">
             <div class="game-icon" style="background: rgba(255,22,133,0.2); margin-bottom: 0;">
@@ -955,13 +665,12 @@
             </div>
             <div style="flex: 1;">
               <div style="font-weight: 800; font-size: 18px;">Spin Wheel</div>
-              <div style="font-size: 12px; color: var(--text-dim);">7 multipliers • Up to 5x</div>
+              <div style="font-size: 12px; color: var(--text-dim);">8 segments • From 2 ETB</div>
             </div>
             <i data-lucide="chevron-right" style="width: 22px; height: 22px; color: var(--text-dim);"></i>
           </div>
         </div>
 
-        <!-- Bingo Card -->
         <div class="game-card" style="background: linear-gradient(135deg, rgba(32,217,245,0.12), rgba(32,217,245,0.03)); margin-bottom: 16px; border-color: rgba(32,217,245,0.2);" onclick="App.openGame('bingo')">
           <div style="display: flex; align-items: center; gap: 16px;">
             <div class="game-icon" style="background: rgba(32,217,245,0.2); margin-bottom: 0;">
@@ -969,13 +678,12 @@
             </div>
             <div style="flex: 1;">
               <div style="font-weight: 800; font-size: 18px;">Bingo</div>
-              <div style="font-size: 12px; color: var(--text-dim);">Pick 5 numbers • Up to 500x</div>
+              <div style="font-size: 12px; color: var(--text-dim);">Pick 5 numbers • From 2 ETB</div>
             </div>
             <i data-lucide="chevron-right" style="width: 22px; height: 22px; color: var(--text-dim);"></i>
           </div>
         </div>
 
-        <!-- DOQA Card -->
         <div class="game-card" style="background: linear-gradient(135deg, rgba(146,62,255,0.12), rgba(146,62,255,0.03)); border-color: rgba(146,62,255,0.2);" onclick="App.openGame('doqa')">
           <div style="display: flex; align-items: center; gap: 16px;">
             <div class="game-icon" style="background: rgba(146,62,255,0.2); margin-bottom: 0;">
@@ -994,7 +702,6 @@
       <div id="tab-wallet" class="tab-pane" style="display: none;">
         <div style="font-size: 22px; font-weight: 800; margin-bottom: 20px;">Wallet</div>
 
-        <!-- Balance Card -->
         <div class="card card-glow" style="background: linear-gradient(135deg, rgba(255,22,133,0.12), rgba(146,62,255,0.08)); border-color: rgba(255,22,133,0.2); margin-bottom: 20px;">
           <div style="font-size: 12px; color: var(--text-dim); font-weight: 500; margin-bottom: 6px;">Available Balance</div>
           <div style="font-size: 34px; font-weight: 800; margin-bottom: 2px;" id="wallet-cash">0.00 <span style="font-size: 16px; color: var(--text-dim);">ETB</span></div>
@@ -1005,7 +712,6 @@
           </div>
         </div>
 
-        <!-- Wagering Progress -->
         <div class="card" style="margin-bottom: 20px; padding: 16px 18px;">
           <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px;">
             <span style="color: var(--text-dim);">Bonus Wagering</span>
@@ -1017,14 +723,8 @@
           <div style="font-size: 11px; color: var(--text-dim); margin-top: 6px;">Complete wagering to unlock bonus for withdrawal</div>
         </div>
 
-        <!-- Transaction History -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <div style="font-size: 16px; font-weight: 700;">History</div>
-          <div style="display: flex; gap: 6px;">
-            <button class="chip active" style="font-size: 11px; padding: 5px 12px;">All</button>
-            <button class="chip" style="font-size: 11px; padding: 5px 12px;">Deposit</button>
-            <button class="chip" style="font-size: 11px; padding: 5px 12px;">Withdraw</button>
-          </div>
         </div>
         <div id="transaction-list">
           <div class="card" style="padding: 14px 16px; margin-bottom: 10px;">
@@ -1052,7 +752,6 @@
       <div id="tab-invite" class="tab-pane" style="display: none;">
         <div style="font-size: 22px; font-weight: 800; margin-bottom: 20px;">Invite & Earn</div>
 
-        <!-- Referral Card -->
         <div class="card card-glow" style="background: linear-gradient(135deg, rgba(146,62,255,0.12), rgba(255,22,133,0.08)); border-color: rgba(146,62,255,0.2); margin-bottom: 20px; text-align: center; padding: 28px 20px;">
           <div style="font-size: 14px; color: var(--text-dim); margin-bottom: 8px;">Your Referral Code</div>
           <div style="font-size: 32px; font-weight: 800; letter-spacing: 4px;" class="text-gradient" id="referral-code">DOQA123</div>
@@ -1063,7 +762,6 @@
           </div>
         </div>
 
-        <!-- Stats -->
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px;">
           <div class="card" style="padding: 14px; text-align: center;">
             <div style="font-size: 20px; font-weight: 800; color: var(--pink);" id="ref-invited">0</div>
@@ -1079,7 +777,6 @@
           </div>
         </div>
 
-        <!-- Invited Users List -->
         <div style="font-size: 16px; font-weight: 700; margin-bottom: 12px;">Your Invites</div>
         <div id="invited-list">
           <div class="card" style="padding: 14px 16px; margin-bottom: 10px;">
@@ -1101,16 +798,12 @@
       <div id="tab-profile" class="tab-pane" style="display: none;">
         <div style="font-size: 22px; font-weight: 800; margin-bottom: 20px;">Profile</div>
 
-        <!-- Profile Header -->
         <div class="card" style="text-align: center; padding: 24px; margin-bottom: 20px;">
-          <div style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, var(--pink), var(--purple)); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-size: 28px; font-weight: 800; color: #fff;" id="profile-avatar">
-            D
-          </div>
+          <div style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, var(--pink), var(--purple)); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-size: 28px; font-weight: 800; color: #fff;" id="profile-avatar">D</div>
           <div style="font-size: 18px; font-weight: 700;" id="profile-name">User Name</div>
           <div style="font-size: 13px; color: var(--text-dim); margin-top: 4px;" id="profile-phone">+251 *** *** ***</div>
         </div>
 
-        <!-- Stats -->
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 24px;">
           <div class="card" style="padding: 14px; text-align: center;">
             <div style="font-size: 18px; font-weight: 800;" id="stat-deposited">0</div>
@@ -1126,7 +819,6 @@
           </div>
         </div>
 
-        <!-- Settings -->
         <div style="font-size: 16px; font-weight: 700; margin-bottom: 12px;">Settings</div>
 
         <div class="card" style="padding: 4px 0; margin-bottom: 16px;">
@@ -1139,7 +831,7 @@
               <div style="width: 22px; height: 22px; border-radius: 50%; background: #fff; position: absolute; top: 2px; right: 2px; transition: transform 0.2s;" id="sound-toggle"></div>
             </div>
           </div>
-          <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border);">
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 18px;">
             <div style="display: flex; align-items: center; gap: 12px;">
               <i data-lucide="globe" style="width: 18px; height: 18px; color: var(--text-dim);"></i>
               <span style="font-size: 14px; font-weight: 500;">Language</span>
@@ -1149,16 +841,8 @@
               <button class="chip" style="font-size: 11px; padding: 4px 10px;" onclick="App.toggleLang()">አማ</button>
             </div>
           </div>
-          <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 18px;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <i data-lucide="shield" style="width: 18px; height: 18px; color: var(--text-dim);"></i>
-              <span style="font-size: 14px; font-weight: 500;">Responsible Gambling</span>
-            </div>
-            <i data-lucide="chevron-right" style="width: 16px; height: 16px; color: var(--text-dim);"></i>
-          </div>
         </div>
 
-        <!-- Logout -->
         <button class="btn-secondary" style="color: var(--pink); border-color: rgba(255,22,133,0.3); font-weight: 700;" onclick="App.handleLogout()">Sign Out</button>
 
         <div style="text-align: center; font-size: 11px; color: var(--text-dim); margin-top: 24px; line-height: 1.6;">
@@ -1167,7 +851,6 @@
       </div>
     </div>
 
-    <!-- Bottom Nav -->
     <div id="bottom-nav">
       <button class="nav-item active" data-tab="home" onclick="App.navigate('home')">
         <i data-lucide="home" style="width: 22px; height: 22px;"></i>
@@ -1192,10 +875,8 @@
     </div>
   </div>
 
-  <!-- ===== TOAST CONTAINER ===== -->
   <div id="toast-container"></div>
 
-  <!-- ===== BOTTOM SHEET OVERLAY ===== -->
   <div id="sheet-overlay" class="sheet-overlay" onclick="App.closeSheet(event)">
     <div class="bottom-sheet" id="bottom-sheet" onclick="event.stopPropagation()">
       <div class="sheet-handle"></div>
@@ -1203,7 +884,6 @@
     </div>
   </div>
 
-  <!-- ===== MODAL OVERLAY ===== -->
   <div id="modal-overlay" class="modal-overlay" onclick="App.closeModal(event)">
     <div class="modal-content" id="modal-content" onclick="event.stopPropagation()"></div>
   </div>
@@ -1219,29 +899,20 @@
         createUserWithEmailAndPassword,
         sendPasswordResetEmail,
         signOut,
-        onAuthStateChanged
+        onAuthStateChanged,
+        GoogleAuthProvider,
+        signInWithPopup
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import {
         getFirestore,
         doc,
         getDoc,
         setDoc,
-        collection,
-        getDocs,
-        addDoc,
-        query,
-        where,
-        updateDoc,
         onSnapshot,
-        serverTimestamp,
-        runTransaction
+        runTransaction,
+        updateDoc
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    import {
-        getFunctions,
-        httpsCallable
-    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js";
 
-    // ---------- CONFIG ----------
     const firebaseConfig = {
         apiKey: "AIzaSyCayGcfnpCAGNDph3YTyEA9_KDdD2C5Fg0",
         authDomain: "my-tiktok-cbd6f.firebaseapp.com",
@@ -1260,85 +931,43 @@
     };
 
     const TELEBIRR_NUMBER = "0996350347";
-    const CURRENCY = "ETB";
-    const DEMO_MODE = false;
 
-    // ---------- INIT FIREBASE ----------
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    let functions;
-    try { functions = getFunctions(app); } catch(e) { functions = null; }
+    const googleProvider = new GoogleAuthProvider();
+    googleProvider.setCustomParameters({ prompt: 'select_account' });
 
-    // ---------- INIT SUPABASE ----------
     let supabase = null;
     if (window.supabase) {
         supabase = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.publishableKey);
     }
 
-    // ---------- STATE ----------
     const State = {
         user: null,
         uid: null,
         userData: null,
         settings: {
-            siteOpen: true,
-            closedMessage: "We'll be back soon!",
-            reopenAt: null,
-            telebirrNumber: TELEBIRR_NUMBER,
-            minDeposit: 10,
-            minWithdraw: 50,
-            maxWithdraw: 10000,
-            bonusWagerMultiplier: 5,
-            referralReward: 5,
-            referralTrigger: "first_deposit_approved",
+            siteOpen: true, closedMessage: "We'll be back soon!", reopenAt: null,
+            telebirrNumber: TELEBIRR_NUMBER, minDeposit: 10, minWithdraw: 50, maxWithdraw: 10000,
+            bonusWagerMultiplier: 5, referralReward: 5,
             spinWeights: [125, 125, 125, 125, 125, 125, 125, 125],
             bingoPaytable: [0, 0, 1.5, 4, 25, 500],
-            doqaPayoutPercent: 75,
-            maxBetPerGame: 1000,
-            maxPayoutPerRound: 50000,
-            banks: [
-                "Commercial Bank of Ethiopia", "Awash Bank", "Dashen Bank",
-                "Bank of Abyssinia", "Wegagen Bank", "Nib Bank",
-                "Cooperative Bank of Oromia", "Hibret Bank", "Telebirr", "CBE Birr", "Other"
-            ]
+            doqaPayoutPercent: 75, maxBetPerGame: 1000, maxPayoutPerRound: 50000,
+            banks: ["Commercial Bank of Ethiopia","Awash Bank","Dashen Bank","Bank of Abyssinia","Wegagen Bank","Nib Bank","Cooperative Bank of Oromia","Hibret Bank","Telebirr","CBE Birr","Other"]
         },
         currentTab: 'home',
         spinWheelAngle: 0,
-        currentGame: null,
         isAdmin: false,
         soundEnabled: true,
         language: 'en',
-        bingoSelected: new Set()
+        bingoSelected: new Set(),
+        sheetHistory: [],
+        authMode: 'signup'
     };
 
-    // ---------- API ADAPTER (Firestore-based) ----------
     const Api = {
-        async _ensureUser() {
-            if (!State.uid) throw new Error('Not authenticated');
-        },
-
-        async signUp({ name, phone, email, password, referralCode }) {
-            const cred = await createUserWithEmailAndPassword(auth, email, password);
-            const uid = cred.user.uid;
-            const userDoc = {
-                name, phone, email,
-                balance: 0, bonusBalance: 0,
-                wagerRequired: 0,
-                totalDeposited: 0, totalWagered: 0, totalBets: 0,
-                referralCode: 'DOQA' + Math.random().toString(36).substring(2, 8).toUpperCase(),
-                referredBy: referralCode || null,
-                createdAt: Date.now(),
-                status: 'active'
-            };
-            await setDoc(doc(db, 'users', uid), userDoc);
-            return { user: { uid, ...userDoc } };
-        },
-
-        async login({ email, password }) {
-            const cred = await signInWithEmailAndPassword(auth, email, password);
-            return { user: cred.user };
-        },
+        async _ensureUser() { if (!State.uid) throw new Error('Not authenticated'); },
 
         async requestDeposit({ amount, senderName, screenshotUrl }) {
             await this._ensureUser();
@@ -1352,14 +981,12 @@
 
         async requestWithdraw({ amount, bankName, accountNumber, accountName }) {
             await this._ensureUser();
-            // Server-enforced check would happen in cloud function; here we do a client check
             if ((State.userData?.balance || 0) < amount) throw new Error('Insufficient balance');
             const id = 'wd_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
             await setDoc(doc(db, 'withdrawals', id), {
                 uid: State.uid, amount, bankName, accountNumber, accountName,
                 status: 'pending', createdAt: Date.now()
             });
-            // Deduct balance atomically via transaction
             const userRef = doc(db, 'users', State.uid);
             await runTransaction(db, async (tx) => {
                 const snap = await tx.get(userRef);
@@ -1372,12 +999,12 @@
 
         async playSpin({ bet }) {
             await this._ensureUser();
+            if (bet < 2) throw new Error('Minimum bet is 2 ETB');
             const userRef = doc(db, 'users', State.uid);
             const snap = await getDoc(userRef);
             const bal = snap.data().balance || 0;
             if (bal < bet) throw new Error('Insufficient balance');
 
-            // 8 equal segments: 1x, 2x, 3x, 4x, 5x, 0x, 0x, 0x (RTP ~60%? Actually let's use weights from settings)
             const weights = State.settings.spinWeights || [125,125,125,125,125,125,125,125];
             const total = weights.reduce((a,b)=>a+b,0);
             let r = Math.random() * total;
@@ -1397,26 +1024,23 @@
                 tx.update(userRef, { balance: b - bet + payout });
             });
 
-            // Log round
             const roundId = 'round_' + Date.now();
             await setDoc(doc(db, 'rounds', roundId), {
                 game: 'spin', uid: State.uid, bet, result, payout,
-                serverSeed: 'demo', serverSeedHash: 'demo', clientSeed: 'demo',
-                nonce: 1, createdAt: Date.now()
+                serverSeed: 'demo', serverSeedHash: 'demo', nonce: 1, createdAt: Date.now()
             });
-
-            return { result, payout, serverSeed: 'demo', serverSeedHash: 'demo', nonce: 1 };
+            return { result, payout };
         },
 
         async playBingo({ bet, picks }) {
             await this._ensureUser();
+            if (bet < 2) throw new Error('Minimum bet is 2 ETB');
             if (!Array.isArray(picks) || picks.length !== 5) throw new Error('Pick exactly 5 numbers');
             const userRef = doc(db, 'users', State.uid);
             const snap = await getDoc(userRef);
             const bal = snap.data().balance || 0;
             if (bal < bet) throw new Error('Insufficient balance');
 
-            // Draw 5 unique from 1-20
             const pool = Array.from({length: 20}, (_, i) => i + 1);
             const drawn = [];
             for (let i = 0; i < 5; i++) {
@@ -1437,12 +1061,10 @@
             const roundId = 'round_' + Date.now();
             await setDoc(doc(db, 'rounds', roundId), {
                 game: 'bingo', uid: State.uid, bet, result: matches, payout,
-                drawnNumbers: drawn, picks,
-                serverSeed: 'demo', serverSeedHash: 'demo',
+                drawnNumbers: drawn, picks, serverSeed: 'demo', serverSeedHash: 'demo',
                 nonce: 1, createdAt: Date.now()
             });
-
-            return { matches, payout, drawnNumbers: drawn, serverSeed: 'demo', serverSeedHash: 'demo', nonce: 1 };
+            return { matches, payout, drawnNumbers: drawn };
         },
 
         async joinDoqaRoom({ roomId, entry }) {
@@ -1452,106 +1074,25 @@
             const bal = snap.data().balance || 0;
             if (bal < entry) throw new Error('Insufficient balance');
 
-            // In a real app, the server would handle room state. Here we simulate a simple join.
-            // We'll store in Firestore rooms collection
             const roomRef = doc(db, 'rooms', roomId);
             const roomSnap = await getDoc(roomRef);
             if (!roomSnap.exists()) {
                 await setDoc(roomRef, { entry, status: 'open', slots: {}, pool: entry, createdAt: Date.now() });
             }
-            // Charge entry
             await runTransaction(db, async (tx) => {
                 const s = await tx.get(userRef);
                 const b = s.data().balance || 0;
                 if (b < entry) throw new Error('Insufficient balance');
                 tx.update(userRef, { balance: b - entry });
             });
-
             return { success: true, roomId, number: Math.floor(Math.random() * 10) + 1 };
         },
 
-        async pickDoqaNumber({ number }) {
-            await this._ensureUser();
-            return { success: true, number };
-        },
-
-        async claimReferral({ refereeUid }) {
-            await this._ensureUser();
-            return { success: true, reward: State.settings.referralReward };
-        },
-
-        async adminApproveDeposit({ depositId, note }) {
-            const depRef = doc(db, 'deposits', depositId);
-            const depSnap = await getDoc(depRef);
-            if (!depSnap.exists()) throw new Error('Deposit not found');
-            const dep = depSnap.data();
-            if (dep.status !== 'pending') throw new Error('Already processed');
-            const userRef = doc(db, 'users', dep.uid);
-            await runTransaction(db, async (tx) => {
-                const us = await tx.get(userRef);
-                const u = us.data();
-                tx.update(userRef, {
-                    balance: (u.balance || 0) + dep.amount,
-                    totalDeposited: (u.totalDeposited || 0) + dep.amount
-                });
-            });
-            await updateDoc(depRef, { status: 'approved', reviewedBy: State.uid, note: note || '' });
-            return { success: true };
-        },
-
-        async adminRejectDeposit({ depositId, note }) {
-            await updateDoc(doc(db, 'deposits', depositId), { status: 'rejected', reviewedBy: State.uid, note: note || '' });
-            return { success: true };
-        },
-
-        async adminApproveWithdraw({ withdrawalId, note }) {
-            await updateDoc(doc(db, 'withdrawals', withdrawalId), { status: 'approved', reviewedBy: State.uid, note: note || '' });
-            return { success: true };
-        },
-
-        async adminRejectWithdraw({ withdrawalId, note }) {
-            const wdRef = doc(db, 'withdrawals', withdrawalId);
-            const wdSnap = await getDoc(wdRef);
-            if (!wdSnap.exists()) throw new Error('Withdrawal not found');
-            const wd = wdSnap.data();
-            if (wd.status !== 'pending') throw new Error('Already processed');
-            const userRef = doc(db, 'users', wd.uid);
-            await runTransaction(db, async (tx) => {
-                const us = await tx.get(userRef);
-                const u = us.data();
-                tx.update(userRef, { balance: (u.balance || 0) + wd.amount });
-            });
-            await updateDoc(wdRef, { status: 'rejected', reviewedBy: State.uid, note: note || '' });
-            return { success: true };
-        },
-
-        async adminSetSiteStatus({ siteOpen, closedMessage, reopenAt }) {
-            await setDoc(doc(db, 'settings', 'main'), {
-                siteOpen, closedMessage: closedMessage || '', reopenAt: reopenAt || null
-            }, { merge: true });
-            return { success: true };
-        },
-
-        async adminUpdateSettings({ settings }) {
-            await setDoc(doc(db, 'settings', 'main'), settings, { merge: true });
-            return { success: true };
-        },
-
-        async adminAdjustBalance({ uid, amount, reason }) {
-            const userRef = doc(db, 'users', uid);
-            await runTransaction(db, async (tx) => {
-                const s = await tx.get(userRef);
-                const u = s.data();
-                tx.update(userRef, { balance: (u.balance || 0) + amount });
-            });
-            return { success: true };
-        }
+        async pickDoqaNumber({ number }) { await this._ensureUser(); return { success: true, number }; }
     };
 
-    // ---------- APP CONTROLLER ----------
     const App = {
         async init() {
-            // Listen to auth state
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
                     State.user = user;
@@ -1559,7 +1100,8 @@
                     await this.loadUserData(user.uid);
                     this.checkAdminStatus();
                     document.getElementById('splash').classList.add('hidden');
-                    document.getElementById('auth-screen').classList.add('hidden');
+                    document.getElementById('landing-screen').classList.add('hidden');
+                    document.getElementById('auth-screen').classList.remove('visible');
                     document.getElementById('main-app').classList.add('visible');
                     this.setupListeners();
                     this.navigate('home');
@@ -1568,136 +1110,112 @@
                     State.uid = null;
                     State.userData = null;
                     document.getElementById('splash').classList.add('hidden');
-                    document.getElementById('auth-screen').classList.remove('hidden');
+                    document.getElementById('landing-screen').classList.remove('hidden');
+                    document.getElementById('auth-screen').classList.remove('visible');
                     document.getElementById('main-app').classList.remove('visible');
                 }
             });
 
-            // Load settings from Firestore
             try {
                 const settingsSnap = await getDoc(doc(db, 'settings', 'main'));
-                if (settingsSnap.exists()) {
-                    State.settings = { ...State.settings, ...settingsSnap.data() };
-                }
-            } catch (err) {
-                console.warn('Could not load settings, using defaults', err);
-            }
+                if (settingsSnap.exists()) State.settings = { ...State.settings, ...settingsSnap.data() };
+            } catch (err) { console.warn('Using default settings', err); }
 
-            // Splash timeout
-            setTimeout(() => {
-                if (!State.user) {
-                    document.getElementById('splash').classList.add('hidden');
-                    document.getElementById('auth-screen').classList.remove('hidden');
-                }
-            }, 1800);
-
-            // Initialize Lucide
             if (window.lucide) window.lucide.createIcons();
         },
 
         async loadUserData(uid) {
             try {
-                const userRef = doc(db, 'users', uid);
-                const snap = await getDoc(userRef);
+                const snap = await getDoc(doc(db, 'users', uid));
                 if (snap.exists()) {
                     State.userData = snap.data();
                     this.updateUI();
                 } else {
-                    // New user
                     const newUser = {
                         name: State.user.displayName || 'User',
-                        phone: '',
-                        email: State.user.email || '',
-                        balance: 0, bonusBalance: 0,
-                        wagerRequired: 0,
+                        phone: '', email: State.user.email || '',
+                        balance: 0, bonusBalance: 0, wagerRequired: 0,
                         totalDeposited: 0, totalWagered: 0, totalBets: 0,
                         referralCode: 'DOQA' + Math.random().toString(36).substring(2, 8).toUpperCase(),
-                        referredBy: null,
-                        createdAt: Date.now(),
-                        status: 'active'
+                        referredBy: null, createdAt: Date.now(), status: 'active'
                     };
-                    await setDoc(userRef, newUser);
+                    await setDoc(doc(db, 'users', uid), newUser);
                     State.userData = newUser;
                     this.updateUI();
                 }
-            } catch (err) {
-                console.error('Load user data error:', err);
-                this.toast('Failed to load profile', 'error');
-            }
+            } catch (err) { console.error(err); this.toast('Failed to load profile', 'error'); }
         },
 
         setupListeners() {
             if (!State.uid) return;
-
-            // Listen to user document
-            const userRef = doc(db, 'users', State.uid);
-            onSnapshot(userRef, (snap) => {
-                if (snap.exists()) {
-                    State.userData = snap.data();
-                    this.updateUI();
-                }
+            onSnapshot(doc(db, 'users', State.uid), (snap) => {
+                if (snap.exists()) { State.userData = snap.data(); this.updateUI(); }
             });
-
-            // Listen to settings
-            const settingsRef = doc(db, 'settings', 'main');
-            onSnapshot(settingsRef, (snap) => {
-                if (snap.exists()) {
-                    State.settings = { ...State.settings, ...snap.data() };
-                }
+            onSnapshot(doc(db, 'settings', 'main'), (snap) => {
+                if (snap.exists()) State.settings = { ...State.settings, ...snap.data() };
             });
         },
 
         checkAdminStatus() {
-            // Admin check: user document has role='admin' or email matches admin list
-            // For simplicity, we check a custom claim or Firestore admin collection
-            const adminRef = doc(db, 'admins', State.uid);
-            getDoc(adminRef).then(snap => {
+            getDoc(doc(db, 'admins', State.uid)).then(snap => {
                 State.isAdmin = snap.exists() && snap.data().active === true;
-            }).catch(() => {
-                State.isAdmin = false;
-            });
+            }).catch(() => { State.isAdmin = false; });
         },
 
         updateUI() {
             if (!State.userData) return;
             const d = State.userData;
-
-            const headerBal = document.getElementById('header-balance-text');
-            if (headerBal) headerBal.textContent = this.formatNumber(d.balance || 0);
-
-            const walletCash = document.getElementById('wallet-cash');
-            if (walletCash) walletCash.innerHTML = `${this.formatNumber(d.balance || 0)} <span style="font-size: 16px; color: var(--text-dim);">ETB</span>`;
-
-            const walletBonus = document.getElementById('wallet-bonus');
-            if (walletBonus) walletBonus.textContent = `+ ${this.formatNumber(d.bonusBalance || 0)} ETB bonus`;
-
+            const hb = document.getElementById('header-balance-text');
+            if (hb) hb.textContent = this.formatNumber(d.balance || 0);
+            const wc = document.getElementById('wallet-cash');
+            if (wc) wc.innerHTML = `${this.formatNumber(d.balance || 0)} <span style="font-size: 16px; color: var(--text-dim);">ETB</span>`;
+            const wb = document.getElementById('wallet-bonus');
+            if (wb) wb.textContent = `+ ${this.formatNumber(d.bonusBalance || 0)} ETB bonus`;
             const wagerReq = d.wagerRequired || 0;
             const wagerDone = d.totalWagered || 0;
-            const wagerPct = wagerReq > 0 ? Math.min(100, (wagerDone / wagerReq) * 100) : 100;
-            const wageringBar = document.getElementById('wagering-bar');
-            if (wageringBar) wageringBar.style.width = wagerPct + '%';
-            const wageringLabel = document.getElementById('wagering-label');
-            if (wageringLabel) wageringLabel.textContent = `${this.formatNumber(wagerDone)} / ${this.formatNumber(wagerReq)} ETB`;
-
-            const refCode = document.getElementById('referral-code');
-            if (refCode) refCode.textContent = d.referralCode || 'DOQA123';
-
-            const profileName = document.getElementById('profile-name');
-            if (profileName) profileName.textContent = d.name || 'User';
-            const profilePhone = document.getElementById('profile-phone');
-            if (profilePhone) profilePhone.textContent = d.phone || '+251 *** *** ***';
-            const profileAvatar = document.getElementById('profile-avatar');
-            if (profileAvatar) profileAvatar.textContent = (d.name || 'U')[0].toUpperCase();
-
-            const statDep = document.getElementById('stat-deposited');
-            if (statDep) statDep.textContent = this.formatNumber(d.totalDeposited || 0);
-            const statWag = document.getElementById('stat-wagered');
-            if (statWag) statWag.textContent = this.formatNumber(d.totalWagered || 0);
-            const statBets = document.getElementById('stat-bets');
-            if (statBets) statBets.textContent = d.totalBets || 0;
+            const pct = wagerReq > 0 ? Math.min(100, (wagerDone / wagerReq) * 100) : 100;
+            const bar = document.getElementById('wagering-bar');
+            if (bar) bar.style.width = pct + '%';
+            const lbl = document.getElementById('wagering-label');
+            if (lbl) lbl.textContent = `${this.formatNumber(wagerDone)} / ${this.formatNumber(wagerReq)} ETB`;
+            const rc = document.getElementById('referral-code');
+            if (rc) rc.textContent = d.referralCode || 'DOQA123';
+            const pn = document.getElementById('profile-name');
+            if (pn) pn.textContent = d.name || 'User';
+            const pp = document.getElementById('profile-phone');
+            if (pp) pp.textContent = d.phone || '+251 *** *** ***';
+            const pa = document.getElementById('profile-avatar');
+            if (pa) pa.textContent = (d.name || 'U')[0].toUpperCase();
+            const sd = document.getElementById('stat-deposited');
+            if (sd) sd.textContent = this.formatNumber(d.totalDeposited || 0);
+            const sw = document.getElementById('stat-wagered');
+            if (sw) sw.textContent = this.formatNumber(d.totalWagered || 0);
+            const sb = document.getElementById('stat-bets');
+            if (sb) sb.textContent = d.totalBets || 0;
         },
 
         // ========== AUTH ==========
+        showAuth(mode) {
+            State.authMode = mode;
+            document.getElementById('landing-screen').classList.add('hidden');
+            document.getElementById('auth-screen').classList.add('visible');
+            if (mode === 'login') {
+                document.getElementById('login-form').style.display = 'block';
+                document.getElementById('signup-form').style.display = 'none';
+            } else {
+                document.getElementById('login-form').style.display = 'none';
+                document.getElementById('signup-form').style.display = 'block';
+            }
+            if (window.lucide) window.lucide.createIcons();
+        },
+
+        closeAuth() {
+            document.getElementById('auth-screen').classList.remove('visible');
+            document.getElementById('landing-screen').classList.remove('hidden');
+        },
+
+        switchAuth(mode) { this.showAuth(mode); },
+
         async handleLogin() {
             const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-password').value;
@@ -1712,6 +1230,32 @@
             } finally {
                 btn.disabled = false; btn.textContent = 'Sign In';
             }
+        },
+
+        async handleGoogleLogin() {
+            const btn = document.getElementById('btn-google-login');
+            btn.disabled = true;
+            try {
+                await signInWithPopup(auth, googleProvider);
+                this.toast('Signed in with Google!', 'success');
+            } catch (err) {
+                if (err.code !== 'auth/popup-closed-by-user') {
+                    this.toast(err.message || 'Google sign-in failed', 'error');
+                }
+            } finally { btn.disabled = false; }
+        },
+
+        async handleGoogleSignup() {
+            const btn = document.getElementById('btn-google-signup');
+            btn.disabled = true;
+            try {
+                await signInWithPopup(auth, googleProvider);
+                this.toast('Account created with Google!', 'success');
+            } catch (err) {
+                if (err.code !== 'auth/popup-closed-by-user') {
+                    this.toast(err.message || 'Google sign-up failed', 'error');
+                }
+            } finally { btn.disabled = false; }
         },
 
         async handleSignUp() {
@@ -1736,13 +1280,10 @@
                 const uid = cred.user.uid;
                 const userDoc = {
                     name, phone, email,
-                    balance: 0, bonusBalance: 0,
-                    wagerRequired: 0,
+                    balance: 0, bonusBalance: 0, wagerRequired: 0,
                     totalDeposited: 0, totalWagered: 0, totalBets: 0,
                     referralCode: 'DOQA' + Math.random().toString(36).substring(2, 8).toUpperCase(),
-                    referredBy: referral || null,
-                    createdAt: Date.now(),
-                    status: 'active'
+                    referredBy: referral || null, createdAt: Date.now(), status: 'active'
                 };
                 await setDoc(doc(db, 'users', uid), userDoc);
                 this.toast('Account created! Welcome to DOQA.', 'success');
@@ -1762,23 +1303,12 @@
             }
         },
 
-        showSignUp() {
-            document.getElementById('login-form').style.display = 'none';
-            document.getElementById('signup-form').style.display = 'block';
-        },
-
-        showLogin() {
-            document.getElementById('login-form').style.display = 'block';
-            document.getElementById('signup-form').style.display = 'none';
-        },
-
         async handleLogout() {
             try {
                 await signOut(auth);
                 this.toast('Signed out', 'info');
-            } catch (err) {
-                this.toast('Logout failed', 'error');
-            }
+                this.closeSheet();
+            } catch (err) { this.toast('Logout failed', 'error'); }
         },
 
         // ========== NAVIGATION ==========
@@ -1796,17 +1326,26 @@
 
         // ========== BOTTOM SHEET ==========
         openSheet(html) {
+            const current = document.getElementById('sheet-content').innerHTML;
+            if (current && current.trim().length > 0) State.sheetHistory.push(current);
             document.getElementById('sheet-content').innerHTML = html;
             document.getElementById('sheet-overlay').classList.add('open');
             if (window.lucide) window.lucide.createIcons();
         },
 
+        sheetBack() {
+            if (State.sheetHistory.length > 0) {
+                document.getElementById('sheet-content').innerHTML = State.sheetHistory.pop();
+                if (window.lucide) window.lucide.createIcons();
+            } else { this.closeSheet(); }
+        },
+
         closeSheet(e) {
             if (e && e.target !== e.currentTarget) return;
             document.getElementById('sheet-overlay').classList.remove('open');
+            setTimeout(() => { State.sheetHistory = []; }, 400);
         },
 
-        // ========== MODAL ==========
         openModal(html) {
             document.getElementById('modal-content').innerHTML = html;
             document.getElementById('modal-overlay').classList.add('open');
@@ -1818,7 +1357,6 @@
             document.getElementById('modal-overlay').classList.remove('open');
         },
 
-        // ========== TOAST ==========
         toast(msg, type = 'info') {
             const container = document.getElementById('toast-container');
             const el = document.createElement('div');
@@ -1828,17 +1366,20 @@
             container.appendChild(el);
             if (window.lucide) window.lucide.createIcons();
             setTimeout(() => {
-                el.style.opacity = '0';
-                el.style.transform = 'translateY(-12px)';
+                el.style.opacity = '0'; el.style.transform = 'translateY(-12px)';
                 el.style.transition = 'all 0.3s';
                 setTimeout(() => el.remove(), 300);
             }, 3500);
         },
 
-        // ========== DEPOSIT FLOW ==========
+        backButton() {
+            return `<button class="sheet-back" onclick="App.sheetBack()"><i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i> Back</button>`;
+        },
+
+        // ========== DEPOSIT ==========
         openDepositSheet() {
-            const d = State.userData || {};
             const html = `
+              ${this.backButton()}
               <div style="font-size: 20px; font-weight: 800; margin-bottom: 20px;">Deposit via Telebirr</div>
               <div style="background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 16px;">
                 <div style="font-size: 12px; color: var(--text-dim); margin-bottom: 6px;">Send to this Telebirr number:</div>
@@ -1848,13 +1389,13 @@
                 </div>
               </div>
               <div style="font-size: 13px; color: var(--text-dim); margin-bottom: 16px; line-height: 1.6;">
-                1. Send exactly the amount below to the number above.<br>
+                1. Send the amount to the number above.<br>
                 2. Take a screenshot of the confirmation.<br>
-                3. Enter the sender name and upload the screenshot.<br>
+                3. Enter sender name and upload the screenshot.<br>
                 4. Tap "Send" and wait for admin approval.
               </div>
               <div style="margin-bottom: 12px;">
-                <label style="font-size: 12px; color: var(--text-dim); margin-bottom: 6px; display: block;">Amount (ETB)</label>
+                <label style="font-size: 12px; color: var(--text-dim); margin-bottom: 6px; display: block;">Amount (ETB) — minimum ${State.settings.minDeposit || 10}</label>
                 <input type="number" id="deposit-amount" class="auth-input" placeholder="Enter amount" min="${State.settings.minDeposit || 10}">
               </div>
               <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
@@ -1879,8 +1420,7 @@
         },
 
         handleScreenshot(input) {
-            const file = input.files[0];
-            if (!file) return;
+            const file = input.files[0]; if (!file) return;
             const preview = document.getElementById('screenshot-preview');
             preview.style.display = 'block';
             preview.innerHTML = `<img src="${URL.createObjectURL(file)}" style="width: 100%; border-radius: 12px; border: 1px solid var(--border); max-height: 180px; object-fit: cover;">`;
@@ -1902,13 +1442,11 @@
                 let screenshotUrl = '';
                 if (supabase) {
                     const fileName = `deposits/${State.uid}/${Date.now()}_${file.name}`;
-                    const { data, error } = await supabase.storage.from(SUPABASE_CONFIG.bucket).upload(fileName, file);
+                    const { error } = await supabase.storage.from(SUPABASE_CONFIG.bucket).upload(fileName, file);
                     if (error) throw error;
                     const { data: urlData } = supabase.storage.from(SUPABASE_CONFIG.bucket).getPublicUrl(fileName);
                     screenshotUrl = urlData.publicUrl;
-                } else {
-                    screenshotUrl = 'https://via.placeholder.com/300x200?text=Screenshot';
-                }
+                } else { screenshotUrl = 'https://via.placeholder.com/300x200?text=Screenshot'; }
 
                 await Api.requestDeposit({ amount, senderName: sender, screenshotUrl });
                 this.closeSheet();
@@ -1920,10 +1458,11 @@
             }
         },
 
-        // ========== WITHDRAW FLOW ==========
+        // ========== WITHDRAW ==========
         openWithdrawSheet() {
             const d = State.userData || {};
             const html = `
+              ${this.backButton()}
               <div style="font-size: 20px; font-weight: 800; margin-bottom: 20px;">Withdraw Funds</div>
               <div style="background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 16px;">
                 <div style="font-size: 12px; color: var(--text-dim);">Available for withdrawal</div>
@@ -1946,9 +1485,6 @@
               <div style="margin-bottom: 16px;">
                 <label style="font-size: 12px; color: var(--text-dim); margin-bottom: 6px; display: block;">Account Holder Name</label>
                 <input type="text" id="withdraw-name" class="auth-input" placeholder="Full name on account">
-              </div>
-              <div style="background: rgba(255,22,133,0.08); border: 1px solid rgba(255,22,133,0.2); border-radius: 12px; padding: 12px; margin-bottom: 16px; font-size: 12px; color: var(--text-dim); line-height: 1.5;">
-                Minimum withdrawal: ${State.settings.minWithdraw || 50} ETB. Bonus funds require ${State.settings.bonusWagerMultiplier || 5}x wagering to unlock.
               </div>
               <button class="btn-primary" id="btn-withdraw" onclick="App.submitWithdraw()">Request Withdrawal</button>
             `;
@@ -1979,64 +1515,51 @@
 
         // ========== GAMES ==========
         openGame(game) {
-            State.currentGame = game;
             if (game === 'spin') this.openSpinWheel();
             else if (game === 'bingo') this.openBingo();
             else if (game === 'doqa') this.openDoqaRooms();
         },
 
         openSpinWheel() {
-            // 8 segments: 1x, 2x, 3x, 4x, 5x, 0x, 0x, 0x
             const segments = ['1x', '2x', '3x', '4x', '5x', '0x', '0x', '0x'];
             const colors = ['#FF1685', '#20D9F5', '#923EFF', '#FFD700', '#FF1685', '#20D9F5', '#923EFF', '#FFD700'];
-            const n = segments.length;
-            const segAngle = 360 / n;
-
-            // Build SVG paths
-            let paths = '';
+            const n = segments.length, segAngle = 360 / n;
+            let paths = '', labels = '';
             for (let i = 0; i < n; i++) {
-                const startAngle = i * segAngle;
-                const endAngle = startAngle + segAngle;
-                const rad1 = (startAngle - 90) * Math.PI / 180;
-                const rad2 = (endAngle - 90) * Math.PI / 180;
-                const x1 = 50 + 45 * Math.cos(rad1);
-                const y1 = 50 + 45 * Math.sin(rad1);
-                const x2 = 50 + 45 * Math.cos(rad2);
-                const y2 = 50 + 45 * Math.sin(rad2);
+                const startAngle = i * segAngle, endAngle = startAngle + segAngle;
+                const rad1 = (startAngle - 90) * Math.PI / 180, rad2 = (endAngle - 90) * Math.PI / 180;
+                const x1 = 50 + 45 * Math.cos(rad1), y1 = 50 + 45 * Math.sin(rad1);
+                const x2 = 50 + 45 * Math.cos(rad2), y2 = 50 + 45 * Math.sin(rad2);
                 paths += `<path d="M50,50 L${x1},${y1} A45,45 0 0,1 ${x2},${y2} Z" fill="${colors[i]}" stroke="#080810" stroke-width="0.5" opacity="0.92"/>`;
             }
-            // Labels
-            let labels = '';
             for (let i = 0; i < n; i++) {
                 const angle = i * segAngle + segAngle / 2;
                 const rad = (angle - 90) * Math.PI / 180;
-                const x = 50 + 30 * Math.cos(rad);
-                const y = 50 + 30 * Math.sin(rad);
+                const x = 50 + 30 * Math.cos(rad), y = 50 + 30 * Math.sin(rad);
                 labels += `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="5.5" font-weight="800" transform="rotate(${angle},${x},${y})">${segments[i]}</text>`;
             }
 
             const html = `
+              ${this.backButton()}
               <div style="text-align: center; margin-bottom: 16px;">
                 <div style="font-size: 20px; font-weight: 800; margin-bottom: 4px;">Spin Wheel</div>
-                <div style="font-size: 12px; color: var(--text-dim);">Bet and spin to win up to 5x</div>
+                <div style="font-size: 12px; color: var(--text-dim);">Bet from 2 ETB • Win up to 5x</div>
               </div>
               <div class="wheel-container">
                 <div class="wheel-pointer"></div>
-                <svg class="wheel-svg" id="spin-wheel-svg" viewBox="0 0 100 100">
-                  ${paths}
-                  ${labels}
-                </svg>
+                <svg class="wheel-svg" id="spin-wheel-svg" viewBox="0 0 100 100">${paths}${labels}</svg>
               </div>
               <div style="margin-top: 24px;">
-                <label style="font-size: 12px; color: var(--text-dim); margin-bottom: 8px; display: block;">Bet Amount (ETB)</label>
-                <input type="number" id="spin-bet" class="auth-input" placeholder="Enter bet" value="10" min="1">
+                <label style="font-size: 12px; color: var(--text-dim); margin-bottom: 8px; display: block;">Bet Amount (ETB) — minimum 2</label>
+                <input type="number" id="spin-bet" class="auth-input" placeholder="Enter amount (min 2)" value="2" min="2" step="1">
+                <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Enter any amount from 2 ETB</div>
                 <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
-                  ${[10, 20, 50, 100, 200, 500].map(a => `<button class="chip" onclick="document.getElementById('spin-bet').value=${a}">${a}</button>`).join('')}
+                  ${[2, 5, 10, 20, 50, 100, 200, 500].map(a => `<button class="chip" onclick="document.getElementById('spin-bet').value=${a}">${a}</button>`).join('')}
                 </div>
               </div>
               <button class="btn-primary" style="margin-top: 20px;" id="btn-spin" onclick="App.playSpin()">Spin!</button>
               <div style="text-align: center; margin-top: 12px;">
-                <button style="background: none; border: none; color: var(--text-dim); font-size: 11px; cursor: pointer; font-family: inherit;" onclick="App.showOdds('spin')">View Odds & RTP</button>
+                <button style="background: none; border: none; color: var(--text-dim); font-size: 11px; cursor: pointer; font-family: inherit;" onclick="App.showOdds('spin')">View Paytable</button>
               </div>
             `;
             this.openSheet(html);
@@ -2045,31 +1568,24 @@
 
         async playSpin() {
             const bet = parseFloat(document.getElementById('spin-bet').value);
-            if (!bet || bet < 1) { this.toast('Minimum bet is 1 ETB', 'error'); return; }
+            if (!bet || bet < 2) { this.toast('Minimum bet is 2 ETB', 'error'); return; }
             const btn = document.getElementById('btn-spin');
             btn.disabled = true; btn.textContent = 'Spinning...';
-
             try {
                 const result = await Api.playSpin({ bet });
-                // result.result is the multiplier (0..5)
                 const multipliers = [1, 2, 3, 4, 5, 0, 0, 0];
                 const idx = multipliers.indexOf(result.result);
                 const segAngle = 360 / 8;
-                // Target rotation: land the pointer (top) on the segment index
-                // Segment i spans from i*segAngle to (i+1)*segAngle clockwise from top
-                // We want the center of segment i to align with top (0°)
                 const targetCenter = idx * segAngle + segAngle / 2;
                 const extraSpins = 3 + Math.floor(Math.random() * 3);
                 const finalAngle = 360 * extraSpins + (360 - targetCenter);
                 State.spinWheelAngle += finalAngle;
-
                 const wheel = document.getElementById('spin-wheel-svg');
                 if (wheel) {
                     wheel.style.transition = 'transform 4s cubic-bezier(0.17,0.67,0.1,0.99)';
                     wheel.style.transform = `rotate(${State.spinWheelAngle}deg)`;
                     await new Promise(r => setTimeout(r, 4200));
                 }
-
                 if (result.payout > 0) {
                     this.toast(`You won ${this.formatNumber(result.payout)} ETB!`, 'success');
                     this.showWinModal(result.payout, bet, result.result + 'x');
@@ -2085,9 +1601,10 @@
 
         openBingo() {
             const html = `
+              ${this.backButton()}
               <div style="text-align: center; margin-bottom: 16px;">
                 <div style="font-size: 20px; font-weight: 800; margin-bottom: 4px;">Bingo</div>
-                <div style="font-size: 12px; color: var(--text-dim);">Pick 5 numbers • Match 2+ to win</div>
+                <div style="font-size: 12px; color: var(--text-dim);">Pick 5 numbers • Bet from 2 ETB</div>
               </div>
               <div class="bingo-grid" id="bingo-board">
                 ${Array.from({length: 20}, (_, i) => i + 1).map(n => `<div class="bingo-cell" data-num="${n}" onclick="App.toggleBingoCell(${n})">${n}</div>`).join('')}
@@ -2097,15 +1614,16 @@
                 <button class="btn-secondary" style="flex: 1; padding: 10px; font-size: 12px;" onclick="App.clearBingo()">Clear</button>
               </div>
               <div style="margin-top: 16px;">
-                <label style="font-size: 12px; color: var(--text-dim); margin-bottom: 8px; display: block;">Bet Amount (ETB)</label>
-                <input type="number" id="bingo-bet" class="auth-input" placeholder="Enter bet" value="10" min="1">
+                <label style="font-size: 12px; color: var(--text-dim); margin-bottom: 8px; display: block;">Bet Amount (ETB) — minimum 2</label>
+                <input type="number" id="bingo-bet" class="auth-input" placeholder="Enter amount (min 2)" value="2" min="2" step="1">
+                <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Enter any amount from 2 ETB</div>
                 <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
-                  ${[10, 20, 50, 100, 200, 500].map(a => `<button class="chip" onclick="document.getElementById('bingo-bet').value=${a}">${a}</button>`).join('')}
+                  ${[2, 5, 10, 20, 50, 100, 200, 500].map(a => `<button class="chip" onclick="document.getElementById('bingo-bet').value=${a}">${a}</button>`).join('')}
                 </div>
               </div>
               <button class="btn-primary" style="margin-top: 20px;" id="btn-bingo" onclick="App.playBingo()">Play Bingo!</button>
               <div style="text-align: center; margin-top: 12px;">
-                <button style="background: none; border: none; color: var(--text-dim); font-size: 11px; cursor: pointer; font-family: inherit;" onclick="App.showOdds('bingo')">View Odds & RTP</button>
+                <button style="background: none; border: none; color: var(--text-dim); font-size: 11px; cursor: pointer; font-family: inherit;" onclick="App.showOdds('bingo')">View Paytable</button>
               </div>
             `;
             this.openSheet(html);
@@ -2116,12 +1634,10 @@
             const el = document.querySelector(`.bingo-cell[data-num="${num}"]`);
             if (!el) return;
             if (State.bingoSelected.has(num)) {
-                State.bingoSelected.delete(num);
-                el.classList.remove('selected');
+                State.bingoSelected.delete(num); el.classList.remove('selected');
             } else {
                 if (State.bingoSelected.size >= 5) { this.toast('You can only pick 5 numbers', 'info'); return; }
-                State.bingoSelected.add(num);
-                el.classList.add('selected');
+                State.bingoSelected.add(num); el.classList.add('selected');
             }
         },
 
@@ -2147,11 +1663,9 @@
         async playBingo() {
             if (State.bingoSelected.size !== 5) { this.toast('Please pick exactly 5 numbers', 'error'); return; }
             const bet = parseFloat(document.getElementById('bingo-bet').value);
-            if (!bet || bet < 1) { this.toast('Minimum bet is 1 ETB', 'error'); return; }
-
+            if (!bet || bet < 2) { this.toast('Minimum bet is 2 ETB', 'error'); return; }
             const btn = document.getElementById('btn-bingo');
             btn.disabled = true; btn.textContent = 'Drawing...';
-
             try {
                 const result = await Api.playBingo({ bet, picks: Array.from(State.bingoSelected) });
                 const drawn = result.drawnNumbers || [];
@@ -2159,15 +1673,11 @@
                     await new Promise(r => setTimeout(r, 600));
                     const el = document.querySelector(`.bingo-cell[data-num="${num}"]`);
                     if (el) {
-                        if (State.bingoSelected.has(num)) {
-                            el.classList.add('matched');
-                        } else {
-                            el.classList.add('missed');
-                        }
+                        if (State.bingoSelected.has(num)) el.classList.add('matched');
+                        else el.classList.add('missed');
                     }
                 }
                 await new Promise(r => setTimeout(r, 800));
-
                 if (result.payout > 0) {
                     this.toast(`You won ${this.formatNumber(result.payout)} ETB!`, 'success');
                     this.showWinModal(result.payout, bet, result.matches + ' matches');
@@ -2183,6 +1693,7 @@
 
         openDoqaRooms() {
             const html = `
+              ${this.backButton()}
               <div style="text-align: center; margin-bottom: 16px;">
                 <div style="font-size: 20px; font-weight: 800; margin-bottom: 4px;">DOQA Rooms</div>
                 <div style="font-size: 12px; color: var(--text-dim);">Pick a room and win 75% of the pool</div>
@@ -2194,17 +1705,8 @@
                     <div style="font-size: 11px; color: var(--text-dim);">Pool: ${entry * 10} ETB</div>
                     <div style="font-size: 11px; color: var(--cyan); margin-top: 6px;">Winner: ${Math.floor(entry * 10 * 0.75)} ETB</div>
                     <div style="font-size: 10px; color: var(--text-dim); margin-top: 8px;">0/10 players</div>
-                    <div style="height: 4px; background: rgba(255,255,255,0.06); border-radius: 4px; margin-top: 10px; overflow: hidden;">
-                      <div style="height: 100%; width: 0%; background: var(--pink); border-radius: 4px; transition: width 0.3s;"></div>
-                    </div>
                   </div>
                 `).join('')}
-              </div>
-              <div style="margin-top: 24px; text-align: center;">
-                <div style="font-size: 12px; color: var(--text-dim); line-height: 1.6;">
-                  Rooms fill with 10 players. When full, a winner is drawn.<br>
-                  If not full within the time limit, everyone is refunded.
-                </div>
               </div>
             `;
             this.openSheet(html);
@@ -2215,25 +1717,22 @@
                 const result = await Api.joinDoqaRoom({ roomId: 'room_' + entry, entry });
                 this.toast(`Joined ${entry} ETB room!`, 'success');
                 this.showDoqaBoard(entry, result);
-            } catch (err) {
-                this.toast(err.message || 'Could not join room', 'error');
-            }
+            } catch (err) { this.toast(err.message || 'Could not join room', 'error'); }
         },
 
         showDoqaBoard(entry, joinResult) {
             const html = `
+              ${this.backButton()}
               <div style="text-align: center; margin-bottom: 16px;">
                 <div style="font-size: 20px; font-weight: 800; margin-bottom: 4px;">Room: ${entry} ETB</div>
                 <div style="font-size: 12px; color: var(--text-dim);">Pick a number (1-10)</div>
               </div>
               <div class="slot-grid" id="doqa-slots">
-                ${Array.from({length: 10}, (_, i) => i + 1).map(n => `
-                  <div class="slot" data-num="${n}" onclick="App.pickDoqaNumber(${n})">${n}</div>
-                `).join('')}
+                ${Array.from({length: 10}, (_, i) => i + 1).map(n => `<div class="slot" data-num="${n}" onclick="App.pickDoqaNumber(${n})">${n}</div>`).join('')}
               </div>
               <div style="margin-top: 24px; text-align: center;">
                 <div style="font-size: 13px; color: var(--text-dim); margin-bottom: 12px;">Waiting for players...</div>
-                <div style="font-size: 11px; color: var(--text-dim);" id="doqa-status">0/10 players</div>
+                <div style="font-size: 11px; color: var(--text-dim);">0/10 players</div>
               </div>
             `;
             this.openSheet(html);
@@ -2255,39 +1754,35 @@
                     slot.innerHTML = `<span>${num}</span><div class="slot-avatar" style="background: var(--pink);">${(State.userData?.name || 'U')[0]}</div>`;
                 }
                 this.toast(`Picked number ${num}`, 'success');
-            } catch (err) {
-                this.toast(err.message || 'Could not pick number', 'error');
-            }
+            } catch (err) { this.toast(err.message || 'Could not pick number', 'error'); }
         },
 
         showOdds(game) {
             let html = '';
             if (game === 'spin') {
                 html = `
-                  <div style="font-size: 20px; font-weight: 800; margin-bottom: 16px;">Spin Wheel Odds</div>
+                  <div style="font-size: 20px; font-weight: 800; margin-bottom: 16px;">Spin Wheel Paytable</div>
                   <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                    <tr style="border-bottom: 1px solid var(--border);"><th style="text-align: left; padding: 8px 0; color: var(--text-dim);">Multiplier</th><th style="text-align: right; color: var(--text-dim);">Probability</th></tr>
-                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">5x</td><td style="text-align: right; color: var(--pink);">12.5%</td></tr>
-                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">4x</td><td style="text-align: right; color: var(--pink);">12.5%</td></tr>
-                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">3x</td><td style="text-align: right; color: var(--pink);">12.5%</td></tr>
-                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">2x</td><td style="text-align: right; color: var(--pink);">12.5%</td></tr>
-                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">1x</td><td style="text-align: right; color: var(--pink);">12.5%</td></tr>
-                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">0x</td><td style="text-align: right; color: var(--pink);">37.5%</td></tr>
+                    <tr style="border-bottom: 1px solid var(--border);"><th style="text-align: left; padding: 8px 0; color: var(--text-dim);">Multiplier</th><th style="text-align: right; color: var(--text-dim);">Payout</th></tr>
+                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">5x</td><td style="text-align: right; color: var(--gold);">5x your bet</td></tr>
+                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">4x</td><td style="text-align: right; color: var(--purple);">4x your bet</td></tr>
+                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">3x</td><td style="text-align: right; color: var(--cyan);">3x your bet</td></tr>
+                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">2x</td><td style="text-align: right; color: var(--cyan);">2x your bet</td></tr>
+                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">1x</td><td style="text-align: right; color: var(--text-dim);">1x your bet</td></tr>
+                    <tr><td style="padding: 10px 0;">0x</td><td style="text-align: right; color: var(--text-dim);">No payout</td></tr>
                   </table>
-                  <div style="margin-top: 16px; font-size: 12px; color: var(--text-dim); text-align: center;">RTP: ~59%</div>
                 `;
             } else if (game === 'bingo') {
                 html = `
-                  <div style="font-size: 20px; font-weight: 800; margin-bottom: 16px;">Bingo Odds</div>
+                  <div style="font-size: 20px; font-weight: 800; margin-bottom: 16px;">Bingo Paytable</div>
                   <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                    <tr style="border-bottom: 1px solid var(--border);"><th style="text-align: left; padding: 8px 0; color: var(--text-dim);">Matches</th><th style="text-align: center; color: var(--text-dim);">Chance</th><th style="text-align: right; color: var(--text-dim);">Payout</th></tr>
-                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">0-1</td><td style="text-align: center; color: var(--text-dim);">63%</td><td style="text-align: right; color: var(--text-dim);">0x</td></tr>
-                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">2</td><td style="text-align: center; color: var(--text-dim);">29.4%</td><td style="text-align: right; color: var(--cyan);">1.5x</td></tr>
-                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">3</td><td style="text-align: center; color: var(--text-dim);">6.8%</td><td style="text-align: right; color: var(--purple);">4x</td></tr>
-                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">4</td><td style="text-align: center; color: var(--text-dim);">0.48%</td><td style="text-align: right; color: var(--gold);">25x</td></tr>
-                    <tr><td style="padding: 10px 0;">5</td><td style="text-align: center; color: var(--text-dim);">0.006%</td><td style="text-align: right; color: var(--gold);">500x</td></tr>
+                    <tr style="border-bottom: 1px solid var(--border);"><th style="text-align: left; padding: 8px 0; color: var(--text-dim);">Matches</th><th style="text-align: right; color: var(--text-dim);">Payout</th></tr>
+                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">5</td><td style="text-align: right; color: var(--gold);">500x your bet</td></tr>
+                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">4</td><td style="text-align: right; color: var(--gold);">25x your bet</td></tr>
+                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">3</td><td style="text-align: right; color: var(--purple);">4x your bet</td></tr>
+                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">2</td><td style="text-align: right; color: var(--cyan);">1.5x your bet</td></tr>
+                    <tr><td style="padding: 10px 0;">0-1</td><td style="text-align: right; color: var(--text-dim);">No payout</td></tr>
                   </table>
-                  <div style="margin-top: 16px; font-size: 12px; color: var(--text-dim); text-align: center;">RTP: ~86%</div>
                 `;
             }
             this.openModal(`<div style="padding: 8px;">${html}</div><button class="btn-secondary" style="margin-top: 20px;" onclick="App.closeModal()">Close</button>`);
@@ -2306,31 +1801,20 @@
             `);
         },
 
-        // ========== REFERRAL ==========
-        copyReferral() {
-            const code = State.userData?.referralCode || 'DOQA123';
-            this.copyText(code);
-        },
+        copyReferral() { this.copyText(State.userData?.referralCode || 'DOQA123'); },
 
         shareReferral() {
             const code = State.userData?.referralCode || 'DOQA123';
             const text = `Join DOQA and win real money! Use my referral code: ${code}`;
-            if (navigator.share) {
-                navigator.share({ title: 'DOQA', text, url: window.location.href }).catch(() => {});
-            } else {
-                this.copyText(text);
-            }
+            if (navigator.share) navigator.share({ title: 'DOQA', text, url: window.location.href }).catch(() => {});
+            else this.copyText(text);
         },
 
         copyText(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                this.toast('Copied!', 'success');
-            }).catch(() => {
-                this.toast('Failed to copy', 'error');
-            });
+            navigator.clipboard.writeText(text).then(() => this.toast('Copied!', 'success'))
+                .catch(() => this.toast('Failed to copy', 'error'));
         },
 
-        // ========== PROFILE ==========
         toggleSound() {
             State.soundEnabled = !State.soundEnabled;
             const toggle = document.getElementById('sound-toggle');
@@ -2346,30 +1830,9 @@
             this.toast(State.language === 'en' ? 'English' : 'አማርኛ', 'info');
         },
 
-        // ========== SITE CLOSED ==========
-        showClosedScreen() {
-            const overlay = document.createElement('div');
-            overlay.id = 'closed-overlay';
-            overlay.style.cssText = 'position: fixed; inset: 0; z-index: 5000; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center;';
-            overlay.innerHTML = `
-              <div style="font-size: 64px; margin-bottom: 24px;">🔒</div>
-              <div style="font-size: 24px; font-weight: 800; margin-bottom: 12px;">DOQA is Temporarily Closed</div>
-              <div style="font-size: 14px; color: var(--text-dim); max-width: 300px; line-height: 1.6; margin-bottom: 24px;">${this.escapeHtml(State.settings.closedMessage || 'We will be back soon!')}</div>
-              <div style="font-size: 13px; color: var(--pink); font-weight: 600;">Reopening soon</div>
-            `;
-            document.body.appendChild(overlay);
-        },
+        formatNumber(n) { return Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); },
 
-        // ========== UTILITIES ==========
-        formatNumber(n) {
-            return Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        },
-
-        escapeHtml(str) {
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
-        },
+        escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; },
 
         fireConfetti() {
             const colors = ['#FF1685', '#20D9F5', '#923EFF', '#FFD700', '#FFFFFF'];
@@ -2377,7 +1840,7 @@
                 const piece = document.createElement('div');
                 piece.className = 'confetti-piece';
                 piece.style.left = Math.random() * 100 + 'vw';
-                piece.style.top = -10 + 'px';
+                piece.style.top = '-10px';
                 piece.style.background = colors[Math.floor(Math.random() * colors.length)];
                 piece.style.width = (6 + Math.random() * 8) + 'px';
                 piece.style.height = (6 + Math.random() * 8) + 'px';
@@ -2390,7 +1853,6 @@
         }
     };
 
-    // ---------- BOOT ----------
     window.App = App;
     window.addEventListener('load', () => {
         if (window.lucide) window.lucide.createIcons();
@@ -2399,3 +1861,4 @@
   </script>
 </body>
 </html>
+```
