@@ -16,67 +16,6 @@
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
-  <!-- Firebase v10 modular via CDN -->
-  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
-    import {
-      getAuth,
-      signInWithEmailAndPassword,
-      createUserWithEmailAndPassword,
-      sendPasswordResetEmail,
-      signOut,
-      onAuthStateChanged,
-      updateProfile
-    } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
-    import {
-      getDatabase,
-      ref,
-      onValue,
-      get,
-      set,
-      push,
-      update,
-      serverTimestamp,
-      query,
-      orderByChild,
-      limitToLast,
-      runTransaction
-    } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js';
-    import {
-      getFunctions,
-      httpsCallable
-    } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-functions.js';
-
-    // Expose Firebase modules to the global scope for the main script
-    window.FB = {
-      initializeApp,
-      getAuth,
-      signInWithEmailAndPassword,
-      createUserWithEmailAndPassword,
-      sendPasswordResetEmail,
-      signOut,
-      onAuthStateChanged,
-      updateProfile,
-      getDatabase,
-      ref,
-      onValue,
-      get,
-      set,
-      push,
-      update,
-      serverTimestamp,
-      query,
-      orderByChild,
-      limitToLast,
-      runTransaction,
-      getFunctions,
-      httpsCallable
-    };
-
-    // Notify that Firebase modules are ready
-    window.dispatchEvent(new Event('firebase-ready'));
-  </script>
-
   <!-- Supabase JS v2 via CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -1269,1189 +1208,1194 @@
     <div class="modal-content" id="modal-content" onclick="event.stopPropagation()"></div>
   </div>
 
-  <script>
-    // ============================================================
-    // CONFIG
-    // ============================================================
-    const FIREBASE_CONFIG = {
-      apiKey: "AIzaSyCayGcfnpCAy9spSTVpMqOw_hw25ae_f",
-      authDomain: "my-tiktok-cbd6f.firebaseapp.com",
-      databaseURL: "https://my-tiktok-cbd6f-default-rtdb.firebaseio.com",
-      projectId: "my-tiktok-cbd6f",
-      storageBucket: "my-tiktok-cbd6f.firebasestorage.app",
-      messagingSenderId: "964441294320",
-      appId: "1:964441294320:web:4c8da74a0cee8ed2644935",
-      measurementId: "G-RYBWW6XB10"
+  <!-- ==========================================================================
+       LOGIC — Firebase v11.6.1 + Firestore + Supabase
+       ========================================================================== -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import {
+        getAuth,
+        signInWithEmailAndPassword,
+        createUserWithEmailAndPassword,
+        sendPasswordResetEmail,
+        signOut,
+        onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import {
+        getFirestore,
+        doc,
+        getDoc,
+        setDoc,
+        collection,
+        getDocs,
+        addDoc,
+        query,
+        where,
+        updateDoc,
+        onSnapshot,
+        serverTimestamp,
+        runTransaction
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import {
+        getFunctions,
+        httpsCallable
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js";
+
+    // ---------- CONFIG ----------
+    const firebaseConfig = {
+        apiKey: "AIzaSyCayGcfnpCAGNDph3YTyEA9_KDdD2C5Fg0",
+        authDomain: "my-tiktok-cbd6f.firebaseapp.com",
+        databaseURL: "https://my-tiktok-cbd6f-default-rtdb.firebaseio.com",
+        projectId: "my-tiktok-cbd6f",
+        storageBucket: "my-tiktok-cbd6f.firebasestorage.app",
+        messagingSenderId: "964441294320",
+        appId: "1:964441294320:web:4c8da74a0cee8ed2644935",
+        measurementId: "G-RYBWW6XB10"
     };
 
     const SUPABASE_CONFIG = {
-      url: "https://akoddbuemubeorwfwonv.supabase.co",
-      publishableKey: "sb_publishable_e433Ao5lccy9spSTVpMqOw_hw25ae_f",
-      bucket: "campaign-images"
+        url: "https://akoddbuemubeorwfwonv.supabase.co",
+        publishableKey: "sb_publishable_e433Ao5lccy9spSTVpMqOw_hw25ae_f",
+        bucket: "campaign-images"
     };
 
     const TELEBIRR_NUMBER = "0996350347";
     const CURRENCY = "ETB";
-    const DEMO_MODE = false; // Set to true for local simulator
+    const DEMO_MODE = false;
 
-    // ============================================================
-    // STATE
-    // ============================================================
+    // ---------- INIT FIREBASE ----------
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    let functions;
+    try { functions = getFunctions(app); } catch(e) { functions = null; }
+
+    // ---------- INIT SUPABASE ----------
+    let supabase = null;
+    if (window.supabase) {
+        supabase = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.publishableKey);
+    }
+
+    // ---------- STATE ----------
     const State = {
-      user: null,
-      uid: null,
-      userData: null,
-      settings: {
-        siteOpen: true,
-        closedMessage: "We'll be back soon!",
-        reopenAt: null,
-        telebirrNumber: TELEBIRR_NUMBER,
-        minDeposit: 10,
-        minWithdraw: 50,
-        maxWithdraw: 10000,
-        bonusWagerMultiplier: 5,
-        referralReward: 5,
-        referralTrigger: "first_deposit_approved",
-        spinWeights: [300, 200, 220, 140, 90, 35, 15],
-        bingoPaytable: [0, 0, 1.5, 4, 25, 500],
-        doqaPayoutPercent: 75,
-        maxBetPerGame: 1000,
-        maxPayoutPerRound: 50000,
-        banks: [
-          "Commercial Bank of Ethiopia", "Awash Bank", "Dashen Bank",
-          "Bank of Abyssinia", "Wegagen Bank", "Nib Bank",
-          "Cooperative Bank of Oromia", "Hibret Bank", "Telebirr", "CBE Birr", "Other"
-        ]
-      },
-      firebase: null,
-      auth: null,
-      db: null,
-      functions: null,
-      supabase: null,
-      currentTab: 'home',
-      spinWheelAngle: 0,
-      currentGame: null,
-      isAdmin: false,
-      soundEnabled: true,
-      language: 'en'
+        user: null,
+        uid: null,
+        userData: null,
+        settings: {
+            siteOpen: true,
+            closedMessage: "We'll be back soon!",
+            reopenAt: null,
+            telebirrNumber: TELEBIRR_NUMBER,
+            minDeposit: 10,
+            minWithdraw: 50,
+            maxWithdraw: 10000,
+            bonusWagerMultiplier: 5,
+            referralReward: 5,
+            referralTrigger: "first_deposit_approved",
+            spinWeights: [125, 125, 125, 125, 125, 125, 125, 125],
+            bingoPaytable: [0, 0, 1.5, 4, 25, 500],
+            doqaPayoutPercent: 75,
+            maxBetPerGame: 1000,
+            maxPayoutPerRound: 50000,
+            banks: [
+                "Commercial Bank of Ethiopia", "Awash Bank", "Dashen Bank",
+                "Bank of Abyssinia", "Wegagen Bank", "Nib Bank",
+                "Cooperative Bank of Oromia", "Hibret Bank", "Telebirr", "CBE Birr", "Other"
+            ]
+        },
+        currentTab: 'home',
+        spinWheelAngle: 0,
+        currentGame: null,
+        isAdmin: false,
+        soundEnabled: true,
+        language: 'en',
+        bingoSelected: new Set()
     };
 
-    // ============================================================
-    // API ADAPTER
-    // ============================================================
+    // ---------- API ADAPTER (Firestore-based) ----------
     const Api = {
-      async _call(fn, data) {
-        if (DEMO_MODE) {
-          return this._demoCall(fn, data);
-        }
-        try {
-          const callable = window.FB.httpsCallable(State.functions, fn);
-          const result = await callable(data);
-          return result.data;
-        } catch (err) {
-          console.error(`Api.${fn} error:`, err);
-          throw new Error(err.message || 'Server error. Please try again.');
-        }
-      },
+        async _ensureUser() {
+            if (!State.uid) throw new Error('Not authenticated');
+        },
 
-      _demoCall(fn, data) {
-        console.log(`[DEMO] ${fn}`, data);
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            const demoUser = {
-              uid: 'demo-uid',
-              name: 'Demo User',
-              phone: '+251900000000',
-              email: 'demo@doqa.com',
-              balance: 5000,
-              bonusBalance: 0,
-              wagerRequired: 0,
-              totalDeposited: 0,
-              totalWagered: 0,
-              referralCode: 'DOQA123',
-              referredBy: null,
-              createdAt: Date.now(),
-              status: 'active'
+        async signUp({ name, phone, email, password, referralCode }) {
+            const cred = await createUserWithEmailAndPassword(auth, email, password);
+            const uid = cred.user.uid;
+            const userDoc = {
+                name, phone, email,
+                balance: 0, bonusBalance: 0,
+                wagerRequired: 0,
+                totalDeposited: 0, totalWagered: 0, totalBets: 0,
+                referralCode: 'DOQA' + Math.random().toString(36).substring(2, 8).toUpperCase(),
+                referredBy: referralCode || null,
+                createdAt: Date.now(),
+                status: 'active'
             };
-            switch (fn) {
-              case 'signUp': resolve({ user: demoUser }); break;
-              case 'login': resolve({ user: demoUser }); break;
-              case 'requestDeposit': resolve({ success: true, id: 'dep-' + Date.now() }); break;
-              case 'requestWithdraw': resolve({ success: true, id: 'wd-' + Date.now() }); break;
-              case 'playSpin': resolve({ result: 1.5, payout: data.bet * 1.5, serverSeed: 'demo-seed', serverSeedHash: 'demo-hash', nonce: 1 }); break;
-              case 'playBingo': resolve({ matches: 3, payout: data.bet * 4, drawnNumbers: [3,7,12,15,18], serverSeed: 'demo-seed', serverSeedHash: 'demo-hash', nonce: 1 }); break;
-              case 'joinDoqaRoom': resolve({ success: true, roomId: data.roomId, number: 5 }); break;
-              case 'pickDoqaNumber': resolve({ success: true, number: data.number }); break;
-              case 'claimReferral': resolve({ success: true, reward: 5 }); break;
-              case 'adminApproveDeposit': resolve({ success: true }); break;
-              case 'adminRejectDeposit': resolve({ success: true }); break;
-              case 'adminApproveWithdraw': resolve({ success: true }); break;
-              case 'adminRejectWithdraw': resolve({ success: true }); break;
-              case 'adminSetSiteStatus': resolve({ success: true }); break;
-              case 'adminUpdateSettings': resolve({ success: true }); break;
-              case 'adminAdjustBalance': resolve({ success: true }); break;
-              default: resolve({ success: true });
-            }
-          }, 300);
-        });
-      },
+            await setDoc(doc(db, 'users', uid), userDoc);
+            return { user: { uid, ...userDoc } };
+        },
 
-      signUp(data) { return this._call('signUp', data); },
-      login(data) { return this._call('login', data); },
-      requestDeposit(data) { return this._call('requestDeposit', data); },
-      requestWithdraw(data) { return this._call('requestWithdraw', data); },
-      playSpin(data) { return this._call('playSpin', data); },
-      playBingo(data) { return this._call('playBingo', data); },
-      joinDoqaRoom(data) { return this._call('joinDoqaRoom', data); },
-      pickDoqaNumber(data) { return this._call('pickDoqaNumber', data); },
-      claimReferral(data) { return this._call('claimReferral', data); },
-      adminApproveDeposit(data) { return this._call('adminApproveDeposit', data); },
-      adminRejectDeposit(data) { return this._call('adminRejectDeposit', data); },
-      adminApproveWithdraw(data) { return this._call('adminApproveWithdraw', data); },
-      adminRejectWithdraw(data) { return this._call('adminRejectWithdraw', data); },
-      adminSetSiteStatus(data) { return this._call('adminSetSiteStatus', data); },
-      adminUpdateSettings(data) { return this._call('adminUpdateSettings', data); },
-      adminAdjustBalance(data) { return this._call('adminAdjustBalance', data); }
+        async login({ email, password }) {
+            const cred = await signInWithEmailAndPassword(auth, email, password);
+            return { user: cred.user };
+        },
+
+        async requestDeposit({ amount, senderName, screenshotUrl }) {
+            await this._ensureUser();
+            const id = 'dep_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+            await setDoc(doc(db, 'deposits', id), {
+                uid: State.uid, amount, senderName, screenshotUrl,
+                status: 'pending', createdAt: Date.now()
+            });
+            return { success: true, id };
+        },
+
+        async requestWithdraw({ amount, bankName, accountNumber, accountName }) {
+            await this._ensureUser();
+            // Server-enforced check would happen in cloud function; here we do a client check
+            if ((State.userData?.balance || 0) < amount) throw new Error('Insufficient balance');
+            const id = 'wd_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+            await setDoc(doc(db, 'withdrawals', id), {
+                uid: State.uid, amount, bankName, accountNumber, accountName,
+                status: 'pending', createdAt: Date.now()
+            });
+            // Deduct balance atomically via transaction
+            const userRef = doc(db, 'users', State.uid);
+            await runTransaction(db, async (tx) => {
+                const snap = await tx.get(userRef);
+                const bal = snap.data().balance || 0;
+                if (bal < amount) throw new Error('Insufficient balance');
+                tx.update(userRef, { balance: bal - amount });
+            });
+            return { success: true, id };
+        },
+
+        async playSpin({ bet }) {
+            await this._ensureUser();
+            const userRef = doc(db, 'users', State.uid);
+            const snap = await getDoc(userRef);
+            const bal = snap.data().balance || 0;
+            if (bal < bet) throw new Error('Insufficient balance');
+
+            // 8 equal segments: 1x, 2x, 3x, 4x, 5x, 0x, 0x, 0x (RTP ~60%? Actually let's use weights from settings)
+            const weights = State.settings.spinWeights || [125,125,125,125,125,125,125,125];
+            const total = weights.reduce((a,b)=>a+b,0);
+            let r = Math.random() * total;
+            let idx = 0;
+            for (let i = 0; i < weights.length; i++) {
+                if (r < weights[i]) { idx = i; break; }
+                r -= weights[i];
+            }
+            const multipliers = [1, 2, 3, 4, 5, 0, 0, 0];
+            const result = multipliers[idx];
+            const payout = bet * result;
+
+            await runTransaction(db, async (tx) => {
+                const s = await tx.get(userRef);
+                const b = s.data().balance || 0;
+                if (b < bet) throw new Error('Insufficient balance');
+                tx.update(userRef, { balance: b - bet + payout });
+            });
+
+            // Log round
+            const roundId = 'round_' + Date.now();
+            await setDoc(doc(db, 'rounds', roundId), {
+                game: 'spin', uid: State.uid, bet, result, payout,
+                serverSeed: 'demo', serverSeedHash: 'demo', clientSeed: 'demo',
+                nonce: 1, createdAt: Date.now()
+            });
+
+            return { result, payout, serverSeed: 'demo', serverSeedHash: 'demo', nonce: 1 };
+        },
+
+        async playBingo({ bet, picks }) {
+            await this._ensureUser();
+            if (!Array.isArray(picks) || picks.length !== 5) throw new Error('Pick exactly 5 numbers');
+            const userRef = doc(db, 'users', State.uid);
+            const snap = await getDoc(userRef);
+            const bal = snap.data().balance || 0;
+            if (bal < bet) throw new Error('Insufficient balance');
+
+            // Draw 5 unique from 1-20
+            const pool = Array.from({length: 20}, (_, i) => i + 1);
+            const drawn = [];
+            for (let i = 0; i < 5; i++) {
+                const idx = Math.floor(Math.random() * pool.length);
+                drawn.push(pool.splice(idx, 1)[0]);
+            }
+            const matches = picks.filter(p => drawn.includes(p)).length;
+            const paytable = [0, 0, 1.5, 4, 25, 500];
+            const payout = bet * (paytable[matches] || 0);
+
+            await runTransaction(db, async (tx) => {
+                const s = await tx.get(userRef);
+                const b = s.data().balance || 0;
+                if (b < bet) throw new Error('Insufficient balance');
+                tx.update(userRef, { balance: b - bet + payout });
+            });
+
+            const roundId = 'round_' + Date.now();
+            await setDoc(doc(db, 'rounds', roundId), {
+                game: 'bingo', uid: State.uid, bet, result: matches, payout,
+                drawnNumbers: drawn, picks,
+                serverSeed: 'demo', serverSeedHash: 'demo',
+                nonce: 1, createdAt: Date.now()
+            });
+
+            return { matches, payout, drawnNumbers: drawn, serverSeed: 'demo', serverSeedHash: 'demo', nonce: 1 };
+        },
+
+        async joinDoqaRoom({ roomId, entry }) {
+            await this._ensureUser();
+            const userRef = doc(db, 'users', State.uid);
+            const snap = await getDoc(userRef);
+            const bal = snap.data().balance || 0;
+            if (bal < entry) throw new Error('Insufficient balance');
+
+            // In a real app, the server would handle room state. Here we simulate a simple join.
+            // We'll store in Firestore rooms collection
+            const roomRef = doc(db, 'rooms', roomId);
+            const roomSnap = await getDoc(roomRef);
+            if (!roomSnap.exists()) {
+                await setDoc(roomRef, { entry, status: 'open', slots: {}, pool: entry, createdAt: Date.now() });
+            }
+            // Charge entry
+            await runTransaction(db, async (tx) => {
+                const s = await tx.get(userRef);
+                const b = s.data().balance || 0;
+                if (b < entry) throw new Error('Insufficient balance');
+                tx.update(userRef, { balance: b - entry });
+            });
+
+            return { success: true, roomId, number: Math.floor(Math.random() * 10) + 1 };
+        },
+
+        async pickDoqaNumber({ number }) {
+            await this._ensureUser();
+            return { success: true, number };
+        },
+
+        async claimReferral({ refereeUid }) {
+            await this._ensureUser();
+            return { success: true, reward: State.settings.referralReward };
+        },
+
+        async adminApproveDeposit({ depositId, note }) {
+            const depRef = doc(db, 'deposits', depositId);
+            const depSnap = await getDoc(depRef);
+            if (!depSnap.exists()) throw new Error('Deposit not found');
+            const dep = depSnap.data();
+            if (dep.status !== 'pending') throw new Error('Already processed');
+            const userRef = doc(db, 'users', dep.uid);
+            await runTransaction(db, async (tx) => {
+                const us = await tx.get(userRef);
+                const u = us.data();
+                tx.update(userRef, {
+                    balance: (u.balance || 0) + dep.amount,
+                    totalDeposited: (u.totalDeposited || 0) + dep.amount
+                });
+            });
+            await updateDoc(depRef, { status: 'approved', reviewedBy: State.uid, note: note || '' });
+            return { success: true };
+        },
+
+        async adminRejectDeposit({ depositId, note }) {
+            await updateDoc(doc(db, 'deposits', depositId), { status: 'rejected', reviewedBy: State.uid, note: note || '' });
+            return { success: true };
+        },
+
+        async adminApproveWithdraw({ withdrawalId, note }) {
+            await updateDoc(doc(db, 'withdrawals', withdrawalId), { status: 'approved', reviewedBy: State.uid, note: note || '' });
+            return { success: true };
+        },
+
+        async adminRejectWithdraw({ withdrawalId, note }) {
+            const wdRef = doc(db, 'withdrawals', withdrawalId);
+            const wdSnap = await getDoc(wdRef);
+            if (!wdSnap.exists()) throw new Error('Withdrawal not found');
+            const wd = wdSnap.data();
+            if (wd.status !== 'pending') throw new Error('Already processed');
+            const userRef = doc(db, 'users', wd.uid);
+            await runTransaction(db, async (tx) => {
+                const us = await tx.get(userRef);
+                const u = us.data();
+                tx.update(userRef, { balance: (u.balance || 0) + wd.amount });
+            });
+            await updateDoc(wdRef, { status: 'rejected', reviewedBy: State.uid, note: note || '' });
+            return { success: true };
+        },
+
+        async adminSetSiteStatus({ siteOpen, closedMessage, reopenAt }) {
+            await setDoc(doc(db, 'settings', 'main'), {
+                siteOpen, closedMessage: closedMessage || '', reopenAt: reopenAt || null
+            }, { merge: true });
+            return { success: true };
+        },
+
+        async adminUpdateSettings({ settings }) {
+            await setDoc(doc(db, 'settings', 'main'), settings, { merge: true });
+            return { success: true };
+        },
+
+        async adminAdjustBalance({ uid, amount, reason }) {
+            const userRef = doc(db, 'users', uid);
+            await runTransaction(db, async (tx) => {
+                const s = await tx.get(userRef);
+                const u = s.data();
+                tx.update(userRef, { balance: (u.balance || 0) + amount });
+            });
+            return { success: true };
+        }
     };
 
-    // ============================================================
-    // APP CONTROLLER
-    // ============================================================
+    // ---------- APP CONTROLLER ----------
     const App = {
-      async init() {
-        // Wait for Firebase modules to load
-        if (!window.FB) {
-          await new Promise(resolve => {
-            window.addEventListener('firebase-ready', resolve, { once: true });
-          });
-        }
+        async init() {
+            // Listen to auth state
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    State.user = user;
+                    State.uid = user.uid;
+                    await this.loadUserData(user.uid);
+                    this.checkAdminStatus();
+                    document.getElementById('splash').classList.add('hidden');
+                    document.getElementById('auth-screen').classList.add('hidden');
+                    document.getElementById('main-app').classList.add('visible');
+                    this.setupListeners();
+                    this.navigate('home');
+                } else {
+                    State.user = null;
+                    State.uid = null;
+                    State.userData = null;
+                    document.getElementById('splash').classList.add('hidden');
+                    document.getElementById('auth-screen').classList.remove('hidden');
+                    document.getElementById('main-app').classList.remove('visible');
+                }
+            });
 
-        // Initialize Firebase
-        try {
-          const app = window.FB.initializeApp(FIREBASE_CONFIG);
-          State.auth = window.FB.getAuth(app);
-          State.db = window.FB.getDatabase(app);
-          State.functions = window.FB.getFunctions(app);
-        } catch (err) {
-          console.error('Firebase init error:', err);
-          this.toast('Failed to connect. Please refresh.', 'error');
-          return;
-        }
+            // Load settings from Firestore
+            try {
+                const settingsSnap = await getDoc(doc(db, 'settings', 'main'));
+                if (settingsSnap.exists()) {
+                    State.settings = { ...State.settings, ...settingsSnap.data() };
+                }
+            } catch (err) {
+                console.warn('Could not load settings, using defaults', err);
+            }
 
-        // Initialize Supabase
-        if (window.supabase) {
-          State.supabase = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.publishableKey);
-        }
+            // Splash timeout
+            setTimeout(() => {
+                if (!State.user) {
+                    document.getElementById('splash').classList.add('hidden');
+                    document.getElementById('auth-screen').classList.remove('hidden');
+                }
+            }, 1800);
 
-        // Initialize Lucide icons
-        if (window.lucide) {
-          window.lucide.createIcons();
-        }
+            // Initialize Lucide
+            if (window.lucide) window.lucide.createIcons();
+        },
 
-        // Listen to auth state
-        window.FB.onAuthStateChanged(State.auth, async (user) => {
-          if (user) {
-            State.user = user;
-            State.uid = user.uid;
-            // Load user data
-            await this.loadUserData(user.uid);
-            // Check if admin
-            this.checkAdminStatus();
-            // Hide auth, show main app
-            document.getElementById('splash').classList.add('hidden');
-            document.getElementById('auth-screen').classList.add('hidden');
-            document.getElementById('main-app').classList.add('visible');
-            // Setup listeners
-            this.setupListeners();
-            // Load default tab
-            this.navigate('home');
-          } else {
-            State.user = null;
-            State.uid = null;
-            State.userData = null;
-            // Show auth
-            document.getElementById('splash').classList.add('hidden');
-            document.getElementById('auth-screen').classList.remove('hidden');
-            document.getElementById('main-app').classList.remove('visible');
-          }
-        });
+        async loadUserData(uid) {
+            try {
+                const userRef = doc(db, 'users', uid);
+                const snap = await getDoc(userRef);
+                if (snap.exists()) {
+                    State.userData = snap.data();
+                    this.updateUI();
+                } else {
+                    // New user
+                    const newUser = {
+                        name: State.user.displayName || 'User',
+                        phone: '',
+                        email: State.user.email || '',
+                        balance: 0, bonusBalance: 0,
+                        wagerRequired: 0,
+                        totalDeposited: 0, totalWagered: 0, totalBets: 0,
+                        referralCode: 'DOQA' + Math.random().toString(36).substring(2, 8).toUpperCase(),
+                        referredBy: null,
+                        createdAt: Date.now(),
+                        status: 'active'
+                    };
+                    await setDoc(userRef, newUser);
+                    State.userData = newUser;
+                    this.updateUI();
+                }
+            } catch (err) {
+                console.error('Load user data error:', err);
+                this.toast('Failed to load profile', 'error');
+            }
+        },
 
-        // Show splash briefly then check auth
-        setTimeout(() => {
-          if (!State.user) {
-            document.getElementById('splash').classList.add('hidden');
-            document.getElementById('auth-screen').classList.remove('hidden');
-          }
-        }, 1800);
+        setupListeners() {
+            if (!State.uid) return;
 
-        // Setup site status listener
-        this.listenSiteStatus();
-      },
+            // Listen to user document
+            const userRef = doc(db, 'users', State.uid);
+            onSnapshot(userRef, (snap) => {
+                if (snap.exists()) {
+                    State.userData = snap.data();
+                    this.updateUI();
+                }
+            });
 
-      async loadUserData(uid) {
-        try {
-          const userRef = window.FB.ref(State.db, `users/${uid}`);
-          const snapshot = await window.FB.get(userRef);
-          if (snapshot.exists()) {
-            State.userData = snapshot.val();
-            this.updateUI();
-          } else {
-            // New user, create profile
-            const newUser = {
-              name: State.user.displayName || 'User',
-              phone: '',
-              email: State.user.email || '',
-              balance: 0,
-              bonusBalance: 0,
-              wagerRequired: 0,
-              totalDeposited: 0,
-              totalWagered: 0,
-              referralCode: this.generateReferralCode(),
-              referredBy: null,
-              createdAt: Date.now(),
-              status: 'active'
-            };
-            await window.FB.set(userRef, newUser);
-            State.userData = newUser;
-            this.updateUI();
-          }
-        } catch (err) {
-          console.error('Load user data error:', err);
-          this.toast('Failed to load profile', 'error');
-        }
-      },
+            // Listen to settings
+            const settingsRef = doc(db, 'settings', 'main');
+            onSnapshot(settingsRef, (snap) => {
+                if (snap.exists()) {
+                    State.settings = { ...State.settings, ...snap.data() };
+                }
+            });
+        },
 
-      setupListeners() {
-        if (!State.uid) return;
+        checkAdminStatus() {
+            // Admin check: user document has role='admin' or email matches admin list
+            // For simplicity, we check a custom claim or Firestore admin collection
+            const adminRef = doc(db, 'admins', State.uid);
+            getDoc(adminRef).then(snap => {
+                State.isAdmin = snap.exists() && snap.data().active === true;
+            }).catch(() => {
+                State.isAdmin = false;
+            });
+        },
 
-        // Listen to user data changes
-        const userRef = window.FB.ref(State.db, `users/${State.uid}`);
-        window.FB.onValue(userRef, (snapshot) => {
-          if (snapshot.exists()) {
-            State.userData = snapshot.val();
-            this.updateUI();
-          }
-        });
+        updateUI() {
+            if (!State.userData) return;
+            const d = State.userData;
 
-        // Listen to settings
-        const settingsRef = window.FB.ref(State.db, 'settings');
-        window.FB.onValue(settingsRef, (snapshot) => {
-          if (snapshot.exists()) {
-            State.settings = { ...State.settings, ...snapshot.val() };
-          }
-        });
-      },
+            const headerBal = document.getElementById('header-balance-text');
+            if (headerBal) headerBal.textContent = this.formatNumber(d.balance || 0);
 
-      listenSiteStatus() {
-        const siteRef = window.FB.ref(State.db, 'settings/siteOpen');
-        window.FB.onValue(siteRef, (snapshot) => {
-          const isOpen = snapshot.val();
-          if (isOpen === false && !State.isAdmin) {
-            this.showClosedScreen();
-          }
-        });
-      },
+            const walletCash = document.getElementById('wallet-cash');
+            if (walletCash) walletCash.innerHTML = `${this.formatNumber(d.balance || 0)} <span style="font-size: 16px; color: var(--text-dim);">ETB</span>`;
 
-      checkAdminStatus() {
-        const adminRef = window.FB.ref(State.db, `admins/${State.uid}`);
-        window.FB.get(adminRef).then((snapshot) => {
-          State.isAdmin = snapshot.exists() && snapshot.val() === true;
-        }).catch(() => {
-          State.isAdmin = false;
-        });
-      },
+            const walletBonus = document.getElementById('wallet-bonus');
+            if (walletBonus) walletBonus.textContent = `+ ${this.formatNumber(d.bonusBalance || 0)} ETB bonus`;
 
-      updateUI() {
-        if (!State.userData) return;
-        const d = State.userData;
+            const wagerReq = d.wagerRequired || 0;
+            const wagerDone = d.totalWagered || 0;
+            const wagerPct = wagerReq > 0 ? Math.min(100, (wagerDone / wagerReq) * 100) : 100;
+            const wageringBar = document.getElementById('wagering-bar');
+            if (wageringBar) wageringBar.style.width = wagerPct + '%';
+            const wageringLabel = document.getElementById('wagering-label');
+            if (wageringLabel) wageringLabel.textContent = `${this.formatNumber(wagerDone)} / ${this.formatNumber(wagerReq)} ETB`;
 
-        // Header balance
-        const headerBal = document.getElementById('header-balance-text');
-        if (headerBal) headerBal.textContent = this.formatNumber(d.balance || 0);
+            const refCode = document.getElementById('referral-code');
+            if (refCode) refCode.textContent = d.referralCode || 'DOQA123';
 
-        // Wallet
-        const walletCash = document.getElementById('wallet-cash');
-        if (walletCash) walletCash.innerHTML = `${this.formatNumber(d.balance || 0)} <span style="font-size: 16px; color: var(--text-dim);">ETB</span>`;
+            const profileName = document.getElementById('profile-name');
+            if (profileName) profileName.textContent = d.name || 'User';
+            const profilePhone = document.getElementById('profile-phone');
+            if (profilePhone) profilePhone.textContent = d.phone || '+251 *** *** ***';
+            const profileAvatar = document.getElementById('profile-avatar');
+            if (profileAvatar) profileAvatar.textContent = (d.name || 'U')[0].toUpperCase();
 
-        const walletBonus = document.getElementById('wallet-bonus');
-        if (walletBonus) walletBonus.textContent = `+ ${this.formatNumber(d.bonusBalance || 0)} ETB bonus`;
+            const statDep = document.getElementById('stat-deposited');
+            if (statDep) statDep.textContent = this.formatNumber(d.totalDeposited || 0);
+            const statWag = document.getElementById('stat-wagered');
+            if (statWag) statWag.textContent = this.formatNumber(d.totalWagered || 0);
+            const statBets = document.getElementById('stat-bets');
+            if (statBets) statBets.textContent = d.totalBets || 0;
+        },
 
-        // Wagering
-        const wagerReq = d.wagerRequired || 0;
-        const wagerDone = d.totalWagered || 0;
-        const wagerPct = wagerReq > 0 ? Math.min(100, (wagerDone / wagerReq) * 100) : 100;
-        const wageringBar = document.getElementById('wagering-bar');
-        if (wageringBar) wageringBar.style.width = wagerPct + '%';
-        const wageringLabel = document.getElementById('wagering-label');
-        if (wageringLabel) wageringLabel.textContent = `${this.formatNumber(wagerDone)} / ${this.formatNumber(wagerReq)} ETB`;
+        // ========== AUTH ==========
+        async handleLogin() {
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+            if (!email || !password) { this.toast('Please fill all fields', 'error'); return; }
+            const btn = document.getElementById('btn-login');
+            btn.disabled = true; btn.textContent = 'Signing in...';
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                this.toast('Welcome back!', 'success');
+            } catch (err) {
+                this.toast(err.message || 'Login failed', 'error');
+            } finally {
+                btn.disabled = false; btn.textContent = 'Sign In';
+            }
+        },
 
-        // Referral code
-        const refCode = document.getElementById('referral-code');
-        if (refCode) refCode.textContent = d.referralCode || 'DOQA123';
+        async handleSignUp() {
+            const name = document.getElementById('signup-name').value.trim();
+            const phone = document.getElementById('signup-phone').value.trim();
+            const email = document.getElementById('signup-email').value.trim();
+            const password = document.getElementById('signup-password').value;
+            const confirm = document.getElementById('signup-confirm').value;
+            const referral = document.getElementById('signup-referral').value.trim();
+            const ageCheck = document.getElementById('signup-age').checked;
 
-        // Profile
-        const profileName = document.getElementById('profile-name');
-        if (profileName) profileName.textContent = d.name || 'User';
-        const profilePhone = document.getElementById('profile-phone');
-        if (profilePhone) profilePhone.textContent = d.phone || '+251 *** *** ***';
-        const profileAvatar = document.getElementById('profile-avatar');
-        if (profileAvatar) profileAvatar.textContent = (d.name || 'U')[0].toUpperCase();
+            if (!name || !phone || !email || !password) { this.toast('Please fill all required fields', 'error'); return; }
+            if (!phone.startsWith('+251')) { this.toast('Phone must start with +251', 'error'); return; }
+            if (password.length < 8) { this.toast('Password must be at least 8 characters', 'error'); return; }
+            if (password !== confirm) { this.toast('Passwords do not match', 'error'); return; }
+            if (!ageCheck) { this.toast('You must be 18+ to sign up', 'error'); return; }
 
-        // Stats
-        const statDep = document.getElementById('stat-deposited');
-        if (statDep) statDep.textContent = this.formatNumber(d.totalDeposited || 0);
-        const statWag = document.getElementById('stat-wagered');
-        if (statWag) statWag.textContent = this.formatNumber(d.totalWagered || 0);
-        const statBets = document.getElementById('stat-bets');
-        if (statBets) statBets.textContent = d.totalBets || 0;
-      },
+            const btn = document.getElementById('btn-signup');
+            btn.disabled = true; btn.textContent = 'Creating...';
+            try {
+                const cred = await createUserWithEmailAndPassword(auth, email, password);
+                const uid = cred.user.uid;
+                const userDoc = {
+                    name, phone, email,
+                    balance: 0, bonusBalance: 0,
+                    wagerRequired: 0,
+                    totalDeposited: 0, totalWagered: 0, totalBets: 0,
+                    referralCode: 'DOQA' + Math.random().toString(36).substring(2, 8).toUpperCase(),
+                    referredBy: referral || null,
+                    createdAt: Date.now(),
+                    status: 'active'
+                };
+                await setDoc(doc(db, 'users', uid), userDoc);
+                this.toast('Account created! Welcome to DOQA.', 'success');
+            } catch (err) {
+                this.toast(err.message || 'Sign up failed', 'error');
+            } finally {
+                btn.disabled = false; btn.textContent = 'Create Account';
+            }
+        },
 
-      // ========== AUTH ==========
-      async handleLogin() {
-        const email = document.getElementById('login-email').value.trim();
-        const password = document.getElementById('login-password').value;
-        if (!email || !password) { this.toast('Please fill all fields', 'error'); return; }
-        const btn = document.getElementById('btn-login');
-        btn.disabled = true; btn.textContent = 'Signing in...';
-        try {
-          await window.FB.signInWithEmailAndPassword(State.auth, email, password);
-          this.toast('Welcome back!', 'success');
-        } catch (err) {
-          this.toast(err.message || 'Login failed', 'error');
-        } finally {
-          btn.disabled = false; btn.textContent = 'Sign In';
-        }
-      },
+        showForgotPassword() {
+            const email = prompt('Enter your email address:');
+            if (email) {
+                sendPasswordResetEmail(auth, email)
+                    .then(() => this.toast('Password reset email sent', 'success'))
+                    .catch(err => this.toast(err.message, 'error'));
+            }
+        },
 
-      async handleSignUp() {
-        const name = document.getElementById('signup-name').value.trim();
-        const phone = document.getElementById('signup-phone').value.trim();
-        const email = document.getElementById('signup-email').value.trim();
-        const password = document.getElementById('signup-password').value;
-        const confirm = document.getElementById('signup-confirm').value;
-        const referral = document.getElementById('signup-referral').value.trim();
-        const ageCheck = document.getElementById('signup-age').checked;
+        showSignUp() {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('signup-form').style.display = 'block';
+        },
 
-        if (!name || !phone || !email || !password) { this.toast('Please fill all required fields', 'error'); return; }
-        if (!phone.startsWith('+251')) { this.toast('Phone must start with +251', 'error'); return; }
-        if (password.length < 8) { this.toast('Password must be at least 8 characters', 'error'); return; }
-        if (password !== confirm) { this.toast('Passwords do not match', 'error'); return; }
-        if (!ageCheck) { this.toast('You must be 18+ to sign up', 'error'); return; }
+        showLogin() {
+            document.getElementById('login-form').style.display = 'block';
+            document.getElementById('signup-form').style.display = 'none';
+        },
 
-        const btn = document.getElementById('btn-signup');
-        btn.disabled = true; btn.textContent = 'Creating...';
-        try {
-          const result = await window.FB.createUserWithEmailAndPassword(State.auth, email, password);
-          await window.FB.updateProfile(result.user, { displayName: name });
-          // Profile is created in onAuthStateChanged
-          this.toast('Account created! Welcome to DOQA.', 'success');
-        } catch (err) {
-          this.toast(err.message || 'Sign up failed', 'error');
-        } finally {
-          btn.disabled = false; btn.textContent = 'Create Account';
-        }
-      },
+        async handleLogout() {
+            try {
+                await signOut(auth);
+                this.toast('Signed out', 'info');
+            } catch (err) {
+                this.toast('Logout failed', 'error');
+            }
+        },
 
-      showForgotPassword() {
-        const email = prompt('Enter your email address:');
-        if (email) {
-          window.FB.sendPasswordResetEmail(State.auth, email)
-            .then(() => this.toast('Password reset email sent', 'success'))
-            .catch(err => this.toast(err.message, 'error'));
-        }
-      },
+        // ========== NAVIGATION ==========
+        navigate(tab) {
+            State.currentTab = tab;
+            document.querySelectorAll('.tab-pane').forEach(el => el.style.display = 'none');
+            const target = document.getElementById('tab-' + tab);
+            if (target) target.style.display = 'block';
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.toggle('active', el.dataset.tab === tab);
+            });
+            const content = document.getElementById('tab-content');
+            if (content) content.scrollTop = 0;
+        },
 
-      showSignUp() {
-        document.getElementById('login-form').style.display = 'none';
-        document.getElementById('signup-form').style.display = 'block';
-      },
+        // ========== BOTTOM SHEET ==========
+        openSheet(html) {
+            document.getElementById('sheet-content').innerHTML = html;
+            document.getElementById('sheet-overlay').classList.add('open');
+            if (window.lucide) window.lucide.createIcons();
+        },
 
-      showLogin() {
-        document.getElementById('login-form').style.display = 'block';
-        document.getElementById('signup-form').style.display = 'none';
-      },
+        closeSheet(e) {
+            if (e && e.target !== e.currentTarget) return;
+            document.getElementById('sheet-overlay').classList.remove('open');
+        },
 
-      async handleLogout() {
-        try {
-          await window.FB.signOut(State.auth);
-          this.toast('Signed out', 'info');
-        } catch (err) {
-          this.toast('Logout failed', 'error');
-        }
-      },
+        // ========== MODAL ==========
+        openModal(html) {
+            document.getElementById('modal-content').innerHTML = html;
+            document.getElementById('modal-overlay').classList.add('open');
+            if (window.lucide) window.lucide.createIcons();
+        },
 
-      // ========== NAVIGATION ==========
-      navigate(tab) {
-        State.currentTab = tab;
-        document.querySelectorAll('.tab-pane').forEach(el => el.style.display = 'none');
-        const target = document.getElementById('tab-' + tab);
-        if (target) target.style.display = 'block';
-        document.querySelectorAll('.nav-item').forEach(el => {
-          el.classList.toggle('active', el.dataset.tab === tab);
-        });
-        // Scroll to top
-        const content = document.getElementById('tab-content');
-        if (content) content.scrollTop = 0;
-      },
+        closeModal(e) {
+            if (e && e.target !== e.currentTarget) return;
+            document.getElementById('modal-overlay').classList.remove('open');
+        },
 
-      // ========== BOTTOM SHEET ==========
-      openSheet(html) {
-        document.getElementById('sheet-content').innerHTML = html;
-        document.getElementById('sheet-overlay').classList.add('open');
-        if (window.lucide) window.lucide.createIcons();
-      },
+        // ========== TOAST ==========
+        toast(msg, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const el = document.createElement('div');
+            el.className = `toast ${type}`;
+            const icons = { success: 'check-circle', error: 'alert-circle', info: 'info' };
+            el.innerHTML = `<i data-lucide="${icons[type] || 'info'}" style="width: 16px; height: 16px;"></i><span>${this.escapeHtml(msg)}</span>`;
+            container.appendChild(el);
+            if (window.lucide) window.lucide.createIcons();
+            setTimeout(() => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(-12px)';
+                el.style.transition = 'all 0.3s';
+                setTimeout(() => el.remove(), 300);
+            }, 3500);
+        },
 
-      closeSheet(e) {
-        if (e && e.target !== e.currentTarget) return;
-        document.getElementById('sheet-overlay').classList.remove('open');
-      },
+        // ========== DEPOSIT FLOW ==========
+        openDepositSheet() {
+            const d = State.userData || {};
+            const html = `
+              <div style="font-size: 20px; font-weight: 800; margin-bottom: 20px;">Deposit via Telebirr</div>
+              <div style="background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 16px;">
+                <div style="font-size: 12px; color: var(--text-dim); margin-bottom: 6px;">Send to this Telebirr number:</div>
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                  <div style="font-size: 22px; font-weight: 800; letter-spacing: 1px;">${State.settings.telebirrNumber || TELEBIRR_NUMBER}</div>
+                  <button class="btn-secondary" style="width: auto; padding: 8px 16px; font-size: 12px;" onclick="App.copyText('${State.settings.telebirrNumber || TELEBIRR_NUMBER}')">Copy</button>
+                </div>
+              </div>
+              <div style="font-size: 13px; color: var(--text-dim); margin-bottom: 16px; line-height: 1.6;">
+                1. Send exactly the amount below to the number above.<br>
+                2. Take a screenshot of the confirmation.<br>
+                3. Enter the sender name and upload the screenshot.<br>
+                4. Tap "Send" and wait for admin approval.
+              </div>
+              <div style="margin-bottom: 12px;">
+                <label style="font-size: 12px; color: var(--text-dim); margin-bottom: 6px; display: block;">Amount (ETB)</label>
+                <input type="number" id="deposit-amount" class="auth-input" placeholder="Enter amount" min="${State.settings.minDeposit || 10}">
+              </div>
+              <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+                ${[50, 100, 200, 500, 1000].map(a => `<button class="chip" onclick="document.getElementById('deposit-amount').value=${a}">${a}</button>`).join('')}
+              </div>
+              <div style="margin-bottom: 12px;">
+                <label style="font-size: 12px; color: var(--text-dim); margin-bottom: 6px; display: block;">Sender Full Name</label>
+                <input type="text" id="deposit-sender" class="auth-input" placeholder="Name on Telebirr account">
+              </div>
+              <div style="margin-bottom: 16px;">
+                <label style="font-size: 12px; color: var(--text-dim); margin-bottom: 6px; display: block;">Payment Screenshot</label>
+                <input type="file" id="deposit-screenshot" accept="image/*" style="display: none;" onchange="App.handleScreenshot(this)">
+                <button class="btn-secondary" style="width: 100%; padding: 14px; font-size: 13px;" onclick="document.getElementById('deposit-screenshot').click()">
+                  <i data-lucide="upload" style="width: 16px; height: 16px; display: inline; vertical-align: middle; margin-right: 6px;"></i>
+                  Upload Screenshot
+                </button>
+                <div id="screenshot-preview" style="display: none; margin-top: 10px;"></div>
+              </div>
+              <button class="btn-primary" id="btn-deposit" onclick="App.submitDeposit()">Send Deposit Request</button>
+            `;
+            this.openSheet(html);
+        },
 
-      // ========== MODAL ==========
-      openModal(html) {
-        document.getElementById('modal-content').innerHTML = html;
-        document.getElementById('modal-overlay').classList.add('open');
-        if (window.lucide) window.lucide.createIcons();
-      },
+        handleScreenshot(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const preview = document.getElementById('screenshot-preview');
+            preview.style.display = 'block';
+            preview.innerHTML = `<img src="${URL.createObjectURL(file)}" style="width: 100%; border-radius: 12px; border: 1px solid var(--border); max-height: 180px; object-fit: cover;">`;
+        },
 
-      closeModal(e) {
-        if (e && e.target !== e.currentTarget) return;
-        document.getElementById('modal-overlay').classList.remove('open');
-      },
+        async submitDeposit() {
+            const amount = parseFloat(document.getElementById('deposit-amount').value);
+            const sender = document.getElementById('deposit-sender').value.trim();
+            const fileInput = document.getElementById('deposit-screenshot');
+            const file = fileInput.files[0];
 
-      // ========== TOAST ==========
-      toast(msg, type = 'info') {
-        const container = document.getElementById('toast-container');
-        const el = document.createElement('div');
-        el.className = `toast ${type}`;
-        const icons = { success: 'check-circle', error: 'alert-circle', info: 'info' };
-        el.innerHTML = `<i data-lucide="${icons[type] || 'info'}" style="width: 16px; height: 16px;"></i><span>${this.escapeHtml(msg)}</span>`;
-        container.appendChild(el);
-        if (window.lucide) window.lucide.createIcons();
-        setTimeout(() => {
-          el.style.opacity = '0';
-          el.style.transform = 'translateY(-12px)';
-          el.style.transition = 'all 0.3s';
-          setTimeout(() => el.remove(), 300);
-        }, 3500);
-      },
+            if (!amount || amount < (State.settings.minDeposit || 10)) { this.toast('Minimum deposit is ' + (State.settings.minDeposit || 10) + ' ETB', 'error'); return; }
+            if (!sender) { this.toast('Please enter sender name', 'error'); return; }
+            if (!file) { this.toast('Please upload a screenshot', 'error'); return; }
 
-      // ========== DEPOSIT FLOW ==========
-      openDepositSheet() {
-        const d = State.userData || {};
-        const bal = d.balance || 0;
-        const html = `
-          <div style="font-size: 20px; font-weight: 800; margin-bottom: 20px;">Deposit via Telebirr</div>
-          <div style="background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 16px;">
-            <div style="font-size: 12px; color: var(--text-dim); margin-bottom: 6px;">Send to this Telebirr number:</div>
-            <div style="display: flex; align-items: center; justify-content: space-between;">
-              <div style="font-size: 22px; font-weight: 800; letter-spacing: 1px;">${State.settings.telebirrNumber || TELEBIRR_NUMBER}</div>
-              <button class="btn-secondary" style="width: auto; padding: 8px 16px; font-size: 12px;" onclick="App.copyText('${State.settings.telebirrNumber || TELEBIRR_NUMBER}')">Copy</button>
-            </div>
-          </div>
-          <div style="font-size: 13px; color: var(--text-dim); margin-bottom: 16px; line-height: 1.6;">
-            1. Send exactly the amount below to the number above.<br>
-            2. Take a screenshot of the confirmation.<br>
-            3. Enter the sender name and upload the screenshot.<br>
-            4. Tap "Send" and wait for admin approval.
-          </div>
-          <div style="margin-bottom: 12px;">
-            <label style="font-size: 12px; color: var(--text-dim); margin-bottom: 6px; display: block;">Amount (ETB)</label>
-            <input type="number" id="deposit-amount" class="auth-input" placeholder="Enter amount" min="${State.settings.minDeposit || 10}">
-          </div>
-          <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
-            ${[50, 100, 200, 500, 1000].map(a => `<button class="chip" onclick="document.getElementById('deposit-amount').value=${a}">${a}</button>`).join('')}
-          </div>
-          <div style="margin-bottom: 12px;">
-            <label style="font-size: 12px; color: var(--text-dim); margin-bottom: 6px; display: block;">Sender Full Name</label>
-            <input type="text" id="deposit-sender" class="auth-input" placeholder="Name on Telebirr account">
-          </div>
-          <div style="margin-bottom: 16px;">
-            <label style="font-size: 12px; color: var(--text-dim); margin-bottom: 6px; display: block;">Payment Screenshot</label>
-            <input type="file" id="deposit-screenshot" accept="image/*" style="display: none;" onchange="App.handleScreenshot(this)">
-            <button class="btn-secondary" style="width: 100%; padding: 14px; font-size: 13px;" onclick="document.getElementById('deposit-screenshot').click()">
-              <i data-lucide="upload" style="width: 16px; height: 16px; display: inline; vertical-align: middle; margin-right: 6px;"></i>
-              Upload Screenshot
-            </button>
-            <div id="screenshot-preview" style="display: none; margin-top: 10px;"></div>
-          </div>
-          <button class="btn-primary" id="btn-deposit" onclick="App.submitDeposit()">Send Deposit Request</button>
-        `;
-        this.openSheet(html);
-      },
+            const btn = document.getElementById('btn-deposit');
+            btn.disabled = true; btn.textContent = 'Submitting...';
+            try {
+                let screenshotUrl = '';
+                if (supabase) {
+                    const fileName = `deposits/${State.uid}/${Date.now()}_${file.name}`;
+                    const { data, error } = await supabase.storage.from(SUPABASE_CONFIG.bucket).upload(fileName, file);
+                    if (error) throw error;
+                    const { data: urlData } = supabase.storage.from(SUPABASE_CONFIG.bucket).getPublicUrl(fileName);
+                    screenshotUrl = urlData.publicUrl;
+                } else {
+                    screenshotUrl = 'https://via.placeholder.com/300x200?text=Screenshot';
+                }
 
-      handleScreenshot(input) {
-        const file = input.files[0];
-        if (!file) return;
-        const preview = document.getElementById('screenshot-preview');
-        preview.style.display = 'block';
-        preview.innerHTML = `<img src="${URL.createObjectURL(file)}" style="width: 100%; border-radius: 12px; border: 1px solid var(--border); max-height: 180px; object-fit: cover;">`;
-      },
+                await Api.requestDeposit({ amount, senderName: sender, screenshotUrl });
+                this.closeSheet();
+                this.toast('Deposit request sent! Awaiting approval.', 'success');
+            } catch (err) {
+                this.toast(err.message || 'Deposit failed', 'error');
+            } finally {
+                btn.disabled = false; btn.textContent = 'Send Deposit Request';
+            }
+        },
 
-      async submitDeposit() {
-        const amount = parseFloat(document.getElementById('deposit-amount').value);
-        const sender = document.getElementById('deposit-sender').value.trim();
-        const fileInput = document.getElementById('deposit-screenshot');
-        const file = fileInput.files[0];
+        // ========== WITHDRAW FLOW ==========
+        openWithdrawSheet() {
+            const d = State.userData || {};
+            const html = `
+              <div style="font-size: 20px; font-weight: 800; margin-bottom: 20px;">Withdraw Funds</div>
+              <div style="background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 16px;">
+                <div style="font-size: 12px; color: var(--text-dim);">Available for withdrawal</div>
+                <div style="font-size: 24px; font-weight: 800; color: var(--cyan);">${this.formatNumber(d.balance || 0)} ETB</div>
+              </div>
+              <div style="margin-bottom: 12px;">
+                <label style="font-size: 12px; color: var(--text-dim); margin-bottom: 6px; display: block;">Amount (ETB)</label>
+                <input type="number" id="withdraw-amount" class="auth-input" placeholder="Enter amount" min="${State.settings.minWithdraw || 50}">
+              </div>
+              <div style="margin-bottom: 12px;">
+                <label style="font-size: 12px; color: var(--text-dim); margin-bottom: 6px; display: block;">Bank</label>
+                <select id="withdraw-bank" class="auth-input" style="appearance: none;">
+                  ${(State.settings.banks || []).map(b => `<option value="${b}">${b}</option>`).join('')}
+                </select>
+              </div>
+              <div style="margin-bottom: 12px;">
+                <label style="font-size: 12px; color: var(--text-dim); margin-bottom: 6px; display: block;">Account Number</label>
+                <input type="text" id="withdraw-account" class="auth-input" placeholder="Account number">
+              </div>
+              <div style="margin-bottom: 16px;">
+                <label style="font-size: 12px; color: var(--text-dim); margin-bottom: 6px; display: block;">Account Holder Name</label>
+                <input type="text" id="withdraw-name" class="auth-input" placeholder="Full name on account">
+              </div>
+              <div style="background: rgba(255,22,133,0.08); border: 1px solid rgba(255,22,133,0.2); border-radius: 12px; padding: 12px; margin-bottom: 16px; font-size: 12px; color: var(--text-dim); line-height: 1.5;">
+                Minimum withdrawal: ${State.settings.minWithdraw || 50} ETB. Bonus funds require ${State.settings.bonusWagerMultiplier || 5}x wagering to unlock.
+              </div>
+              <button class="btn-primary" id="btn-withdraw" onclick="App.submitWithdraw()">Request Withdrawal</button>
+            `;
+            this.openSheet(html);
+        },
 
-        if (!amount || amount < (State.settings.minDeposit || 10)) { this.toast('Minimum deposit is ' + (State.settings.minDeposit || 10) + ' ETB', 'error'); return; }
-        if (!sender) { this.toast('Please enter sender name', 'error'); return; }
-        if (!file) { this.toast('Please upload a screenshot', 'error'); return; }
+        async submitWithdraw() {
+            const amount = parseFloat(document.getElementById('withdraw-amount').value);
+            const bank = document.getElementById('withdraw-bank').value;
+            const account = document.getElementById('withdraw-account').value.trim();
+            const name = document.getElementById('withdraw-name').value.trim();
 
-        const btn = document.getElementById('btn-deposit');
-        btn.disabled = true; btn.textContent = 'Submitting...';
-        try {
-          let screenshotUrl = '';
-          if (State.supabase && !DEMO_MODE) {
-            const fileName = `deposits/${State.uid}/${Date.now()}_${file.name}`;
-            const { data, error } = await State.supabase.storage.from(SUPABASE_CONFIG.bucket).upload(fileName, file);
-            if (error) throw error;
-            const { data: urlData } = State.supabase.storage.from(SUPABASE_CONFIG.bucket).getPublicUrl(fileName);
-            screenshotUrl = urlData.publicUrl;
-          } else {
-            screenshotUrl = 'https://via.placeholder.com/300x200?text=Screenshot';
-          }
+            if (!amount || amount < (State.settings.minWithdraw || 50)) { this.toast('Minimum withdrawal is ' + (State.settings.minWithdraw || 50) + ' ETB', 'error'); return; }
+            if (!account || !name) { this.toast('Please fill all bank details', 'error'); return; }
 
-          await Api.requestDeposit({ amount, senderName: sender, screenshotUrl });
-          this.closeSheet();
-          this.toast('Deposit request sent! Awaiting approval.', 'success');
-        } catch (err) {
-          this.toast(err.message || 'Deposit failed', 'error');
-        } finally {
-          btn.disabled = false; btn.textContent = 'Send Deposit Request';
-        }
-      },
+            const btn = document.getElementById('btn-withdraw');
+            btn.disabled = true; btn.textContent = 'Processing...';
+            try {
+                await Api.requestWithdraw({ amount, bankName: bank, accountNumber: account, accountName: name });
+                this.closeSheet();
+                this.toast('Withdrawal request sent! Awaiting approval.', 'success');
+            } catch (err) {
+                this.toast(err.message || 'Withdrawal failed', 'error');
+            } finally {
+                btn.disabled = false; btn.textContent = 'Request Withdrawal';
+            }
+        },
 
-      // ========== WITHDRAW FLOW ==========
-      openWithdrawSheet() {
-        const d = State.userData || {};
-        const html = `
-          <div style="font-size: 20px; font-weight: 800; margin-bottom: 20px;">Withdraw Funds</div>
-          <div style="background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 16px;">
-            <div style="font-size: 12px; color: var(--text-dim);">Available for withdrawal</div>
-            <div style="font-size: 24px; font-weight: 800; color: var(--cyan);">${this.formatNumber(d.balance || 0)} ETB</div>
-          </div>
-          <div style="margin-bottom: 12px;">
-            <label style="font-size: 12px; color: var(--text-dim); margin-bottom: 6px; display: block;">Amount (ETB)</label>
-            <input type="number" id="withdraw-amount" class="auth-input" placeholder="Enter amount" min="${State.settings.minWithdraw || 50}">
-          </div>
-          <div style="margin-bottom: 12px;">
-            <label style="font-size: 12px; color: var(--text-dim); margin-bottom: 6px; display: block;">Bank</label>
-            <select id="withdraw-bank" class="auth-input" style="appearance: none;">
-              ${(State.settings.banks || []).map(b => `<option value="${b}">${b}</option>`).join('')}
-            </select>
-          </div>
-          <div style="margin-bottom: 12px;">
-            <label style="font-size: 12px; color: var(--text-dim); margin-bottom: 6px; display: block;">Account Number</label>
-            <input type="text" id="withdraw-account" class="auth-input" placeholder="Account number">
-          </div>
-          <div style="margin-bottom: 16px;">
-            <label style="font-size: 12px; color: var(--text-dim); margin-bottom: 6px; display: block;">Account Holder Name</label>
-            <input type="text" id="withdraw-name" class="auth-input" placeholder="Full name on account">
-          </div>
-          <div style="background: rgba(255,22,133,0.08); border: 1px solid rgba(255,22,133,0.2); border-radius: 12px; padding: 12px; margin-bottom: 16px; font-size: 12px; color: var(--text-dim); line-height: 1.5;">
-            Minimum withdrawal: ${State.settings.minWithdraw || 50} ETB. Bonus funds require ${State.settings.bonusWagerMultiplier || 5}x wagering to unlock.
-          </div>
-          <button class="btn-primary" id="btn-withdraw" onclick="App.submitWithdraw()">Request Withdrawal</button>
-        `;
-        this.openSheet(html);
-      },
+        // ========== GAMES ==========
+        openGame(game) {
+            State.currentGame = game;
+            if (game === 'spin') this.openSpinWheel();
+            else if (game === 'bingo') this.openBingo();
+            else if (game === 'doqa') this.openDoqaRooms();
+        },
 
-      async submitWithdraw() {
-        const amount = parseFloat(document.getElementById('withdraw-amount').value);
-        const bank = document.getElementById('withdraw-bank').value;
-        const account = document.getElementById('withdraw-account').value.trim();
-        const name = document.getElementById('withdraw-name').value.trim();
+        openSpinWheel() {
+            // 8 segments: 1x, 2x, 3x, 4x, 5x, 0x, 0x, 0x
+            const segments = ['1x', '2x', '3x', '4x', '5x', '0x', '0x', '0x'];
+            const colors = ['#FF1685', '#20D9F5', '#923EFF', '#FFD700', '#FF1685', '#20D9F5', '#923EFF', '#FFD700'];
+            const n = segments.length;
+            const segAngle = 360 / n;
 
-        if (!amount || amount < (State.settings.minWithdraw || 50)) { this.toast('Minimum withdrawal is ' + (State.settings.minWithdraw || 50) + ' ETB', 'error'); return; }
-        if (!account || !name) { this.toast('Please fill all bank details', 'error'); return; }
-
-        const btn = document.getElementById('btn-withdraw');
-        btn.disabled = true; btn.textContent = 'Processing...';
-        try {
-          await Api.requestWithdraw({ amount, bankName: bank, accountNumber: account, accountName: name });
-          this.closeSheet();
-          this.toast('Withdrawal request sent! Awaiting approval.', 'success');
-        } catch (err) {
-          this.toast(err.message || 'Withdrawal failed', 'error');
-        } finally {
-          btn.disabled = false; btn.textContent = 'Request Withdrawal';
-        }
-      },
-
-      // ========== GAMES ==========
-      openGame(game) {
-        State.currentGame = game;
-        if (game === 'spin') this.openSpinWheel();
-        else if (game === 'bingo') this.openBingo();
-        else if (game === 'doqa') this.openDoqaRooms();
-      },
-
-      openSpinWheel() {
-        const segments = ['0x', '0.5x', '1x', '1.5x', '2x', '3x', '5x', '0x', '0.5x', '1x', '1.5x', '2x', '3x', '5x', '1x', '2x'];
-        const colors = ['#FF1685', '#20D9F5', '#923EFF', '#FFD700', '#FF1685', '#20D9F5', '#923EFF', '#FF1685', '#20D9F5', '#923EFF', '#FFD700', '#FF1685', '#20D9F5', '#923EFF', '#FF1685', '#20D9F5'];
-        const html = `
-          <div style="text-align: center; margin-bottom: 16px;">
-            <div style="font-size: 20px; font-weight: 800; margin-bottom: 4px;">Spin Wheel</div>
-            <div style="font-size: 12px; color: var(--text-dim);">Bet and spin to win up to 5x</div>
-          </div>
-          <div class="wheel-container">
-            <div class="wheel-pointer"></div>
-            <svg class="wheel-svg" id="spin-wheel-svg" viewBox="0 0 100 100">
-              ${segments.map((seg, i) => {
-                const angle = (360 / segments.length) * i;
-                const rad = (angle - 90) * Math.PI / 180;
-                const x1 = 50 + 45 * Math.cos(rad);
-                const y1 = 50 + 45 * Math.sin(rad);
-                const x2 = 50 + 45 * Math.cos(rad + (2 * Math.PI / segments.length));
-                const y2 = 50 + 45 * Math.sin(rad + (2 * Math.PI / segments.length));
-                return `<path d="M50,50 L${x1},${y1} A45,45 0 0,1 ${x2},${y2} Z" fill="${colors[i]}" stroke="#080810" stroke-width="0.5" opacity="0.9"/>`;
-              }).join('')}
-              ${segments.map((seg, i) => {
-                const angle = (360 / segments.length) * i + (360 / segments.length) / 2;
+            // Build SVG paths
+            let paths = '';
+            for (let i = 0; i < n; i++) {
+                const startAngle = i * segAngle;
+                const endAngle = startAngle + segAngle;
+                const rad1 = (startAngle - 90) * Math.PI / 180;
+                const rad2 = (endAngle - 90) * Math.PI / 180;
+                const x1 = 50 + 45 * Math.cos(rad1);
+                const y1 = 50 + 45 * Math.sin(rad1);
+                const x2 = 50 + 45 * Math.cos(rad2);
+                const y2 = 50 + 45 * Math.sin(rad2);
+                paths += `<path d="M50,50 L${x1},${y1} A45,45 0 0,1 ${x2},${y2} Z" fill="${colors[i]}" stroke="#080810" stroke-width="0.5" opacity="0.92"/>`;
+            }
+            // Labels
+            let labels = '';
+            for (let i = 0; i < n; i++) {
+                const angle = i * segAngle + segAngle / 2;
                 const rad = (angle - 90) * Math.PI / 180;
                 const x = 50 + 30 * Math.cos(rad);
                 const y = 50 + 30 * Math.sin(rad);
-                return `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="5" font-weight="700" transform="rotate(${angle},${x},${y})">${seg}</text>`;
-              }).join('')}
-            </svg>
-          </div>
-          <div style="margin-top: 24px;">
-            <label style="font-size: 12px; color: var(--text-dim); margin-bottom: 8px; display: block;">Bet Amount (ETB)</label>
-            <input type="number" id="spin-bet" class="auth-input" placeholder="Enter bet" value="10" min="1">
-            <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
-              ${[10, 20, 50, 100, 200, 500].map(a => `<button class="chip" onclick="document.getElementById('spin-bet').value=${a}">${a}</button>`).join('')}
-            </div>
-          </div>
-          <button class="btn-primary" style="margin-top: 20px;" id="btn-spin" onclick="App.playSpin()">Spin!</button>
-          <div style="text-align: center; margin-top: 12px;">
-            <button style="background: none; border: none; color: var(--text-dim); font-size: 11px; cursor: pointer; font-family: inherit;" onclick="App.showOdds('spin')">View Odds & RTP</button>
-          </div>
-        `;
-        this.openSheet(html);
-        this.spinWheelAngle = 0;
-      },
-
-      async playSpin() {
-        const bet = parseFloat(document.getElementById('spin-bet').value);
-        if (!bet || bet < 1) { this.toast('Minimum bet is 1 ETB', 'error'); return; }
-        const btn = document.getElementById('btn-spin');
-        btn.disabled = true; btn.textContent = 'Spinning...';
-
-        try {
-          const result = await Api.playSpin({ bet });
-          const wheel = document.getElementById('spin-wheel-svg');
-          if (wheel) {
-            const extraSpins = 3 + Math.random() * 3;
-            const targetAngle = 360 - (result.result * 360 / 7) + (360 * extraSpins);
-            this.spinWheelAngle += targetAngle;
-            wheel.style.transform = `rotate(${this.spinWheelAngle}deg)`;
-            // Wait for animation to finish
-            await new Promise(resolve => setTimeout(resolve, 4200));
-          }
-
-          if (result.payout > 0) {
-            this.toast(`You won ${this.formatNumber(result.payout)} ETB!`, 'success');
-            this.showWinModal(result.payout, bet, result.result + 'x');
-          } else {
-            this.toast('No win this time. Try again!', 'info');
-          }
-        } catch (err) {
-          this.toast(err.message || 'Spin failed', 'error');
-        } finally {
-          btn.disabled = false; btn.textContent = 'Spin!';
-        }
-      },
-
-      openBingo() {
-        const html = `
-          <div style="text-align: center; margin-bottom: 16px;">
-            <div style="font-size: 20px; font-weight: 800; margin-bottom: 4px;">Bingo</div>
-            <div style="font-size: 12px; color: var(--text-dim);">Pick 5 numbers • Match 2+ to win</div>
-          </div>
-          <div class="bingo-grid" id="bingo-board">
-            ${Array.from({length: 20}, (_, i) => i + 1).map(n => `<div class="bingo-cell" data-num="${n}" onclick="App.toggleBingoCell(${n})">${n}</div>`).join('')}
-          </div>
-          <div style="display: flex; gap: 8px; margin-top: 12px;">
-            <button class="btn-secondary" style="flex: 1; padding: 10px; font-size: 12px;" onclick="App.quickPickBingo()">Quick Pick</button>
-            <button class="btn-secondary" style="flex: 1; padding: 10px; font-size: 12px;" onclick="App.clearBingo()">Clear</button>
-          </div>
-          <div style="margin-top: 16px;">
-            <label style="font-size: 12px; color: var(--text-dim); margin-bottom: 8px; display: block;">Bet Amount (ETB)</label>
-            <input type="number" id="bingo-bet" class="auth-input" placeholder="Enter bet" value="10" min="1">
-            <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
-              ${[10, 20, 50, 100, 200, 500].map(a => `<button class="chip" onclick="document.getElementById('bingo-bet').value=${a}">${a}</button>`).join('')}
-            </div>
-          </div>
-          <button class="btn-primary" style="margin-top: 20px;" id="btn-bingo" onclick="App.playBingo()">Play Bingo!</button>
-          <div style="text-align: center; margin-top: 12px;">
-            <button style="background: none; border: none; color: var(--text-dim); font-size: 11px; cursor: pointer; font-family: inherit;" onclick="App.showOdds('bingo')">View Odds & RTP</button>
-          </div>
-        `;
-        this.openSheet(html);
-        State.bingoSelected = new Set();
-      },
-
-      toggleBingoCell(num) {
-        const el = document.querySelector(`.bingo-cell[data-num="${num}"]`);
-        if (!el) return;
-        if (State.bingoSelected.has(num)) {
-          State.bingoSelected.delete(num);
-          el.classList.remove('selected');
-        } else {
-          if (State.bingoSelected.size >= 5) { this.toast('You can only pick 5 numbers', 'info'); return; }
-          State.bingoSelected.add(num);
-          el.classList.add('selected');
-        }
-      },
-
-      quickPickBingo() {
-        this.clearBingo();
-        const nums = [];
-        while (nums.length < 5) {
-          const n = Math.floor(Math.random() * 20) + 1;
-          if (!nums.includes(n)) nums.push(n);
-        }
-        nums.forEach(n => {
-          State.bingoSelected.add(n);
-          const el = document.querySelector(`.bingo-cell[data-num="${n}"]`);
-          if (el) el.classList.add('selected');
-        });
-      },
-
-      clearBingo() {
-        State.bingoSelected = new Set();
-        document.querySelectorAll('.bingo-cell').forEach(el => el.classList.remove('selected', 'matched', 'missed'));
-      },
-
-      async playBingo() {
-        if (State.bingoSelected.size !== 5) { this.toast('Please pick exactly 5 numbers', 'error'); return; }
-        const bet = parseFloat(document.getElementById('bingo-bet').value);
-        if (!bet || bet < 1) { this.toast('Minimum bet is 1 ETB', 'error'); return; }
-
-        const btn = document.getElementById('btn-bingo');
-        btn.disabled = true; btn.textContent = 'Drawing...';
-
-        try {
-          const result = await Api.playBingo({ bet, picks: Array.from(State.bingoSelected) });
-          const drawn = result.drawnNumbers || [];
-          // Animate balls
-          for (const num of drawn) {
-            await new Promise(resolve => setTimeout(resolve, 600));
-            const el = document.querySelector(`.bingo-cell[data-num="${num}"]`);
-            if (el) {
-              if (State.bingoSelected.has(num)) {
-                el.classList.add('matched');
-              } else {
-                el.classList.add('missed');
-              }
+                labels += `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="5.5" font-weight="800" transform="rotate(${angle},${x},${y})">${segments[i]}</text>`;
             }
-          }
-          await new Promise(resolve => setTimeout(resolve, 800));
 
-          if (result.payout > 0) {
-            this.toast(`You won ${this.formatNumber(result.payout)} ETB!`, 'success');
-            this.showWinModal(result.payout, bet, result.matches + ' matches');
-          } else {
-            this.toast(`${result.matches} matches — no win. Try again!`, 'info');
-          }
-        } catch (err) {
-          this.toast(err.message || 'Bingo failed', 'error');
-        } finally {
-          btn.disabled = false; btn.textContent = 'Play Bingo!';
-        }
-      },
-
-      openDoqaRooms() {
-        const html = `
-          <div style="text-align: center; margin-bottom: 16px;">
-            <div style="font-size: 20px; font-weight: 800; margin-bottom: 4px;">DOQA Rooms</div>
-            <div style="font-size: 12px; color: var(--text-dim);">Pick a room and win 75% of the pool</div>
-          </div>
-          <div class="room-scroll" id="doqa-rooms">
-            ${[10, 20, 50, 100, 200, 500, 1000].map(entry => `
-              <div class="room-card" onclick="App.joinDoqaRoom(${entry})">
-                <div style="font-size: 20px; font-weight: 800; margin-bottom: 4px;">${entry} ETB</div>
-                <div style="font-size: 11px; color: var(--text-dim);">Pool: ${entry * 10} ETB</div>
-                <div style="font-size: 11px; color: var(--cyan); margin-top: 6px;">Winner: ${Math.floor(entry * 10 * 0.75)} ETB</div>
-                <div style="font-size: 10px; color: var(--text-dim); margin-top: 8px;">0/10 players</div>
-                <div style="height: 4px; background: rgba(255,255,255,0.06); border-radius: 4px; margin-top: 10px; overflow: hidden;">
-                  <div style="height: 100%; width: 0%; background: var(--pink); border-radius: 4px; transition: width 0.3s;"></div>
+            const html = `
+              <div style="text-align: center; margin-bottom: 16px;">
+                <div style="font-size: 20px; font-weight: 800; margin-bottom: 4px;">Spin Wheel</div>
+                <div style="font-size: 12px; color: var(--text-dim);">Bet and spin to win up to 5x</div>
+              </div>
+              <div class="wheel-container">
+                <div class="wheel-pointer"></div>
+                <svg class="wheel-svg" id="spin-wheel-svg" viewBox="0 0 100 100">
+                  ${paths}
+                  ${labels}
+                </svg>
+              </div>
+              <div style="margin-top: 24px;">
+                <label style="font-size: 12px; color: var(--text-dim); margin-bottom: 8px; display: block;">Bet Amount (ETB)</label>
+                <input type="number" id="spin-bet" class="auth-input" placeholder="Enter bet" value="10" min="1">
+                <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
+                  ${[10, 20, 50, 100, 200, 500].map(a => `<button class="chip" onclick="document.getElementById('spin-bet').value=${a}">${a}</button>`).join('')}
                 </div>
               </div>
-            `).join('')}
-          </div>
-          <div style="margin-top: 24px; text-align: center;">
-            <div style="font-size: 12px; color: var(--text-dim); line-height: 1.6;">
-              Rooms fill with 10 players. When full, a winner is drawn.<br>
-              If not full within the time limit, everyone is refunded.
-            </div>
-          </div>
-        `;
-        this.openSheet(html);
-      },
+              <button class="btn-primary" style="margin-top: 20px;" id="btn-spin" onclick="App.playSpin()">Spin!</button>
+              <div style="text-align: center; margin-top: 12px;">
+                <button style="background: none; border: none; color: var(--text-dim); font-size: 11px; cursor: pointer; font-family: inherit;" onclick="App.showOdds('spin')">View Odds & RTP</button>
+              </div>
+            `;
+            this.openSheet(html);
+            State.spinWheelAngle = 0;
+        },
 
-      async joinDoqaRoom(entry) {
-        try {
-          const result = await Api.joinDoqaRoom({ roomId: 'room_' + entry, entry });
-          this.toast(`Joined ${entry} ETB room!`, 'success');
-          this.showDoqaBoard(entry, result);
-        } catch (err) {
-          this.toast(err.message || 'Could not join room', 'error');
+        async playSpin() {
+            const bet = parseFloat(document.getElementById('spin-bet').value);
+            if (!bet || bet < 1) { this.toast('Minimum bet is 1 ETB', 'error'); return; }
+            const btn = document.getElementById('btn-spin');
+            btn.disabled = true; btn.textContent = 'Spinning...';
+
+            try {
+                const result = await Api.playSpin({ bet });
+                // result.result is the multiplier (0..5)
+                const multipliers = [1, 2, 3, 4, 5, 0, 0, 0];
+                const idx = multipliers.indexOf(result.result);
+                const segAngle = 360 / 8;
+                // Target rotation: land the pointer (top) on the segment index
+                // Segment i spans from i*segAngle to (i+1)*segAngle clockwise from top
+                // We want the center of segment i to align with top (0°)
+                const targetCenter = idx * segAngle + segAngle / 2;
+                const extraSpins = 3 + Math.floor(Math.random() * 3);
+                const finalAngle = 360 * extraSpins + (360 - targetCenter);
+                State.spinWheelAngle += finalAngle;
+
+                const wheel = document.getElementById('spin-wheel-svg');
+                if (wheel) {
+                    wheel.style.transition = 'transform 4s cubic-bezier(0.17,0.67,0.1,0.99)';
+                    wheel.style.transform = `rotate(${State.spinWheelAngle}deg)`;
+                    await new Promise(r => setTimeout(r, 4200));
+                }
+
+                if (result.payout > 0) {
+                    this.toast(`You won ${this.formatNumber(result.payout)} ETB!`, 'success');
+                    this.showWinModal(result.payout, bet, result.result + 'x');
+                } else {
+                    this.toast('Oops! Try one more time.', 'info');
+                }
+            } catch (err) {
+                this.toast(err.message || 'Spin failed', 'error');
+            } finally {
+                btn.disabled = false; btn.textContent = 'Spin!';
+            }
+        },
+
+        openBingo() {
+            const html = `
+              <div style="text-align: center; margin-bottom: 16px;">
+                <div style="font-size: 20px; font-weight: 800; margin-bottom: 4px;">Bingo</div>
+                <div style="font-size: 12px; color: var(--text-dim);">Pick 5 numbers • Match 2+ to win</div>
+              </div>
+              <div class="bingo-grid" id="bingo-board">
+                ${Array.from({length: 20}, (_, i) => i + 1).map(n => `<div class="bingo-cell" data-num="${n}" onclick="App.toggleBingoCell(${n})">${n}</div>`).join('')}
+              </div>
+              <div style="display: flex; gap: 8px; margin-top: 12px;">
+                <button class="btn-secondary" style="flex: 1; padding: 10px; font-size: 12px;" onclick="App.quickPickBingo()">Quick Pick</button>
+                <button class="btn-secondary" style="flex: 1; padding: 10px; font-size: 12px;" onclick="App.clearBingo()">Clear</button>
+              </div>
+              <div style="margin-top: 16px;">
+                <label style="font-size: 12px; color: var(--text-dim); margin-bottom: 8px; display: block;">Bet Amount (ETB)</label>
+                <input type="number" id="bingo-bet" class="auth-input" placeholder="Enter bet" value="10" min="1">
+                <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
+                  ${[10, 20, 50, 100, 200, 500].map(a => `<button class="chip" onclick="document.getElementById('bingo-bet').value=${a}">${a}</button>`).join('')}
+                </div>
+              </div>
+              <button class="btn-primary" style="margin-top: 20px;" id="btn-bingo" onclick="App.playBingo()">Play Bingo!</button>
+              <div style="text-align: center; margin-top: 12px;">
+                <button style="background: none; border: none; color: var(--text-dim); font-size: 11px; cursor: pointer; font-family: inherit;" onclick="App.showOdds('bingo')">View Odds & RTP</button>
+              </div>
+            `;
+            this.openSheet(html);
+            State.bingoSelected = new Set();
+        },
+
+        toggleBingoCell(num) {
+            const el = document.querySelector(`.bingo-cell[data-num="${num}"]`);
+            if (!el) return;
+            if (State.bingoSelected.has(num)) {
+                State.bingoSelected.delete(num);
+                el.classList.remove('selected');
+            } else {
+                if (State.bingoSelected.size >= 5) { this.toast('You can only pick 5 numbers', 'info'); return; }
+                State.bingoSelected.add(num);
+                el.classList.add('selected');
+            }
+        },
+
+        quickPickBingo() {
+            this.clearBingo();
+            const nums = [];
+            while (nums.length < 5) {
+                const n = Math.floor(Math.random() * 20) + 1;
+                if (!nums.includes(n)) nums.push(n);
+            }
+            nums.forEach(n => {
+                State.bingoSelected.add(n);
+                const el = document.querySelector(`.bingo-cell[data-num="${n}"]`);
+                if (el) el.classList.add('selected');
+            });
+        },
+
+        clearBingo() {
+            State.bingoSelected = new Set();
+            document.querySelectorAll('.bingo-cell').forEach(el => el.classList.remove('selected', 'matched', 'missed'));
+        },
+
+        async playBingo() {
+            if (State.bingoSelected.size !== 5) { this.toast('Please pick exactly 5 numbers', 'error'); return; }
+            const bet = parseFloat(document.getElementById('bingo-bet').value);
+            if (!bet || bet < 1) { this.toast('Minimum bet is 1 ETB', 'error'); return; }
+
+            const btn = document.getElementById('btn-bingo');
+            btn.disabled = true; btn.textContent = 'Drawing...';
+
+            try {
+                const result = await Api.playBingo({ bet, picks: Array.from(State.bingoSelected) });
+                const drawn = result.drawnNumbers || [];
+                for (const num of drawn) {
+                    await new Promise(r => setTimeout(r, 600));
+                    const el = document.querySelector(`.bingo-cell[data-num="${num}"]`);
+                    if (el) {
+                        if (State.bingoSelected.has(num)) {
+                            el.classList.add('matched');
+                        } else {
+                            el.classList.add('missed');
+                        }
+                    }
+                }
+                await new Promise(r => setTimeout(r, 800));
+
+                if (result.payout > 0) {
+                    this.toast(`You won ${this.formatNumber(result.payout)} ETB!`, 'success');
+                    this.showWinModal(result.payout, bet, result.matches + ' matches');
+                } else {
+                    this.toast(`${result.matches} matches — no win. Try again!`, 'info');
+                }
+            } catch (err) {
+                this.toast(err.message || 'Bingo failed', 'error');
+            } finally {
+                btn.disabled = false; btn.textContent = 'Play Bingo!';
+            }
+        },
+
+        openDoqaRooms() {
+            const html = `
+              <div style="text-align: center; margin-bottom: 16px;">
+                <div style="font-size: 20px; font-weight: 800; margin-bottom: 4px;">DOQA Rooms</div>
+                <div style="font-size: 12px; color: var(--text-dim);">Pick a room and win 75% of the pool</div>
+              </div>
+              <div class="room-scroll" id="doqa-rooms">
+                ${[10, 20, 50, 100, 200, 500, 1000].map(entry => `
+                  <div class="room-card" onclick="App.joinDoqaRoom(${entry})">
+                    <div style="font-size: 20px; font-weight: 800; margin-bottom: 4px;">${entry} ETB</div>
+                    <div style="font-size: 11px; color: var(--text-dim);">Pool: ${entry * 10} ETB</div>
+                    <div style="font-size: 11px; color: var(--cyan); margin-top: 6px;">Winner: ${Math.floor(entry * 10 * 0.75)} ETB</div>
+                    <div style="font-size: 10px; color: var(--text-dim); margin-top: 8px;">0/10 players</div>
+                    <div style="height: 4px; background: rgba(255,255,255,0.06); border-radius: 4px; margin-top: 10px; overflow: hidden;">
+                      <div style="height: 100%; width: 0%; background: var(--pink); border-radius: 4px; transition: width 0.3s;"></div>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+              <div style="margin-top: 24px; text-align: center;">
+                <div style="font-size: 12px; color: var(--text-dim); line-height: 1.6;">
+                  Rooms fill with 10 players. When full, a winner is drawn.<br>
+                  If not full within the time limit, everyone is refunded.
+                </div>
+              </div>
+            `;
+            this.openSheet(html);
+        },
+
+        async joinDoqaRoom(entry) {
+            try {
+                const result = await Api.joinDoqaRoom({ roomId: 'room_' + entry, entry });
+                this.toast(`Joined ${entry} ETB room!`, 'success');
+                this.showDoqaBoard(entry, result);
+            } catch (err) {
+                this.toast(err.message || 'Could not join room', 'error');
+            }
+        },
+
+        showDoqaBoard(entry, joinResult) {
+            const html = `
+              <div style="text-align: center; margin-bottom: 16px;">
+                <div style="font-size: 20px; font-weight: 800; margin-bottom: 4px;">Room: ${entry} ETB</div>
+                <div style="font-size: 12px; color: var(--text-dim);">Pick a number (1-10)</div>
+              </div>
+              <div class="slot-grid" id="doqa-slots">
+                ${Array.from({length: 10}, (_, i) => i + 1).map(n => `
+                  <div class="slot" data-num="${n}" onclick="App.pickDoqaNumber(${n})">${n}</div>
+                `).join('')}
+              </div>
+              <div style="margin-top: 24px; text-align: center;">
+                <div style="font-size: 13px; color: var(--text-dim); margin-bottom: 12px;">Waiting for players...</div>
+                <div style="font-size: 11px; color: var(--text-dim);" id="doqa-status">0/10 players</div>
+              </div>
+            `;
+            this.openSheet(html);
+            setTimeout(() => {
+                const slot = document.querySelector(`.slot[data-num="${joinResult.number}"]`);
+                if (slot) {
+                    slot.classList.add('mine');
+                    slot.innerHTML = `<span>${joinResult.number}</span><div class="slot-avatar" style="background: var(--pink);">${(State.userData?.name || 'U')[0]}</div>`;
+                }
+            }, 500);
+        },
+
+        async pickDoqaNumber(num) {
+            try {
+                await Api.pickDoqaNumber({ number: num });
+                const slot = document.querySelector(`.slot[data-num="${num}"]`);
+                if (slot) {
+                    slot.classList.add('mine');
+                    slot.innerHTML = `<span>${num}</span><div class="slot-avatar" style="background: var(--pink);">${(State.userData?.name || 'U')[0]}</div>`;
+                }
+                this.toast(`Picked number ${num}`, 'success');
+            } catch (err) {
+                this.toast(err.message || 'Could not pick number', 'error');
+            }
+        },
+
+        showOdds(game) {
+            let html = '';
+            if (game === 'spin') {
+                html = `
+                  <div style="font-size: 20px; font-weight: 800; margin-bottom: 16px;">Spin Wheel Odds</div>
+                  <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                    <tr style="border-bottom: 1px solid var(--border);"><th style="text-align: left; padding: 8px 0; color: var(--text-dim);">Multiplier</th><th style="text-align: right; color: var(--text-dim);">Probability</th></tr>
+                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">5x</td><td style="text-align: right; color: var(--pink);">12.5%</td></tr>
+                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">4x</td><td style="text-align: right; color: var(--pink);">12.5%</td></tr>
+                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">3x</td><td style="text-align: right; color: var(--pink);">12.5%</td></tr>
+                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">2x</td><td style="text-align: right; color: var(--pink);">12.5%</td></tr>
+                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">1x</td><td style="text-align: right; color: var(--pink);">12.5%</td></tr>
+                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">0x</td><td style="text-align: right; color: var(--pink);">37.5%</td></tr>
+                  </table>
+                  <div style="margin-top: 16px; font-size: 12px; color: var(--text-dim); text-align: center;">RTP: ~59%</div>
+                `;
+            } else if (game === 'bingo') {
+                html = `
+                  <div style="font-size: 20px; font-weight: 800; margin-bottom: 16px;">Bingo Odds</div>
+                  <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                    <tr style="border-bottom: 1px solid var(--border);"><th style="text-align: left; padding: 8px 0; color: var(--text-dim);">Matches</th><th style="text-align: center; color: var(--text-dim);">Chance</th><th style="text-align: right; color: var(--text-dim);">Payout</th></tr>
+                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">0-1</td><td style="text-align: center; color: var(--text-dim);">63%</td><td style="text-align: right; color: var(--text-dim);">0x</td></tr>
+                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">2</td><td style="text-align: center; color: var(--text-dim);">29.4%</td><td style="text-align: right; color: var(--cyan);">1.5x</td></tr>
+                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">3</td><td style="text-align: center; color: var(--text-dim);">6.8%</td><td style="text-align: right; color: var(--purple);">4x</td></tr>
+                    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">4</td><td style="text-align: center; color: var(--text-dim);">0.48%</td><td style="text-align: right; color: var(--gold);">25x</td></tr>
+                    <tr><td style="padding: 10px 0;">5</td><td style="text-align: center; color: var(--text-dim);">0.006%</td><td style="text-align: right; color: var(--gold);">500x</td></tr>
+                  </table>
+                  <div style="margin-top: 16px; font-size: 12px; color: var(--text-dim); text-align: center;">RTP: ~86%</div>
+                `;
+            }
+            this.openModal(`<div style="padding: 8px;">${html}</div><button class="btn-secondary" style="margin-top: 20px;" onclick="App.closeModal()">Close</button>`);
+        },
+
+        showWinModal(payout, bet, label) {
+            const isBigWin = payout >= bet * 5;
+            if (isBigWin) this.fireConfetti();
+            this.openModal(`
+              <div style="text-align: center; padding: 12px 0;">
+                <div style="font-size: 48px; margin-bottom: 12px;">${isBigWin ? '🎉' : '✨'}</div>
+                <div style="font-size: 28px; font-weight: 800; color: var(--gold); margin-bottom: 4px;">+${this.formatNumber(payout)} ETB</div>
+                <div style="font-size: 14px; color: var(--text-dim); margin-bottom: 20px;">${label}</div>
+                <button class="btn-primary" onclick="App.closeModal()">Awesome!</button>
+              </div>
+            `);
+        },
+
+        // ========== REFERRAL ==========
+        copyReferral() {
+            const code = State.userData?.referralCode || 'DOQA123';
+            this.copyText(code);
+        },
+
+        shareReferral() {
+            const code = State.userData?.referralCode || 'DOQA123';
+            const text = `Join DOQA and win real money! Use my referral code: ${code}`;
+            if (navigator.share) {
+                navigator.share({ title: 'DOQA', text, url: window.location.href }).catch(() => {});
+            } else {
+                this.copyText(text);
+            }
+        },
+
+        copyText(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                this.toast('Copied!', 'success');
+            }).catch(() => {
+                this.toast('Failed to copy', 'error');
+            });
+        },
+
+        // ========== PROFILE ==========
+        toggleSound() {
+            State.soundEnabled = !State.soundEnabled;
+            const toggle = document.getElementById('sound-toggle');
+            if (toggle) {
+                toggle.style.transform = State.soundEnabled ? 'translateX(0)' : 'translateX(-18px)';
+                toggle.parentElement.style.background = State.soundEnabled ? 'var(--pink)' : 'var(--text-dim)';
+            }
+            this.toast(State.soundEnabled ? 'Sound on' : 'Sound off', 'info');
+        },
+
+        toggleLang() {
+            State.language = State.language === 'en' ? 'am' : 'en';
+            this.toast(State.language === 'en' ? 'English' : 'አማርኛ', 'info');
+        },
+
+        // ========== SITE CLOSED ==========
+        showClosedScreen() {
+            const overlay = document.createElement('div');
+            overlay.id = 'closed-overlay';
+            overlay.style.cssText = 'position: fixed; inset: 0; z-index: 5000; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center;';
+            overlay.innerHTML = `
+              <div style="font-size: 64px; margin-bottom: 24px;">🔒</div>
+              <div style="font-size: 24px; font-weight: 800; margin-bottom: 12px;">DOQA is Temporarily Closed</div>
+              <div style="font-size: 14px; color: var(--text-dim); max-width: 300px; line-height: 1.6; margin-bottom: 24px;">${this.escapeHtml(State.settings.closedMessage || 'We will be back soon!')}</div>
+              <div style="font-size: 13px; color: var(--pink); font-weight: 600;">Reopening soon</div>
+            `;
+            document.body.appendChild(overlay);
+        },
+
+        // ========== UTILITIES ==========
+        formatNumber(n) {
+            return Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        },
+
+        escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        },
+
+        fireConfetti() {
+            const colors = ['#FF1685', '#20D9F5', '#923EFF', '#FFD700', '#FFFFFF'];
+            for (let i = 0; i < 60; i++) {
+                const piece = document.createElement('div');
+                piece.className = 'confetti-piece';
+                piece.style.left = Math.random() * 100 + 'vw';
+                piece.style.top = -10 + 'px';
+                piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+                piece.style.width = (6 + Math.random() * 8) + 'px';
+                piece.style.height = (6 + Math.random() * 8) + 'px';
+                piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                piece.style.animationDelay = Math.random() * 0.8 + 's';
+                piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+                document.body.appendChild(piece);
+                setTimeout(() => piece.remove(), 4500);
+            }
         }
-      },
-
-      showDoqaBoard(entry, joinResult) {
-        const html = `
-          <div style="text-align: center; margin-bottom: 16px;">
-            <div style="font-size: 20px; font-weight: 800; margin-bottom: 4px;">Room: ${entry} ETB</div>
-            <div style="font-size: 12px; color: var(--text-dim);">Pick a number (1-10)</div>
-          </div>
-          <div class="slot-grid" id="doqa-slots">
-            ${Array.from({length: 10}, (_, i) => i + 1).map(n => `
-              <div class="slot" data-num="${n}" onclick="App.pickDoqaNumber(${n})">${n}</div>
-            `).join('')}
-          </div>
-          <div style="margin-top: 24px; text-align: center;">
-            <div style="font-size: 13px; color: var(--text-dim); margin-bottom: 12px;">Waiting for players...</div>
-            <div style="font-size: 11px; color: var(--text-dim);" id="doqa-status">0/10 players</div>
-          </div>
-        `;
-        this.openSheet(html);
-        // Mark user's chosen number
-        setTimeout(() => {
-          const slot = document.querySelector(`.slot[data-num="${joinResult.number}"]`);
-          if (slot) {
-            slot.classList.add('mine');
-            slot.innerHTML = `<span>${joinResult.number}</span><div class="slot-avatar" style="background: var(--pink);">${(State.userData?.name || 'U')[0]}</div>`;
-          }
-        }, 500);
-      },
-
-      async pickDoqaNumber(num) {
-        try {
-          await Api.pickDoqaNumber({ number: num });
-          const slot = document.querySelector(`.slot[data-num="${num}"]`);
-          if (slot) {
-            slot.classList.add('mine');
-            slot.innerHTML = `<span>${num}</span><div class="slot-avatar" style="background: var(--pink);">${(State.userData?.name || 'U')[0]}</div>`;
-          }
-          this.toast(`Picked number ${num}`, 'success');
-        } catch (err) {
-          this.toast(err.message || 'Could not pick number', 'error');
-        }
-      },
-
-      showOdds(game) {
-        let html = '';
-        if (game === 'spin') {
-          html = `
-            <div style="font-size: 20px; font-weight: 800; margin-bottom: 16px;">Spin Wheel Odds</div>
-            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-              <tr style="border-bottom: 1px solid var(--border);"><th style="text-align: left; padding: 8px 0; color: var(--text-dim);">Multiplier</th><th style="text-align: right; color: var(--text-dim);">Probability</th></tr>
-              <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">5x</td><td style="text-align: right; color: var(--pink);">1.5%</td></tr>
-              <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">3x</td><td style="text-align: right; color: var(--pink);">3.5%</td></tr>
-              <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">2x</td><td style="text-align: right; color: var(--pink);">9%</td></tr>
-              <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">1.5x</td><td style="text-align: right; color: var(--pink);">14%</td></tr>
-              <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">1x</td><td style="text-align: right; color: var(--pink);">22%</td></tr>
-              <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">0.5x</td><td style="text-align: right; color: var(--pink);">20%</td></tr>
-              <tr><td style="padding: 10px 0;">0x</td><td style="text-align: right; color: var(--pink);">30%</td></tr>
-            </table>
-            <div style="margin-top: 16px; font-size: 12px; color: var(--text-dim); text-align: center;">RTP: ~89%</div>
-          `;
-        } else if (game === 'bingo') {
-          html = `
-            <div style="font-size: 20px; font-weight: 800; margin-bottom: 16px;">Bingo Odds</div>
-            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-              <tr style="border-bottom: 1px solid var(--border);"><th style="text-align: left; padding: 8px 0; color: var(--text-dim);">Matches</th><th style="text-align: right; color: var(--text-dim);">Payout</th></tr>
-              <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">5</td><td style="text-align: right; color: var(--gold);">500x</td></tr>
-              <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">4</td><td style="text-align: right; color: var(--gold);">25x</td></tr>
-              <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">3</td><td style="text-align: right; color: var(--gold);">4x</td></tr>
-              <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px 0;">2</td><td style="text-align: right; color: var(--gold);">1.5x</td></tr>
-              <tr><td style="padding: 10px 0;">0-1</td><td style="text-align: right; color: var(--text-dim);">0x</td></tr>
-            </table>
-            <div style="margin-top: 16px; font-size: 12px; color: var(--text-dim); text-align: center;">RTP: ~86%</div>
-          `;
-        }
-        this.openModal(`<div style="padding: 8px;">${html}</div><button class="btn-secondary" style="margin-top: 20px;" onclick="App.closeModal()">Close</button>`);
-      },
-
-      showWinModal(payout, bet, label) {
-        const isBigWin = payout >= bet * 5;
-        if (isBigWin) this.fireConfetti();
-        this.openModal(`
-          <div style="text-align: center; padding: 12px 0;">
-            <div style="font-size: 48px; margin-bottom: 12px;">${isBigWin ? '🎉' : '✨'}</div>
-            <div style="font-size: 28px; font-weight: 800; color: var(--gold); margin-bottom: 4px;">+${this.formatNumber(payout)} ETB</div>
-            <div style="font-size: 14px; color: var(--text-dim); margin-bottom: 20px;">${label}</div>
-            <button class="btn-primary" onclick="App.closeModal()">Awesome!</button>
-          </div>
-        `);
-      },
-
-      // ========== REFERRAL ==========
-      copyReferral() {
-        const code = State.userData?.referralCode || 'DOQA123';
-        this.copyText(code);
-      },
-
-      shareReferral() {
-        const code = State.userData?.referralCode || 'DOQA123';
-        const text = `Join DOQA and win real money! Use my referral code: ${code}`;
-        if (navigator.share) {
-          navigator.share({ title: 'DOQA', text, url: window.location.href }).catch(() => {});
-        } else {
-          this.copyText(text);
-        }
-      },
-
-      copyText(text) {
-        navigator.clipboard.writeText(text).then(() => {
-          this.toast('Copied!', 'success');
-        }).catch(() => {
-          this.toast('Failed to copy', 'error');
-        });
-      },
-
-      // ========== PROFILE ==========
-      toggleSound() {
-        State.soundEnabled = !State.soundEnabled;
-        const toggle = document.getElementById('sound-toggle');
-        if (toggle) {
-          toggle.style.transform = State.soundEnabled ? 'translateX(0)' : 'translateX(-18px)';
-          toggle.parentElement.style.background = State.soundEnabled ? 'var(--pink)' : 'var(--text-dim)';
-        }
-        this.toast(State.soundEnabled ? 'Sound on' : 'Sound off', 'info');
-      },
-
-      toggleLang() {
-        State.language = State.language === 'en' ? 'am' : 'en';
-        this.toast(State.language === 'en' ? 'English' : 'አማርኛ', 'info');
-      },
-
-      // ========== SITE CLOSED ==========
-      showClosedScreen() {
-        const overlay = document.createElement('div');
-        overlay.id = 'closed-overlay';
-        overlay.style.cssText = 'position: fixed; inset: 0; z-index: 5000; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center;';
-        overlay.innerHTML = `
-          <div style="font-size: 64px; margin-bottom: 24px;">🔒</div>
-          <div style="font-size: 24px; font-weight: 800; margin-bottom: 12px;">DOQA is Temporarily Closed</div>
-          <div style="font-size: 14px; color: var(--text-dim); max-width: 300px; line-height: 1.6; margin-bottom: 24px;">${this.escapeHtml(State.settings.closedMessage || 'We will be back soon!')}</div>
-          <div style="font-size: 13px; color: var(--pink); font-weight: 600;">Reopening soon</div>
-        `;
-        document.body.appendChild(overlay);
-      },
-
-      // ========== UTILITIES ==========
-      formatNumber(n) {
-        return Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      },
-
-      escapeHtml(str) {
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
-      },
-
-      generateReferralCode() {
-        return 'DOQA' + Math.random().toString(36).substring(2, 8).toUpperCase();
-      },
-
-      fireConfetti() {
-        const colors = ['#FF1685', '#20D9F5', '#923EFF', '#FFD700', '#FFFFFF'];
-        for (let i = 0; i < 60; i++) {
-          const piece = document.createElement('div');
-          piece.className = 'confetti-piece';
-          piece.style.left = Math.random() * 100 + 'vw';
-          piece.style.top = -10 + 'px';
-          piece.style.background = colors[Math.floor(Math.random() * colors.length)];
-          piece.style.width = (6 + Math.random() * 8) + 'px';
-          piece.style.height = (6 + Math.random() * 8) + 'px';
-          piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
-          piece.style.animationDelay = Math.random() * 0.8 + 's';
-          piece.style.animationDuration = (2 + Math.random() * 2) + 's';
-          document.body.appendChild(piece);
-          setTimeout(() => piece.remove(), 4500);
-        }
-      }
     };
 
-    // ============================================================
-    // BOOT
-    // ============================================================
-    window.addEventListener('load', () => {
-      // Re-initialize Lucide icons
-      if (window.lucide) {
-        window.lucide.createIcons();
-      }
-      App.init();
-    });
-
-    // Expose App globally for inline handlers
+    // ---------- BOOT ----------
     window.App = App;
-
-    // ============================================================
-    // FIREBASE REALTIME DATABASE SECURITY RULES (for reference)
-    // ============================================================
-    /*
-    {
-      "rules": {
-        "users": {
-          "$uid": {
-            ".read": "$uid === auth.uid || root.child('admins').child(auth.uid).exists()",
-            ".write": "$uid === auth.uid || root.child('admins').child(auth.uid).exists()"
-          }
-        },
-        "deposits": {
-          ".read": "root.child('admins').child(auth.uid).exists()",
-          "$id": {
-            ".write": "auth !== null && !data.exists()",
-            ".validate": "newData.hasChildren(['uid', 'amount', 'senderName', 'screenshotUrl', 'status', 'createdAt'])"
-          }
-        },
-        "withdrawals": {
-          ".read": "root.child('admins').child(auth.uid).exists()",
-          "$id": {
-            ".write": "auth !== null && !data.exists()",
-            ".validate": "newData.hasChildren(['uid', 'amount', 'bankName', 'accountNumber', 'accountName', 'status', 'createdAt'])"
-          }
-        },
-        "transactions": {
-          "$uid": {
-            ".read": "$uid === auth.uid || root.child('admins').child(auth.uid).exists()",
-            ".write": "root.child('admins').child(auth.uid).exists()"
-          }
-        },
-        "rounds": {
-          ".read": "root.child('admins').child(auth.uid).exists()",
-          ".write": "root.child('admins').child(auth.uid).exists()"
-        },
-        "rooms": {
-          ".read": "auth !== null",
-          ".write": "root.child('admins').child(auth.uid).exists()"
-        },
-        "referrals": {
-          "$referrerUid": {
-            ".read": "$referrerUid === auth.uid || root.child('admins').child(auth.uid).exists()",
-            ".write": "root.child('admins').child(auth.uid).exists()"
-          }
-        },
-        "settings": {
-          ".read": "auth !== null",
-          ".write": "root.child('admins').child(auth.uid).exists()"
-        },
-        "admins": {
-          ".read": "root.child('admins').child(auth.uid).exists()",
-          ".write": "false"
-        }
-      }
-    }
-    */
-
-    // ============================================================
-    // CLOUD FUNCTIONS CONTRACT
-    // ============================================================
-    /*
-    FUNCTION: signUp
-    INPUT: { name: string, phone: string, email: string, password: string, referralCode?: string }
-    OUTPUT: { user: UserProfile }
-    CHECKS: Validate email/phone uniqueness, phone format, referral code validity, age >= 18.
-    SERVER: Create Firebase Auth user, create users/{uid} profile with 0 balance.
-
-    FUNCTION: login
-    INPUT: { email: string, password: string }
-    OUTPUT: { user: UserProfile }
-    CHECKS: Firebase Auth verification.
-
-    FUNCTION: requestDeposit
-    INPUT: { amount: number, senderName: string, screenshotUrl: string }
-    OUTPUT: { success: boolean, id: string }
-    CHECKS: amount >= minDeposit, <= maxDeposit, user has < 3 pending deposits, screenshot URL valid.
-    SERVER: Create deposits/{id} with status "pending". Do NOT credit balance.
-
-    FUNCTION: requestWithdraw
-    INPUT: { amount: number, bankName: string, accountNumber: string, accountName: string }
-    OUTPUT: { success: boolean, id: string }
-    CHECKS: amount >= minWithdraw, amount <= maxWithdraw, user balance >= amount, user totalWagered >= totalDeposited,
-             bonus wagering complete. Server atomically deducts balance into hold.
-    SERVER: Create withdrawals/{id} status "pending", create hold. If rejected, refund.
-
-    FUNCTION: playSpin
-    INPUT: { bet: number }
-    OUTPUT: { result: number (multiplier), payout: number, serverSeed: string, serverSeedHash: string, nonce: number }
-    CHECKS: bet <= maxBetPerGame, bet <= balance + bonusBalance, site open, user not excluded.
-    SERVER: Use crypto RNG with weights [300,200,220,140,90,35,15] per 1000 to pick multiplier.
-            Deduct bet, credit payout, create round record, update wagering progress.
-
-    FUNCTION: playBingo
-    INPUT: { bet: number, picks: number[5] }
-    OUTPUT: { matches: number, payout: number, drawnNumbers: number[5], serverSeed: string, serverSeedHash: string, nonce: number }
-    CHECKS: picks exactly 5 unique numbers 1-20, bet valid, site open.
-    SERVER: Draw 5 unique numbers 1-20 using crypto RNG. Calculate matches. Paytable [0,0,1.5,4,25,500].
-            Deduct bet, credit payout, create round, update wagering.
-
-    FUNCTION: joinDoqaRoom
-    INPUT: { roomId: string, entry: number }
-    OUTPUT: { success: boolean, roomId: string, number: number }
-    CHECKS: room exists, room is open, user not already in room, balance >= entry, room has < 10 players.
-    SERVER: Atomically charge entry, add uid to room slots, assign free number 1-10, update room pool.
-
-    FUNCTION: pickDoqaNumber
-    INPUT: { number: number }
-    OUTPUT: { success: boolean, number: number }
-    CHECKS: number 1-10 free, user is in an active room, room not full.
-    SERVER: Atomically assign number to user's slot. Prevent double-picks.
-
-    FUNCTION: claimReferral
-    INPUT: { refereeUid: string }
-    OUTPUT: { success: boolean, reward: number }
-    CHECKS: referee's first deposit approved, referrer not self, one reward per referee, anti-abuse checks.
-    SERVER: Credit referrer bonusBalance with 5 ETB, set wagerRequired += reward * bonusWagerMultiplier,
-            create transaction record.
-
-    FUNCTION: adminApproveDeposit
-    INPUT: { depositId: string, note?: string }
-    OUTPUT: { success: boolean }
-    CHECKS: Caller has admin:true custom claim AND present in admins/{uid}.
-    SERVER: Set deposit status "approved", credit user balance, update totalDeposited,
-            trigger referral reward if first deposit, log audit.
-
-    FUNCTION: adminRejectDeposit
-    INPUT: { depositId: string, note: string }
-    OUTPUT: { success: boolean }
-    CHECKS: Admin only.
-    SERVER: Set deposit status "rejected", log audit.
-
-    FUNCTION: adminApproveWithdraw
-    INPUT: { withdrawalId: string, note?: string }
-    OUTPUT: { success: boolean }
-    CHECKS: Admin only.
-    SERVER: Set withdrawal status "approved", remove hold, log audit.
-
-    FUNCTION: adminRejectWithdraw
-    INPUT: { withdrawalId: string, note: string }
-    OUTPUT: { success: boolean }
-    CHECKS: Admin only.
-    SERVER: Set withdrawal status "rejected", refund hold to user balance, log audit.
-
-    FUNCTION: adminSetSiteStatus
-    INPUT: { siteOpen: boolean, closedMessage?: string, reopenAt?: number }
-    OUTPUT: { success: boolean }
-    CHECKS: Admin only.
-    SERVER: Update settings/siteOpen, settings/closedMessage, settings/reopenAt. Log audit.
-
-    FUNCTION: adminUpdateSettings
-    INPUT: { settings: Partial<Settings> }
-    OUTPUT: { success: boolean }
-    CHECKS: Admin only, validate each setting.
-    SERVER: Update settings. Log audit.
-
-    FUNCTION: adminAdjustBalance
-    INPUT: { uid: string, amount: number, reason: string }
-    OUTPUT: { success: boolean }
-    CHECKS: Admin only, amount != 0, reason provided.
-    SERVER: Atomically adjust user balance, create transaction record, log audit.
-    */
+    window.addEventListener('load', () => {
+        if (window.lucide) window.lucide.createIcons();
+        App.init();
+    });
   </script>
 </body>
 </html>
