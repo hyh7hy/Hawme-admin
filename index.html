@@ -147,7 +147,7 @@
 <body>
   <div id="toast-container"></div>
 
-  <!-- DIRECT ADMIN DASHBOARD SHELL (NO PASSWORD GATE) -->
+  <!-- DIRECT ADMIN DASHBOARD SHELL (ALIGNED WITH index.html) -->
   <div id="admin-shell">
     <header class="topbar">
       <div style="display:flex; align-items:center; gap:12px;">
@@ -155,7 +155,7 @@
         <strong class="display-font" style="font-size:16px;">AV GAME Control Center</strong>
       </div>
       <div style="display:flex; align-items:center; gap:10px;">
-        <a href="index.html" class="btn btn-secondary btn-sm"><i data-lucide="globe"></i> Open World View</a>
+        <a href="index.html" class="btn btn-secondary btn-sm"><i data-lucide="globe"></i> Open World Map</a>
       </div>
     </header>
 
@@ -163,48 +163,59 @@
       <!-- LIVE WORLD KPI STRIP -->
       <div class="grid-4" style="margin-bottom:20px;">
         <div class="card"><div class="kpi-sub">Registered Presidents</div><div class="kpi-value mono" id="kpi-players">0</div></div>
-        <div class="card"><div class="kpi-sub">Configured Nations</div><div class="kpi-value mono" id="kpi-countries">0</div></div>
-        <div class="card"><div class="kpi-sub">Active Companies</div><div class="kpi-value mono" id="kpi-companies">0</div></div>
+        <div class="card"><div class="kpi-sub">Active Nations</div><div class="kpi-value mono" id="kpi-countries">0</div></div>
+        <div class="card"><div class="kpi-sub">Global Nuclear Warheads</div><div class="kpi-value mono" style="color:var(--orange);" id="kpi-nukes">0</div></div>
         <div class="card"><div class="kpi-sub">Open Corporate Offers</div><div class="kpi-value mono" id="kpi-events">0 Offers</div></div>
       </div>
 
       <!-- NAVIGATION TABS -->
       <div class="tab-bar" id="admin-tabs">
-        <button class="tab-btn active" data-tab="players"><i data-lucide="users"></i> Players & Assignments</button>
-        <button class="tab-btn" data-tab="countries"><i data-lucide="flag"></i> Countries & Inventories</button>
+        <button class="tab-btn active" data-tab="players"><i data-lucide="users"></i> Players & Nuclear Alignment</button>
+        <button class="tab-btn" data-tab="countries"><i data-lucide="flag"></i> Nations & Inventories</button>
         <button class="tab-btn" data-tab="companies"><i data-lucide="factory"></i> Companies & Scarcity</button>
         <button class="tab-btn" data-tab="offers"><i data-lucide="briefcase"></i> Corporate Offers</button>
         <button class="tab-btn" data-tab="rules"><i data-lucide="sliders"></i> Global Rules & News</button>
         <button class="tab-btn" data-tab="audit"><i data-lucide="file-text"></i> Audit Logs</button>
       </div>
 
-      <!-- TAB 1: PLAYERS & ASSIGNMENTS -->
+      <!-- TAB 1: PROVISION PLAYER + LISTED COUNTRY + COINS + NUCLEAR -->
       <section id="tab-players" class="admin-tab-panel">
         <div class="grid-3">
           <div class="card">
-            <div class="card-header"><span class="card-title"><i data-lucide="user-plus" style="color:var(--orange);"></i> Provision New President</span></div>
+            <div class="card-header"><span class="card-title"><i data-lucide="user-plus" style="color:var(--orange);"></i> Provision Player & Align Country</span></div>
             <form id="provision-player-form">
-              <div class="form-group"><label>Username (Login ID)</label><input id="p-username" placeholder="e.g. Alex" required /></div>
-              <div class="form-group"><label>Temporary Initial Password</label><input id="p-temp-pw" type="text" placeholder="TempPass2026!" minlength="8" required /></div>
               <div class="grid-2">
-                <div class="form-group"><label>Assign Country (ISO-3)</label><input id="p-iso" placeholder="USA" maxlength="3" required /></div>
-                <div class="form-group"><label>Starting Coins</label><input id="p-coins" type="number" value="50000" required /></div>
+                <div class="form-group"><label>Player Username</label><input id="p-username" placeholder="e.g. Alex" required /></div>
+                <div class="form-group"><label>Initial Password</label><input id="p-temp-pw" type="text" placeholder="Pass2026!" minlength="8" required /></div>
+              </div>
+              <div class="form-group">
+                <label>Choose Listed Country (Auto-Aligns Main Page & Map)</label>
+                <select id="p-country-select" required></select>
               </div>
               <div class="grid-2">
-                <div class="form-group"><label>Starting Level</label><input id="p-level" type="number" value="1" min="1" required /></div>
-                <div class="form-group"><label>Government Role</label>
-                  <select id="p-role"><option value="president">President</option><option value="minister">Minister</option></select>
+                <div class="form-group"><label>Starting Coins</label><input id="p-coins" type="number" value="100000" required /></div>
+                <div class="form-group"><label>Military Score</label><input id="p-military" type="number" value="80" min="1" required /></div>
+              </div>
+              <div class="grid-2">
+                <div class="form-group"><label>Nuclear Warheads</label><input id="p-nukes" type="number" value="0" min="0" required /></div>
+                <div class="form-group"><label>Nuclear Status</label>
+                  <select id="p-nuke-status">
+                    <option value="Non-Nuclear">Non-Nuclear</option>
+                    <option value="Threshold Research">Threshold Research</option>
+                    <option value="Tactical Deterrent">Tactical Deterrent</option>
+                    <option value="Strategic Nuclear Power">Strategic Nuclear Power</option>
+                  </select>
                 </div>
               </div>
-              <button type="submit" class="btn btn-admin btn-full" id="provision-btn"><i data-lucide="server"></i> Create Account</button>
+              <button type="submit" class="btn btn-admin btn-full" id="provision-btn"><i data-lucide="server"></i> Create Player & Align Nation</button>
             </form>
           </div>
 
           <div class="card" style="grid-column: span 2;">
-            <div class="card-header"><span class="card-title"><i data-lucide="shield" style="color:var(--cyan);"></i> Active Player Roster & Access Control</span></div>
+            <div class="card-header"><span class="card-title"><i data-lucide="shield" style="color:var(--cyan);"></i> Active Player Roster & Aligned Nations</span></div>
             <div class="table-wrap">
               <table>
-                <thead><tr><th>Username</th><th>Country</th><th>Role</th><th>First Login</th><th>Status</th><th>Actions</th></tr></thead>
+                <thead><tr><th>Username</th><th>Aligned Country</th><th>Coins</th><th>Nuclear Arsenal</th><th>Status</th><th>Actions</th></tr></thead>
                 <tbody id="players-tbody"></tbody>
               </table>
             </div>
@@ -212,16 +223,15 @@
         </div>
       </section>
 
-      <!-- TAB 2: COUNTRIES & STARTING INVENTORIES -->
+      <!-- TAB 2: NATIONS, NUCLEAR DOCTRINE & INVENTORIES -->
       <section id="tab-countries" class="admin-tab-panel hidden">
         <div class="grid-3" style="margin-bottom:16px;">
           <div class="card">
-            <div class="card-header"><span class="card-title"><i data-lucide="globe" style="color:var(--cyan);"></i> Configure Nation</span></div>
+            <div class="card-header"><span class="card-title"><i data-lucide="globe" style="color:var(--cyan);"></i> Configure Listed Country</span></div>
             <form id="country-config-form">
-              <div class="grid-3">
-                <div class="form-group"><label>ISO-3</label><input id="c-iso" placeholder="USA" maxlength="3" required /></div>
-                <div class="form-group"><label>Country Name</label><input id="c-name" placeholder="United States" required /></div>
-                <div class="form-group"><label>Flag</label><input id="c-flag" placeholder="🇺🇸" required /></div>
+              <div class="form-group">
+                <label>Select Country from World Catalog</label>
+                <select id="c-country-select" required></select>
               </div>
               <div class="grid-3">
                 <div class="form-group"><label>Treasury</label><input id="c-coins" type="number" value="100000" required /></div>
@@ -229,19 +239,30 @@
                 <div class="form-group"><label>Tech Tier</label><input id="c-tech" type="number" value="2" min="1" required /></div>
               </div>
               <div class="grid-2">
+                <div class="form-group"><label>Nuclear Warheads</label><input id="c-nukes" type="number" value="0" min="0" required /></div>
+                <div class="form-group"><label>Nuclear Doctrine</label>
+                  <select id="c-nuke-status">
+                    <option value="Non-Nuclear">Non-Nuclear</option>
+                    <option value="Threshold Research">Threshold Research</option>
+                    <option value="Tactical Deterrent">Tactical Deterrent</option>
+                    <option value="Strategic Nuclear Power">Strategic Nuclear Power</option>
+                  </select>
+                </div>
+              </div>
+              <div class="grid-2">
                 <div class="form-group"><label>Unclaimed Purchasable?</label>
                   <select id="c-purchasable"><option value="false">No</option><option value="true">Yes</option></select>
                 </div>
                 <div class="form-group"><label>Acquisition Price</label><input id="c-price" type="number" value="50000" /></div>
               </div>
-              <button type="submit" class="btn btn-primary btn-full"><i data-lucide="save"></i> Save Nation Parameters</button>
+              <button type="submit" class="btn btn-primary btn-full"><i data-lucide="save"></i> Save & Align Country</button>
             </form>
           </div>
 
           <div class="card">
             <div class="card-header"><span class="card-title"><i data-lucide="package-plus" style="color:var(--green);"></i> Grant / Set Country Stock</span></div>
             <form id="grant-inventory-form">
-              <div class="form-group"><label>Target Country ISO-3</label><input id="inv-iso" placeholder="USA" maxlength="3" required /></div>
+              <div class="form-group"><label>Select Country</label><select id="inv-country-select" required></select></div>
               <div class="form-group"><label>Product / Resource Name</label><input id="inv-product" placeholder="Oil" required /></div>
               <div class="grid-2">
                 <div class="form-group"><label>Stock Quantity</label><input id="inv-qty" type="number" value="250" required /></div>
@@ -254,7 +275,7 @@
           <div class="card">
             <div class="card-header"><span class="card-title"><i data-lucide="target" style="color:var(--purple);"></i> Assign Presidential Mission</span></div>
             <form id="assign-mission-form">
-              <div class="form-group"><label>Target Country ISO-3</label><input id="m-iso" placeholder="USA" maxlength="3" required /></div>
+              <div class="form-group"><label>Select Country</label><select id="m-country-select" required></select></div>
               <div class="form-group"><label>Mission Title</label><input id="m-title" placeholder="International Exporter" required /></div>
               <div class="form-group"><label>Description</label><input id="m-desc" placeholder="Complete 1 export deal on the Global Market" required /></div>
               <div class="grid-2">
@@ -267,10 +288,10 @@
         </div>
 
         <div class="card">
-          <div class="card-header"><span class="card-title"><i data-lucide="map-pin" style="color:var(--orange);"></i> World Nations Directory</span></div>
+          <div class="card-header"><span class="card-title"><i data-lucide="map-pin" style="color:var(--orange);"></i> World Nations Directory (Live Synced with Map)</span></div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Flag</th><th>ISO</th><th>Name</th><th>President</th><th>Treasury</th><th>Military</th><th>Tech</th><th>Purchasable</th></tr></thead>
+              <thead><tr><th>Nation</th><th>President</th><th>Treasury</th><th>Military</th><th>Nuclear Arsenal</th><th>Doctrine</th><th>Purchasable</th></tr></thead>
               <tbody id="countries-tbody"></tbody>
             </table>
           </div>
@@ -285,7 +306,7 @@
             <form id="company-create-form">
               <div class="form-group"><label>Company Name</label><input id="comp-name" placeholder="Aramco" required /></div>
               <div class="grid-2">
-                <div class="form-group"><label>Country ISO-3</label><input id="comp-iso" placeholder="SAU" maxlength="3" required /></div>
+                <div class="form-group"><label>Owner Country</label><select id="comp-country-select" required></select></div>
                 <div class="form-group"><label>Industry Sector</label><input id="comp-sector" placeholder="Energy & Oil" required /></div>
               </div>
               <div class="form-group"><label>Product Produced</label><input id="comp-product" placeholder="Crude Oil" required /></div>
@@ -321,7 +342,7 @@
               <div class="form-group"><label>Offer Title</label><input id="off-title" placeholder="Mercedes-Benz Assembly Plant" required /></div>
               <div class="form-group"><label>Description</label><textarea id="off-desc" rows="2" placeholder="Grants industrial automotive capacity and +150 GDP."></textarea></div>
               <div class="grid-2">
-                <div class="form-group"><label>Restrict to ISO (Blank = Global)</label><input id="off-iso" placeholder="DEU" maxlength="3" /></div>
+                <div class="form-group"><label>Target Country</label><select id="off-country-select"></select></div>
                 <div class="form-group"><label>Price (Coins)</label><input id="off-price" type="number" value="35000" min="1" required /></div>
               </div>
               <div class="grid-2">
@@ -356,12 +377,12 @@
                 <label>Announcement Category</label>
                 <select id="news-type">
                   <option value="WORLD COUNCIL">World Council Decree</option>
+                  <option value="NUCLEAR TREATY">Nuclear Non-Proliferation Notice</option>
                   <option value="ECONOMY">Global Market Shift</option>
                   <option value="DIPLOMACY">International Summit</option>
-                  <option value="LAW">International Law Update</option>
                 </select>
               </div>
-              <div class="form-group"><label>Public Dispatch Message</label><textarea id="news-msg" rows="3" required placeholder="Announce global trade rules, oil crises, or tournament milestones..."></textarea></div>
+              <div class="form-group"><label>Public Dispatch Message</label><textarea id="news-msg" rows="3" required placeholder="Announce global trade rules, nuclear treaties, or tournament milestones..."></textarea></div>
               <button type="submit" class="btn btn-admin btn-full"><i data-lucide="radio"></i> Publish to Live News Feed</button>
             </form>
           </div>
@@ -419,11 +440,59 @@
       measurementId: "G-RYBWW6XB10"
     };
 
+    // IDENTICAL CANONICAL COUNTRY CATALOG AS index.html FOR 100% ALIGNMENT
+    const WORLD_COUNTRIES = [
+      { iso: "USA", num: "840", name: "United States", flag: "🇺🇸" },
+      { iso: "RUS", num: "643", name: "Russia", flag: "🇷🇺" },
+      { iso: "CHN", num: "156", name: "China", flag: "🇨🇳" },
+      { iso: "DEU", num: "276", name: "Germany", flag: "🇩🇪" },
+      { iso: "JPN", num: "392", name: "Japan", flag: "🇯🇵" },
+      { iso: "GBR", num: "826", name: "United Kingdom", flag: "🇬🇧" },
+      { iso: "FRA", num: "250", name: "France", flag: "🇫🇷" },
+      { iso: "IND", num: "356", name: "India", flag: "🇮🇳" },
+      { iso: "SAU", num: "682", name: "Saudi Arabia", flag: "🇸🇦" },
+      { iso: "ETH", num: "231", name: "Ethiopia", flag: "🇪🇹" },
+      { iso: "BRA", num: "076", name: "Brazil", flag: "🇧🇷" },
+      { iso: "COL", num: "170", name: "Colombia", flag: "🇨🇴" },
+      { iso: "EGY", num: "818", name: "Egypt", flag: "🇪🇬" },
+      { iso: "ZAF", num: "710", name: "South Africa", flag: "🇿🇦" },
+      { iso: "TUR", num: "792", name: "Turkey", flag: "🇹🇷" },
+      { iso: "KOR", num: "410", name: "South Korea", flag: "🇰🇷" },
+      { iso: "AUS", num: "036", name: "Australia", flag: "🇦🇺" },
+      { iso: "CAN", num: "124", name: "Canada", flag: "🇨🇦" },
+      { iso: "MEX", num: "484", name: "Mexico", flag: "🇲🇽" },
+      { iso: "ITA", num: "380", name: "Italy", flag: "🇮🇹" },
+      { iso: "ISR", num: "376", name: "Israel", flag: "🇮🇱" },
+      { iso: "IRN", num: "364", name: "Iran", flag: "🇮🇷" },
+      { iso: "PAK", num: "586", name: "Pakistan", flag: "🇵🇰" },
+      { iso: "NGA", num: "566", name: "Nigeria", flag: "🇳🇬" },
+      { iso: "KEN", num: "404", name: "Kenya", flag: "🇰🇪" },
+      { iso: "ARE", num: "784", name: "United Arab Emirates", flag: "🇦🇪" },
+      { iso: "ESP", num: "724", name: "Spain", flag: "🇪🇸" },
+      { iso: "IDN", num: "360", name: "Indonesia", flag: "🇮🇩" },
+      { iso: "ARG", num: "032", name: "Argentina", flag: "🇦🇷" },
+      { iso: "UKR", num: "804", name: "Ukraine", flag: "🇺🇦" }
+    ];
+
+    const CATALOG_BY_ISO = Object.fromEntries(WORLD_COUNTRIES.map(c => [c.iso, c]));
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
     const functions = getFunctions(app);
 
+    const countriesCache = {};
+
+    function populateListedCountryDropdowns() {
+      const optionsHtml = WORLD_COUNTRIES.map(c => `<option value="${c.iso}">${c.flag} ${c.name} (${c.iso})</option>`).join('');
+      ['p-country-select', 'c-country-select', 'inv-country-select', 'm-country-select', 'comp-country-select'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = optionsHtml;
+      });
+      const offSel = document.getElementById('off-country-select');
+      if (offSel) offSel.innerHTML = `<option value="">🌐 Global (All Countries)</option>` + optionsHtml;
+    }
+    populateListedCountryDropdowns();
     lucide.createIcons();
 
     function escapeHtml(str = '') {
@@ -460,61 +529,72 @@
       document.getElementById(`tab-${btn.dataset.tab}`).classList.remove('hidden');
     });
 
-    // Real-time Listeners (Load Immediately Without Password Gate)
-    onSnapshot(collection(db, 'users'), (snap) => {
-      document.getElementById('kpi-players').textContent = snap.size;
+    // Real-time Listeners
+    let usersCache = [];
+    function renderPlayersTable() {
       const tbody = document.getElementById('players-tbody');
       tbody.innerHTML = '';
-      snap.forEach(d => {
-        const u = d.data();
+      usersCache.forEach(u => {
+        const c = countriesCache[u.countryIso] || CATALOG_BY_ISO[u.countryIso] || {};
         tbody.insertAdjacentHTML('beforeend', `
           <tr>
             <td><strong>${escapeHtml(u.username)}</strong></td>
-            <td class="mono">${escapeHtml(u.countryIso || 'NONE')}</td>
-            <td>${escapeHtml(u.role || 'president')}</td>
-            <td>${u.mustChangePassword ? '<span style="color:var(--orange);">Temp PW Pending</span>' : '<span style="color:var(--green);">Active</span>'}</td>
-            <td>${u.suspended ? '<span style="color:var(--danger);">SUSPENDED</span>' : 'Enabled'}</td>
+            <td>${c.flag || '🏳️'} <strong>${escapeHtml(c.name || u.countryIso || 'NONE')}</strong> <span class="mono">(${escapeHtml(u.countryIso || '-')})</span></td>
+            <td class="mono">${(c.coins ?? 0).toLocaleString()}</td>
+            <td class="mono" style="color:var(--orange);">☢️ ${c.nuclearWarheads ?? 0} (${escapeHtml(c.nuclearStatus || 'Non-Nuclear')})</td>
+            <td>${u.suspended ? '<span style="color:var(--danger);">SUSPENDED</span>' : '<span style="color:var(--green);">Active</span>'}</td>
             <td>
-              <button class="btn btn-secondary btn-sm" data-toggle-suspend="${d.id}" data-cur="${Boolean(u.suspended)}">
+              <button class="btn btn-secondary btn-sm" data-toggle-suspend="${u.id}" data-cur="${Boolean(u.suspended)}">
                 ${u.suspended ? 'Restore' : 'Suspend'}
               </button>
             </td>
           </tr>
         `);
       });
-    }, (err) => toast(`Firestore read notice: ${err.message}`));
+    }
+
+    onSnapshot(collection(db, 'users'), (snap) => {
+      document.getElementById('kpi-players').textContent = snap.size;
+      usersCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderPlayersTable();
+    }, (err) => toast(`Firestore notice: ${err.message}`));
 
     onSnapshot(collection(db, 'countries'), (snap) => {
       document.getElementById('kpi-countries').textContent = snap.size;
+      let totalNukes = 0;
       const tbody = document.getElementById('countries-tbody');
       tbody.innerHTML = '';
       snap.forEach(d => {
-        const c = d.data();
+        const meta = CATALOG_BY_ISO[d.id];
+        const c = { name: meta?.name || d.id, flag: meta?.flag || '🏳️', ...d.data() };
+        countriesCache[d.id] = c;
+        totalNukes += Number(c.nuclearWarheads || 0);
         tbody.insertAdjacentHTML('beforeend', `
           <tr>
-            <td style="font-size:18px;">${c.flag || '🏳️'}</td>
-            <td class="mono"><strong>${escapeHtml(d.id)}</strong></td>
-            <td>${escapeHtml(c.name)}</td>
+            <td>${c.flag} <strong>${escapeHtml(c.name)}</strong> <span class="mono">(${escapeHtml(d.id)})</span></td>
             <td>${escapeHtml(c.presidentName || 'Unclaimed')}</td>
             <td class="mono">${(c.coins || 0).toLocaleString()}</td>
             <td class="mono">${c.militaryScore || 10}</td>
-            <td class="mono">Tier ${c.techLevel || 1}</td>
+            <td class="mono" style="color:var(--orange);">☢️ ${c.nuclearWarheads || 0}</td>
+            <td>${escapeHtml(c.nuclearStatus || 'Non-Nuclear')}</td>
             <td>${c.purchasable ? 'Yes' : 'No'}</td>
           </tr>
         `);
       });
+      document.getElementById('kpi-nukes').textContent = totalNukes.toLocaleString();
+      renderPlayersTable();
     });
 
     onSnapshot(collection(db, 'companies'), (snap) => {
-      document.getElementById('kpi-companies').textContent = snap.size;
       const tbody = document.getElementById('companies-tbody');
       tbody.innerHTML = '';
       snap.forEach(d => {
         const comp = d.data();
+        const meta = CATALOG_BY_ISO[comp.countryIso];
         tbody.insertAdjacentHTML('beforeend', `
           <tr>
             <td><strong>${escapeHtml(comp.name)}</strong></td>
-            <td class="mono">${escapeHtml(comp.countryIso)}</td>
+            <td>${meta?.flag || ''} <span class="mono">${escapeHtml(comp.countryIso)}</span></td>
             <td>${escapeHtml(comp.product)}</td>
             <td class="mono">${comp.outputRate} / ${comp.intervalMinutes}m</td>
             <td><span style="color:${comp.status === 'ACTIVE' ? 'var(--green)' : 'var(--orange)'}; font-weight:700;">${escapeHtml(comp.status)}</span></td>
@@ -572,17 +652,47 @@
       e.preventDefault();
       const btn = document.getElementById('provision-btn');
       btn.disabled = true;
+
+      const iso = document.getElementById('p-country-select').value;
+      const meta = CATALOG_BY_ISO[iso];
+      const username = document.getElementById('p-username').value.trim();
+      const tempPassword = document.getElementById('p-temp-pw').value;
+      const startingCoins = Number(document.getElementById('p-coins').value) || 100000;
+      const militaryScore = Number(document.getElementById('p-military').value) || 80;
+      const nuclearWarheads = Number(document.getElementById('p-nukes').value) || 0;
+      const nuclearStatus = document.getElementById('p-nuke-status').value;
+
       try {
         const provisionFn = httpsCallable(functions, 'adminProvisionPlayer');
         await provisionFn({
-          username: document.getElementById('p-username').value.trim(),
-          tempPassword: document.getElementById('p-temp-pw').value,
-          countryIso: document.getElementById('p-iso').value.trim().toUpperCase(),
-          startingCoins: Number(document.getElementById('p-coins').value),
-          startingLevel: Number(document.getElementById('p-level').value),
-          role: document.getElementById('p-role').value
+          username,
+          tempPassword,
+          countryIso: iso,
+          countryName: meta?.name || iso,
+          countryFlag: meta?.flag || '🏳️',
+          startingCoins,
+          militaryScore,
+          nuclearWarheads,
+          nuclearStatus
         });
-        toast('Player provisioned via Cloud Function!');
+
+        // Ensure country document is immediately aligned with flag, name, coins, military, and nuclear arsenal
+        await setDoc(doc(db, 'countries', iso), {
+          name: meta?.name || iso,
+          flag: meta?.flag || '🏳️',
+          presidentName: username,
+          coins: startingCoins,
+          militaryScore,
+          nuclearWarheads,
+          nuclearStatus,
+          level: 1,
+          xp: 0,
+          stability: 100,
+          techLevel: 1
+        }, { merge: true });
+
+        await logAdminAction('PROVISION_ALIGNED_PLAYER', `${username} -> ${meta?.name} (${iso}) | Coins: ${startingCoins} | Nukes: ${nuclearWarheads}`);
+        toast(`${username} provisioned & aligned with ${meta?.flag || ''} ${meta?.name || iso}!`);
         e.target.reset();
       } catch (err) {
         toast(err.message);
@@ -605,26 +715,33 @@
     document.getElementById('country-config-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       try {
-        const iso = document.getElementById('c-iso').value.trim().toUpperCase();
+        const iso = document.getElementById('c-country-select').value;
+        const meta = CATALOG_BY_ISO[iso];
+        const nukes = Number(document.getElementById('c-nukes').value) || 0;
+        const nukeStatus = document.getElementById('c-nuke-status').value;
+
         await setDoc(doc(db, 'countries', iso), {
-          name: document.getElementById('c-name').value.trim(),
-          flag: document.getElementById('c-flag').value.trim(),
+          name: meta?.name || iso,
+          flag: meta?.flag || '🏳️',
           coins: Number(document.getElementById('c-coins').value),
           militaryScore: Number(document.getElementById('c-mil').value),
           techLevel: Number(document.getElementById('c-tech').value),
+          nuclearWarheads: nukes,
+          nuclearStatus: nukeStatus,
           purchasable: document.getElementById('c-purchasable').value === 'true',
           purchasePrice: Number(document.getElementById('c-price').value) || 50000,
           level: 1, xp: 0, stability: 100
         }, { merge: true });
-        await logAdminAction('CONFIGURE_COUNTRY', `Updated ${iso}`);
-        toast(`Country ${iso} saved.`);
+
+        await logAdminAction('CONFIGURE_COUNTRY', `${iso} (${meta?.name}) | Nukes: ${nukes}`);
+        toast(`${meta?.flag || ''} ${meta?.name || iso} aligned & updated.`);
       } catch (err) { toast(err.message); }
     });
 
     document.getElementById('grant-inventory-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       try {
-        const iso = document.getElementById('inv-iso').value.trim().toUpperCase();
+        const iso = document.getElementById('inv-country-select').value;
         const product = document.getElementById('inv-product').value.trim();
         const qty = Number(document.getElementById('inv-qty').value);
         const minThreshold = Number(document.getElementById('inv-threshold').value);
@@ -637,7 +754,7 @@
     document.getElementById('assign-mission-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       try {
-        const iso = document.getElementById('m-iso').value.trim().toUpperCase();
+        const iso = document.getElementById('m-country-select').value;
         await addDoc(collection(db, 'countries', iso, 'missions'), {
           title: document.getElementById('m-title').value.trim(),
           description: document.getElementById('m-desc').value.trim(),
@@ -658,7 +775,7 @@
       e.preventDefault();
       try {
         const name = document.getElementById('comp-name').value.trim();
-        const countryIso = document.getElementById('comp-iso').value.trim().toUpperCase();
+        const countryIso = document.getElementById('comp-country-select').value;
         await addDoc(collection(db, 'companies'), {
           name,
           countryIso,
@@ -670,7 +787,7 @@
           status: 'ACTIVE'
         });
         await logAdminAction('CREATE_COMPANY', `${name} (${countryIso})`);
-        toast(`${name} registered.`);
+        toast(`${name} registered to ${countryIso}.`);
         e.target.reset();
       } catch (err) { toast(err.message); }
     });
@@ -701,7 +818,7 @@
         await addDoc(collection(db, 'companyOffers'), {
           title,
           description: document.getElementById('off-desc').value.trim(),
-          targetIso: document.getElementById('off-iso').value.trim().toUpperCase(),
+          targetIso: document.getElementById('off-country-select').value,
           price: Number(document.getElementById('off-price').value),
           quantity: Number(document.getElementById('off-qty').value),
           unique: document.getElementById('off-unique').value === 'true',
