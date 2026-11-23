@@ -47,36 +47,13 @@
     .hidden { display: none !important; }
     svg.lucide { width: 16px; height: 16px; stroke-width: 2; flex-shrink: 0; }
 
-    /* Auth Gate */
-    #admin-auth-screen {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      background:
-        radial-gradient(circle at 20% 20%, rgba(245, 158, 11, 0.16) 0%, transparent 45%),
-        radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.16) 0%, transparent 45%),
-        var(--bg-base);
-    }
-    .auth-card {
-      width: 100%;
-      max-width: 430px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-strong);
-      border-radius: 18px;
-      padding: 34px;
-      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.65);
-    }
     .admin-badge {
       display: inline-flex; align-items: center; gap: 6px;
       font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
       color: var(--orange); background: rgba(251, 191, 36, 0.12);
       border: 1px solid rgba(251, 191, 36, 0.3);
-      padding: 5px 11px; border-radius: 999px; margin-bottom: 14px;
+      padding: 5px 11px; border-radius: 999px;
     }
-    .auth-card h1 { font-family: var(--font-display); font-size: 25px; margin-bottom: 6px; }
-    .auth-card p { font-size: 13px; color: var(--text-secondary); margin-bottom: 22px; line-height: 1.5; }
 
     /* Form Controls */
     .form-group { margin-bottom: 13px; }
@@ -98,6 +75,7 @@
       display: inline-flex; align-items: center; justify-content: center; gap: 7px;
       padding: 9px 14px; border-radius: 10px; font-size: 13px; font-weight: 600;
       cursor: pointer; border: 1px solid transparent; transition: all 0.15s ease;
+      text-decoration: none;
     }
     .btn:disabled { opacity: 0.45; cursor: not-allowed; }
     .btn-admin { background: var(--grad-admin); color: #090D18; font-weight: 700; }
@@ -169,37 +147,15 @@
 <body>
   <div id="toast-container"></div>
 
-  <!-- ADMIN LOGIN GATE -->
-  <section id="admin-auth-screen">
-    <div class="auth-card">
-      <div class="admin-badge"><i data-lucide="shield-alert"></i> WORLD COUNCIL ROOT ACCESS</div>
-      <h1>AV GAME Admin</h1>
-      <p>Sign in with your administrator credentials (<strong>Hanif</strong>) to manage players, countries, companies, and global rules.</p>
-      <form id="admin-login-form">
-        <div class="form-group">
-          <label for="adm-login-user">Administrator Username</label>
-          <input id="adm-login-user" type="text" value="Hanif" autocomplete="username" required />
-        </div>
-        <div class="form-group">
-          <label for="adm-login-pw">Password</label>
-          <input id="adm-login-pw" type="password" value="12345678" autocomplete="current-password" required />
-        </div>
-        <div id="adm-login-err" class="kpi-sub" style="color:var(--danger); margin-bottom:10px;"></div>
-        <button type="submit" class="btn btn-admin btn-full" id="adm-login-btn"><i data-lucide="lock"></i> Authenticate Administrator</button>
-      </form>
-    </div>
-  </section>
-
-  <!-- ADMIN DASHBOARD SHELL -->
-  <div id="admin-shell" class="hidden">
+  <!-- DIRECT ADMIN DASHBOARD SHELL (NO PASSWORD GATE) -->
+  <div id="admin-shell">
     <header class="topbar">
       <div style="display:flex; align-items:center; gap:12px;">
-        <span class="admin-badge" style="margin:0;"><i data-lucide="shield-check"></i> WORLD ARCHITECT: HANIF</span>
+        <span class="admin-badge"><i data-lucide="shield-check"></i> WORLD ARCHITECT: HANIF</span>
         <strong class="display-font" style="font-size:16px;">AV GAME Control Center</strong>
       </div>
       <div style="display:flex; align-items:center; gap:10px;">
         <a href="index.html" class="btn btn-secondary btn-sm"><i data-lucide="globe"></i> Open World View</a>
-        <button id="admin-logout-btn" class="btn btn-danger btn-sm"><i data-lucide="log-out"></i> Sign Out</button>
       </div>
     </header>
 
@@ -240,7 +196,7 @@
                   <select id="p-role"><option value="president">President</option><option value="minister">Minister</option></select>
                 </div>
               </div>
-              <button type="submit" class="btn btn-admin btn-full" id="provision-btn"><i data-lucide="server"></i> Create Account via Server</button>
+              <button type="submit" class="btn btn-admin btn-full" id="provision-btn"><i data-lucide="server"></i> Create Account</button>
             </form>
           </div>
 
@@ -444,9 +400,9 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import {
-      getFirestore, doc, getDoc, setDoc, collection, addDoc, updateDoc, deleteDoc,
+      getFirestore, doc, setDoc, collection, addDoc, updateDoc, deleteDoc,
       onSnapshot, query, orderBy, limit, serverTimestamp
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js";
@@ -468,8 +424,7 @@
     const db = getFirestore(app);
     const functions = getFunctions(app);
 
-    let currentAdminUid = null;
-    let unsubscribers = [];
+    lucide.createIcons();
 
     function escapeHtml(str = '') {
       return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
@@ -485,12 +440,14 @@
     }
 
     async function logAdminAction(action, details) {
-      await addDoc(collection(db, 'adminAuditLogs'), {
-        action,
-        details,
-        by: currentAdminUid,
-        at: serverTimestamp()
-      });
+      try {
+        await addDoc(collection(db, 'adminAuditLogs'), {
+          action,
+          details,
+          by: auth.currentUser?.uid || 'Hanif (Direct Admin)',
+          at: serverTimestamp()
+        });
+      } catch (_) {}
     }
 
     // Tab Switching
@@ -503,173 +460,112 @@
       document.getElementById(`tab-${btn.dataset.tab}`).classList.remove('hidden');
     });
 
-    // Admin Auth (Username -> <username>@avgame.internal)
-    function usernameToAuthEmail(username) {
-      return `${username.trim().toLowerCase().replace(/[^a-z0-9._-]/g, '')}@avgame.internal`;
-    }
+    // Real-time Listeners (Load Immediately Without Password Gate)
+    onSnapshot(collection(db, 'users'), (snap) => {
+      document.getElementById('kpi-players').textContent = snap.size;
+      const tbody = document.getElementById('players-tbody');
+      tbody.innerHTML = '';
+      snap.forEach(d => {
+        const u = d.data();
+        tbody.insertAdjacentHTML('beforeend', `
+          <tr>
+            <td><strong>${escapeHtml(u.username)}</strong></td>
+            <td class="mono">${escapeHtml(u.countryIso || 'NONE')}</td>
+            <td>${escapeHtml(u.role || 'president')}</td>
+            <td>${u.mustChangePassword ? '<span style="color:var(--orange);">Temp PW Pending</span>' : '<span style="color:var(--green);">Active</span>'}</td>
+            <td>${u.suspended ? '<span style="color:var(--danger);">SUSPENDED</span>' : 'Enabled'}</td>
+            <td>
+              <button class="btn btn-secondary btn-sm" data-toggle-suspend="${d.id}" data-cur="${Boolean(u.suspended)}">
+                ${u.suspended ? 'Restore' : 'Suspend'}
+              </button>
+            </td>
+          </tr>
+        `);
+      });
+    }, (err) => toast(`Firestore read notice: ${err.message}`));
 
-    document.getElementById('admin-login-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const errEl = document.getElementById('adm-login-err');
-      const btn = document.getElementById('adm-login-btn');
-      errEl.textContent = '';
-      btn.disabled = true;
-
-      const userVal = document.getElementById('adm-login-user').value.trim();
-      const pwVal = document.getElementById('adm-login-pw').value;
-
-      try {
-        await signInWithEmailAndPassword(auth, usernameToAuthEmail(userVal), pwVal);
-      } catch (err) {
-        errEl.textContent = 'Authentication failed. Ensure hanif@avgame.internal (password: 12345678) is added in Firebase Console -> Authentication.';
-      } finally {
-        btn.disabled = false;
-      }
+    onSnapshot(collection(db, 'countries'), (snap) => {
+      document.getElementById('kpi-countries').textContent = snap.size;
+      const tbody = document.getElementById('countries-tbody');
+      tbody.innerHTML = '';
+      snap.forEach(d => {
+        const c = d.data();
+        tbody.insertAdjacentHTML('beforeend', `
+          <tr>
+            <td style="font-size:18px;">${c.flag || '🏳️'}</td>
+            <td class="mono"><strong>${escapeHtml(d.id)}</strong></td>
+            <td>${escapeHtml(c.name)}</td>
+            <td>${escapeHtml(c.presidentName || 'Unclaimed')}</td>
+            <td class="mono">${(c.coins || 0).toLocaleString()}</td>
+            <td class="mono">${c.militaryScore || 10}</td>
+            <td class="mono">Tier ${c.techLevel || 1}</td>
+            <td>${c.purchasable ? 'Yes' : 'No'}</td>
+          </tr>
+        `);
+      });
     });
 
-    document.getElementById('admin-logout-btn').onclick = async () => {
-      unsubscribers.forEach(u => u());
-      unsubscribers = [];
-      await signOut(auth);
-    };
-
-    onAuthStateChanged(auth, async (user) => {
-      lucide.createIcons();
-      if (!user) {
-        document.getElementById('admin-auth-screen').classList.remove('hidden');
-        document.getElementById('admin-shell').classList.add('hidden');
-        return;
-      }
-
-      const tokenRes = await user.getIdTokenResult(true);
-      const userSnap = await getDoc(doc(db, 'users', user.uid));
-      const isHanifAdmin = user.email === 'hanif@avgame.internal' && (tokenRes.claims.admin === true || userSnap.data()?.role === 'admin');
-      const isVerifiedAdmin = tokenRes.claims.admin === true || userSnap.data()?.role === 'admin' || isHanifAdmin;
-
-      if (!isVerifiedAdmin) {
-        document.getElementById('adm-login-err').textContent = 'Access denied: Administrator role or custom claim required.';
-        await signOut(auth);
-        return;
-      }
-
-      currentAdminUid = user.uid;
-      document.getElementById('admin-auth-screen').classList.add('hidden');
-      document.getElementById('admin-shell').classList.remove('hidden');
-      attachAdminListeners();
+    onSnapshot(collection(db, 'companies'), (snap) => {
+      document.getElementById('kpi-companies').textContent = snap.size;
+      const tbody = document.getElementById('companies-tbody');
+      tbody.innerHTML = '';
+      snap.forEach(d => {
+        const comp = d.data();
+        tbody.insertAdjacentHTML('beforeend', `
+          <tr>
+            <td><strong>${escapeHtml(comp.name)}</strong></td>
+            <td class="mono">${escapeHtml(comp.countryIso)}</td>
+            <td>${escapeHtml(comp.product)}</td>
+            <td class="mono">${comp.outputRate} / ${comp.intervalMinutes}m</td>
+            <td><span style="color:${comp.status === 'ACTIVE' ? 'var(--green)' : 'var(--orange)'}; font-weight:700;">${escapeHtml(comp.status)}</span></td>
+            <td>
+              <button class="btn btn-secondary btn-sm" data-toggle-comp="${d.id}" data-status="${comp.status}">
+                ${comp.status === 'ACTIVE' ? 'Pause' : 'Resume'}
+              </button>
+            </td>
+          </tr>
+        `);
+      });
     });
 
-    function attachAdminListeners() {
-      // 1. Players
-      unsubscribers.push(onSnapshot(collection(db, 'users'), (snap) => {
-        document.getElementById('kpi-players').textContent = snap.size;
-        const tbody = document.getElementById('players-tbody');
-        tbody.innerHTML = '';
-        snap.forEach(d => {
-          const u = d.data();
-          tbody.insertAdjacentHTML('beforeend', `
-            <tr>
-              <td><strong>${escapeHtml(u.username)}</strong></td>
-              <td class="mono">${escapeHtml(u.countryIso || 'NONE')}</td>
-              <td>${escapeHtml(u.role || 'president')}</td>
-              <td>${u.mustChangePassword ? '<span style="color:var(--orange);">Temp PW Pending</span>' : '<span style="color:var(--green);">Active</span>'}</td>
-              <td>${u.suspended ? '<span style="color:var(--danger);">SUSPENDED</span>' : 'Enabled'}</td>
-              <td>
-                <button class="btn btn-secondary btn-sm" data-toggle-suspend="${d.id}" data-cur="${Boolean(u.suspended)}">
-                  ${u.suspended ? 'Restore' : 'Suspend'}
-                </button>
-              </td>
-            </tr>
-          `);
-        });
-      }));
+    onSnapshot(collection(db, 'companyOffers'), (snap) => {
+      let openOffersCount = 0;
+      const tbody = document.getElementById('offers-tbody');
+      tbody.innerHTML = '';
+      snap.forEach(d => {
+        const o = d.data();
+        if (o.status === 'available') openOffersCount++;
+        tbody.insertAdjacentHTML('beforeend', `
+          <tr>
+            <td><strong>${escapeHtml(o.title)}</strong></td>
+            <td class="mono">${escapeHtml(o.targetIso || 'GLOBAL')}</td>
+            <td class="mono">${(o.price || 0).toLocaleString()}</td>
+            <td class="mono">${o.quantity}</td>
+            <td>${escapeHtml(o.status)}</td>
+            <td class="mono">${escapeHtml(o.purchasedBy || '-')}</td>
+            <td><button class="btn btn-danger btn-sm" data-del-offer="${d.id}">Delete</button></td>
+          </tr>
+        `);
+      });
+      document.getElementById('kpi-events').textContent = `${openOffersCount} Offers`;
+    });
 
-      // 2. Countries
-      unsubscribers.push(onSnapshot(collection(db, 'countries'), (snap) => {
-        document.getElementById('kpi-countries').textContent = snap.size;
-        const tbody = document.getElementById('countries-tbody');
-        tbody.innerHTML = '';
-        snap.forEach(d => {
-          const c = d.data();
-          tbody.insertAdjacentHTML('beforeend', `
-            <tr>
-              <td style="font-size:18px;">${c.flag || '🏳️'}</td>
-              <td class="mono"><strong>${escapeHtml(d.id)}</strong></td>
-              <td>${escapeHtml(c.name)}</td>
-              <td>${escapeHtml(c.presidentName || 'Unclaimed')}</td>
-              <td class="mono">${(c.coins || 0).toLocaleString()}</td>
-              <td class="mono">${c.militaryScore || 10}</td>
-              <td class="mono">Tier ${c.techLevel || 1}</td>
-              <td>${c.purchasable ? 'Yes' : 'No'}</td>
-            </tr>
-          `);
-        });
-      }));
-
-      // 3. Companies
-      unsubscribers.push(onSnapshot(collection(db, 'companies'), (snap) => {
-        document.getElementById('kpi-companies').textContent = snap.size;
-        const tbody = document.getElementById('companies-tbody');
-        tbody.innerHTML = '';
-        snap.forEach(d => {
-          const comp = d.data();
-          tbody.insertAdjacentHTML('beforeend', `
-            <tr>
-              <td><strong>${escapeHtml(comp.name)}</strong></td>
-              <td class="mono">${escapeHtml(comp.countryIso)}</td>
-              <td>${escapeHtml(comp.product)}</td>
-              <td class="mono">${comp.outputRate} / ${comp.intervalMinutes}m</td>
-              <td><span style="color:${comp.status === 'ACTIVE' ? 'var(--green)' : 'var(--orange)'}; font-weight:700;">${escapeHtml(comp.status)}</span></td>
-              <td>
-                <button class="btn btn-secondary btn-sm" data-toggle-comp="${d.id}" data-status="${comp.status}">
-                  ${comp.status === 'ACTIVE' ? 'Pause' : 'Resume'}
-                </button>
-              </td>
-            </tr>
-          `);
-        });
-      }));
-
-      // 4. Corporate Offers
-      unsubscribers.push(onSnapshot(collection(db, 'companyOffers'), (snap) => {
-        let openOffersCount = 0;
-        const tbody = document.getElementById('offers-tbody');
-        tbody.innerHTML = '';
-        snap.forEach(d => {
-          const o = d.data();
-          if (o.status === 'available') openOffersCount++;
-          tbody.insertAdjacentHTML('beforeend', `
-            <tr>
-              <td><strong>${escapeHtml(o.title)}</strong></td>
-              <td class="mono">${escapeHtml(o.targetIso || 'GLOBAL')}</td>
-              <td class="mono">${(o.price || 0).toLocaleString()}</td>
-              <td class="mono">${o.quantity}</td>
-              <td>${escapeHtml(o.status)}</td>
-              <td class="mono">${escapeHtml(o.purchasedBy || '-')}</td>
-              <td><button class="btn btn-danger btn-sm" data-del-offer="${d.id}">Delete</button></td>
-            </tr>
-          `);
-        });
-        document.getElementById('kpi-events').textContent = `${openOffersCount} Offers`;
-      }));
-
-      // 5. Audit Logs
-      unsubscribers.push(onSnapshot(query(collection(db, 'adminAuditLogs'), orderBy('at', 'desc'), limit(40)), (snap) => {
-        const tbody = document.getElementById('audit-tbody');
-        tbody.innerHTML = '';
-        snap.forEach(d => {
-          const a = d.data();
-          const ts = a.at?.toDate ? a.at.toDate().toLocaleString() : 'Just now';
-          tbody.insertAdjacentHTML('beforeend', `
-            <tr>
-              <td><span class="admin-badge" style="margin:0;">${escapeHtml(a.action)}</span></td>
-              <td>${escapeHtml(a.details || `${a.targetUser || ''} ${a.countryIso || ''}`)}</td>
-              <td class="mono" style="font-size:11px;">${escapeHtml(a.by || '')}</td>
-              <td style="font-size:12px; color:var(--text-secondary);">${ts}</td>
-            </tr>
-          `);
-        });
-      }));
-    }
+    onSnapshot(query(collection(db, 'adminAuditLogs'), orderBy('at', 'desc'), limit(40)), (snap) => {
+      const tbody = document.getElementById('audit-tbody');
+      tbody.innerHTML = '';
+      snap.forEach(d => {
+        const a = d.data();
+        const ts = a.at?.toDate ? a.at.toDate().toLocaleString() : 'Just now';
+        tbody.insertAdjacentHTML('beforeend', `
+          <tr>
+            <td><span class="admin-badge">${escapeHtml(a.action)}</span></td>
+            <td>${escapeHtml(a.details || `${a.targetUser || ''} ${a.countryIso || ''}`)}</td>
+            <td class="mono" style="font-size:11px;">${escapeHtml(a.by || '')}</td>
+            <td style="font-size:12px; color:var(--text-secondary);">${ts}</td>
+          </tr>
+        `);
+      });
+    });
 
     // ACTION HANDLERS
     document.getElementById('provision-player-form').addEventListener('submit', async (e) => {
@@ -698,84 +594,96 @@
     document.getElementById('players-tbody').addEventListener('click', async (e) => {
       const btn = e.target.closest('[data-toggle-suspend]');
       if (!btn) return;
-      const next = btn.dataset.cur !== 'true';
-      await updateDoc(doc(db, 'users', btn.dataset.toggleSuspend), { suspended: next });
-      await logAdminAction('TOGGLE_SUSPENSION', `UID ${btn.dataset.toggleSuspend} suspended=${next}`);
-      toast(next ? 'Player account suspended.' : 'Player account restored.');
+      try {
+        const next = btn.dataset.cur !== 'true';
+        await updateDoc(doc(db, 'users', btn.dataset.toggleSuspend), { suspended: next });
+        await logAdminAction('TOGGLE_SUSPENSION', `UID ${btn.dataset.toggleSuspend} suspended=${next}`);
+        toast(next ? 'Player account suspended.' : 'Player account restored.');
+      } catch (err) { toast(err.message); }
     });
 
     document.getElementById('country-config-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const iso = document.getElementById('c-iso').value.trim().toUpperCase();
-      await setDoc(doc(db, 'countries', iso), {
-        name: document.getElementById('c-name').value.trim(),
-        flag: document.getElementById('c-flag').value.trim(),
-        coins: Number(document.getElementById('c-coins').value),
-        militaryScore: Number(document.getElementById('c-mil').value),
-        techLevel: Number(document.getElementById('c-tech').value),
-        purchasable: document.getElementById('c-purchasable').value === 'true',
-        purchasePrice: Number(document.getElementById('c-price').value) || 50000,
-        level: 1, xp: 0, stability: 100
-      }, { merge: true });
-      await logAdminAction('CONFIGURE_COUNTRY', `Updated ${iso}`);
-      toast(`Country ${iso} saved.`);
+      try {
+        const iso = document.getElementById('c-iso').value.trim().toUpperCase();
+        await setDoc(doc(db, 'countries', iso), {
+          name: document.getElementById('c-name').value.trim(),
+          flag: document.getElementById('c-flag').value.trim(),
+          coins: Number(document.getElementById('c-coins').value),
+          militaryScore: Number(document.getElementById('c-mil').value),
+          techLevel: Number(document.getElementById('c-tech').value),
+          purchasable: document.getElementById('c-purchasable').value === 'true',
+          purchasePrice: Number(document.getElementById('c-price').value) || 50000,
+          level: 1, xp: 0, stability: 100
+        }, { merge: true });
+        await logAdminAction('CONFIGURE_COUNTRY', `Updated ${iso}`);
+        toast(`Country ${iso} saved.`);
+      } catch (err) { toast(err.message); }
     });
 
     document.getElementById('grant-inventory-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const iso = document.getElementById('inv-iso').value.trim().toUpperCase();
-      const product = document.getElementById('inv-product').value.trim();
-      const qty = Number(document.getElementById('inv-qty').value);
-      const minThreshold = Number(document.getElementById('inv-threshold').value);
-      await setDoc(doc(db, 'countries', iso, 'inventory', product), { quantity: qty, minThreshold }, { merge: true });
-      await logAdminAction('SET_INVENTORY', `${iso}: ${product} = ${qty}`);
-      toast(`Updated ${product} stock for ${iso}.`);
+      try {
+        const iso = document.getElementById('inv-iso').value.trim().toUpperCase();
+        const product = document.getElementById('inv-product').value.trim();
+        const qty = Number(document.getElementById('inv-qty').value);
+        const minThreshold = Number(document.getElementById('inv-threshold').value);
+        await setDoc(doc(db, 'countries', iso, 'inventory', product), { quantity: qty, minThreshold }, { merge: true });
+        await logAdminAction('SET_INVENTORY', `${iso}: ${product} = ${qty}`);
+        toast(`Updated ${product} stock for ${iso}.`);
+      } catch (err) { toast(err.message); }
     });
 
     document.getElementById('assign-mission-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const iso = document.getElementById('m-iso').value.trim().toUpperCase();
-      await addDoc(collection(db, 'countries', iso, 'missions'), {
-        title: document.getElementById('m-title').value.trim(),
-        description: document.getElementById('m-desc').value.trim(),
-        target: Number(document.getElementById('m-target').value),
-        progress: 0,
-        rewardXp: Number(document.getElementById('m-xp').value),
-        claimed: false,
-        icon: 'target',
-        createdAt: serverTimestamp()
-      });
-      await logAdminAction('ASSIGN_MISSION', `Mission deployed to ${iso}`);
-      toast(`Mission assigned to ${iso}.`);
-      e.target.reset();
+      try {
+        const iso = document.getElementById('m-iso').value.trim().toUpperCase();
+        await addDoc(collection(db, 'countries', iso, 'missions'), {
+          title: document.getElementById('m-title').value.trim(),
+          description: document.getElementById('m-desc').value.trim(),
+          target: Number(document.getElementById('m-target').value),
+          progress: 0,
+          rewardXp: Number(document.getElementById('m-xp').value),
+          claimed: false,
+          icon: 'target',
+          createdAt: serverTimestamp()
+        });
+        await logAdminAction('ASSIGN_MISSION', `Mission deployed to ${iso}`);
+        toast(`Mission assigned to ${iso}.`);
+        e.target.reset();
+      } catch (err) { toast(err.message); }
     });
 
     document.getElementById('company-create-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const name = document.getElementById('comp-name').value.trim();
-      const countryIso = document.getElementById('comp-iso').value.trim().toUpperCase();
-      await addDoc(collection(db, 'companies'), {
-        name,
-        countryIso,
-        sector: document.getElementById('comp-sector').value.trim(),
-        product: document.getElementById('comp-product').value.trim(),
-        outputRate: Number(document.getElementById('comp-rate').value),
-        intervalMinutes: Number(document.getElementById('comp-mins').value),
-        lastProducedAt: serverTimestamp(),
-        status: 'ACTIVE'
-      });
-      await logAdminAction('CREATE_COMPANY', `${name} (${countryIso})`);
-      toast(`${name} registered.`);
-      e.target.reset();
+      try {
+        const name = document.getElementById('comp-name').value.trim();
+        const countryIso = document.getElementById('comp-iso').value.trim().toUpperCase();
+        await addDoc(collection(db, 'companies'), {
+          name,
+          countryIso,
+          sector: document.getElementById('comp-sector').value.trim(),
+          product: document.getElementById('comp-product').value.trim(),
+          outputRate: Number(document.getElementById('comp-rate').value),
+          intervalMinutes: Number(document.getElementById('comp-mins').value),
+          lastProducedAt: serverTimestamp(),
+          status: 'ACTIVE'
+        });
+        await logAdminAction('CREATE_COMPANY', `${name} (${countryIso})`);
+        toast(`${name} registered.`);
+        e.target.reset();
+      } catch (err) { toast(err.message); }
     });
 
     document.getElementById('companies-tbody').addEventListener('click', async (e) => {
       const btn = e.target.closest('[data-toggle-comp]');
       if (!btn) return;
-      const next = btn.dataset.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
-      await updateDoc(doc(db, 'companies', btn.dataset.toggleComp), { status: next });
-      await logAdminAction('TOGGLE_COMPANY', `${btn.dataset.toggleComp} -> ${next}`);
-      toast(`Company status set to ${next}.`);
+      try {
+        const next = btn.dataset.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
+        await updateDoc(doc(db, 'companies', btn.dataset.toggleComp), { status: next });
+        await logAdminAction('TOGGLE_COMPANY', `${btn.dataset.toggleComp} -> ${next}`);
+        toast(`Company status set to ${next}.`);
+      } catch (err) { toast(err.message); }
     });
 
     document.getElementById('force-global-tick-btn').onclick = async () => {
@@ -788,54 +696,62 @@
 
     document.getElementById('offer-create-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const title = document.getElementById('off-title').value.trim();
-      await addDoc(collection(db, 'companyOffers'), {
-        title,
-        description: document.getElementById('off-desc').value.trim(),
-        targetIso: document.getElementById('off-iso').value.trim().toUpperCase(),
-        price: Number(document.getElementById('off-price').value),
-        quantity: Number(document.getElementById('off-qty').value),
-        unique: document.getElementById('off-unique').value === 'true',
-        status: 'available',
-        createdAt: serverTimestamp()
-      });
-      await logAdminAction('PUBLISH_OFFER', title);
-      toast('Corporate offer published.');
-      e.target.reset();
+      try {
+        const title = document.getElementById('off-title').value.trim();
+        await addDoc(collection(db, 'companyOffers'), {
+          title,
+          description: document.getElementById('off-desc').value.trim(),
+          targetIso: document.getElementById('off-iso').value.trim().toUpperCase(),
+          price: Number(document.getElementById('off-price').value),
+          quantity: Number(document.getElementById('off-qty').value),
+          unique: document.getElementById('off-unique').value === 'true',
+          status: 'available',
+          createdAt: serverTimestamp()
+        });
+        await logAdminAction('PUBLISH_OFFER', title);
+        toast('Corporate offer published.');
+        e.target.reset();
+      } catch (err) { toast(err.message); }
     });
 
     document.getElementById('offers-tbody').addEventListener('click', async (e) => {
       const btn = e.target.closest('[data-del-offer]');
       if (!btn) return;
-      await deleteDoc(doc(db, 'companyOffers', btn.dataset.delOffer));
-      await logAdminAction('DELETE_OFFER', btn.dataset.delOffer);
-      toast('Offer removed.');
+      try {
+        await deleteDoc(doc(db, 'companyOffers', btn.dataset.delOffer));
+        await logAdminAction('DELETE_OFFER', btn.dataset.delOffer);
+        toast('Offer removed.');
+      } catch (err) { toast(err.message); }
     });
 
     document.getElementById('news-broadcast-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const message = document.getElementById('news-msg').value.trim();
-      await addDoc(collection(db, 'announcements'), {
-        type: document.getElementById('news-type').value,
-        message,
-        createdAt: serverTimestamp()
-      });
-      await logAdminAction('BROADCAST_NEWS', message);
-      toast('World Council announcement published.');
-      e.target.reset();
+      try {
+        const message = document.getElementById('news-msg').value.trim();
+        await addDoc(collection(db, 'announcements'), {
+          type: document.getElementById('news-type').value,
+          message,
+          createdAt: serverTimestamp()
+        });
+        await logAdminAction('BROADCAST_NEWS', message);
+        toast('World Council announcement published.');
+        e.target.reset();
+      } catch (err) { toast(err.message); }
     });
 
     document.getElementById('global-rules-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      await setDoc(doc(db, 'worldSettings', 'global'), {
-        defaultTaxRate: Number(document.getElementById('rule-tax').value),
-        baseInflation: Number(document.getElementById('rule-inflation').value),
-        allowUnclaimedPurchases: document.getElementById('rule-unclaimed').value === 'true',
-        allowConflicts: document.getElementById('rule-conflicts').value === 'true',
-        updatedAt: serverTimestamp()
-      }, { merge: true });
-      await logAdminAction('UPDATE_WORLD_RULES', 'Updated global simulation settings');
-      toast('Global simulation rules saved.');
+      try {
+        await setDoc(doc(db, 'worldSettings', 'global'), {
+          defaultTaxRate: Number(document.getElementById('rule-tax').value),
+          baseInflation: Number(document.getElementById('rule-inflation').value),
+          allowUnclaimedPurchases: document.getElementById('rule-unclaimed').value === 'true',
+          allowConflicts: document.getElementById('rule-conflicts').value === 'true',
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+        await logAdminAction('UPDATE_WORLD_RULES', 'Updated global simulation settings');
+        toast('Global simulation rules saved.');
+      } catch (err) { toast(err.message); }
     });
   </script>
 </body>
