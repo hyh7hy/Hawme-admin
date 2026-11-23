@@ -3,10 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>AV GAME — World Administrator Command (admin.html)</title>
+  <title>AV GAME — Global Geopolitical Strategy Simulation</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <!-- D3 & TopoJSON for real-world interactive vector map -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
+  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Chart.js for historical telemetry -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <style>
     :root {
       --bg-base: #090D18;
@@ -15,7 +21,7 @@
       --bg-elevated: #1D2B47;
       --bg-hover: #243556;
       --border: rgba(148, 163, 184, 0.14);
-      --border-strong: rgba(251, 191, 36, 0.42);
+      --border-strong: rgba(56, 189, 248, 0.42);
       --text-primary: #F8FAFC;
       --text-secondary: #94A3B8;
       --text-muted: #64748B;
@@ -24,14 +30,35 @@
       --purple: #A78BFA;
       --green: #34D399;
       --orange: #FBBF24;
+      --pink: #F472B6;
       --danger: #EF4444;
-      --grad-admin: linear-gradient(135deg, #F59E0B 0%, #EA580C 100%);
       --grad-primary: linear-gradient(135deg, #38BDF8 0%, #6366F1 100%);
+      --grad-admin: linear-gradient(135deg, #F59E0B 0%, #EA580C 100%);
       --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.55);
       --radius: 14px;
       --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       --font-display: 'Space Grotesk', 'Inter', sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    [data-theme="light"] {
+      --bg-base: #F3F6FC;
+      --bg-surface: #FFFFFF;
+      --bg-card: #FFFFFF;
+      --bg-elevated: #F1F5F9;
+      --bg-hover: #E2E8F0;
+      --border: rgba(23, 32, 51, 0.10);
+      --border-strong: rgba(2, 132, 199, 0.45);
+      --text-primary: #172033;
+      --text-secondary: #475569;
+      --text-muted: #64748B;
+      --cyan: #0284C7;
+      --blue: #4F46E5;
+      --purple: #7C3AED;
+      --green: #059669;
+      --orange: #D97706;
+      --pink: #DB2777;
+      --shadow-card: 0 8px 24px -8px rgba(15, 23, 42, 0.08);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -40,23 +67,36 @@
       background: var(--bg-base);
       color: var(--text-primary);
       min-height: 100vh;
+      overflow-x: hidden;
       font-feature-settings: "tnum" 1;
     }
+
+    body.reduced-motion *, body.reduced-motion *::before, body.reduced-motion *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
     .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
     .display-font { font-family: var(--font-display); }
     .hidden { display: none !important; }
     svg.lucide { width: 16px; height: 16px; stroke-width: 2; flex-shrink: 0; }
 
-    /* Auth Gate */
-    #admin-auth-screen {
+    /* Auth Screen */
+    #auth-screen {
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 20px;
       background:
-        radial-gradient(circle at 20% 20%, rgba(245, 158, 11, 0.16) 0%, transparent 45%),
-        radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.16) 0%, transparent 45%),
+        radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.2) 0%, transparent 45%),
+        radial-gradient(circle at 80% 80%, rgba(56, 189, 248, 0.16) 0%, transparent 45%),
         var(--bg-base);
     }
     .auth-card {
@@ -68,390 +108,1168 @@
       padding: 34px;
       box-shadow: 0 28px 70px rgba(0, 0, 0, 0.65);
     }
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      padding: 5px 11px;
+      border-radius: 999px;
+      margin-bottom: 14px;
+    }
     .admin-badge {
       display: inline-flex; align-items: center; gap: 6px;
       font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
       color: var(--orange); background: rgba(251, 191, 36, 0.12);
       border: 1px solid rgba(251, 191, 36, 0.3);
-      padding: 5px 11px; border-radius: 999px; margin-bottom: 14px;
+      padding: 4px 10px; border-radius: 999px;
     }
-    .auth-card h1 { font-family: var(--font-display); font-size: 25px; margin-bottom: 6px; }
+    .auth-card h1 { font-family: var(--font-display); font-size: 26px; font-weight: 700; margin-bottom: 6px; }
     .auth-card p { font-size: 13px; color: var(--text-secondary); margin-bottom: 22px; line-height: 1.5; }
 
-    /* Form Controls */
-    .form-group { margin-bottom: 13px; }
-    .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 5px; }
+    /* Forms & Buttons */
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
     input, select, textarea {
       width: 100%;
       background: var(--bg-elevated);
       border: 1px solid var(--border);
       color: var(--text-primary);
-      padding: 9px 12px;
+      padding: 10px 12px;
       border-radius: 10px;
       font-size: 13px;
       font-family: var(--font-sans);
       outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
-    input:focus, select:focus, textarea:focus { border-color: var(--orange); }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+    }
 
     .btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
-      padding: 9px 14px; border-radius: 10px; font-size: 13px; font-weight: 600;
-      cursor: pointer; border: 1px solid transparent; transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 9px 15px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: transform 0.12s ease, filter 0.15s ease, background 0.15s ease;
     }
+    .btn:active:not(:disabled) { transform: scale(0.98); }
     .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary { background: var(--grad-primary); color: #fff; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35); }
+    .btn-primary:hover:not(:disabled) { filter: brightness(1.08); }
     .btn-admin { background: var(--grad-admin); color: #090D18; font-weight: 700; }
-    .btn-primary { background: var(--grad-primary); color: #fff; }
     .btn-secondary { background: var(--bg-elevated); border-color: var(--border); color: var(--text-primary); }
-    .btn-secondary:hover:not(:disabled) { background: var(--bg-hover); }
-    .btn-danger { background: rgba(239, 68, 68, 0.16); border-color: rgba(239, 68, 68, 0.35); color: #FCA5A5; }
+    .btn-secondary:hover:not(:disabled) { background: var(--bg-hover); border-color: var(--border-strong); }
     .btn-success { background: rgba(52, 211, 153, 0.16); border-color: rgba(52, 211, 153, 0.35); color: var(--green); }
-    .btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 8px; }
+    .btn-danger { background: rgba(239, 68, 68, 0.16); border-color: rgba(239, 68, 68, 0.35); color: #FCA5A5; }
+    .btn-sm { padding: 6px 11px; font-size: 12px; border-radius: 8px; }
     .btn-full { width: 100%; }
 
-    /* Layout */
-    .topbar {
-      height: 64px;
+    /* Shell & Collapsible Sidebar */
+    #app-shell { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 256px;
       background: var(--bg-surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; bottom: 0; left: 0;
+      z-index: 50;
+      transition: width 0.22s ease;
+    }
+    .sidebar.collapsed { width: 74px; }
+    .sidebar.collapsed .nav-label,
+    .sidebar.collapsed .logo-label,
+    .sidebar.collapsed .sidebar-profile-text { display: none; }
+    .sidebar-header {
+      padding: 16px 18px;
       border-bottom: 1px solid var(--border);
-      padding: 0 24px;
-      display: flex; align-items: center; justify-content: space-between;
-      position: sticky; top: 0; z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
-    .container { max-width: 1520px; margin: 0 auto; padding: 20px; }
+    .logo-wrap { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 700; font-size: 17px; }
+    .logo-orb {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: var(--grad-primary);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; box-shadow: 0 0 16px rgba(56, 189, 248, 0.45);
+    }
 
-    /* Tabs */
-    .tab-bar {
-      display: flex; gap: 6px; overflow-x: auto;
-      background: var(--bg-surface); border: 1px solid var(--border);
-      padding: 6px; border-radius: 12px; margin-bottom: 20px;
+    .nav-list { flex: 1; padding: 12px 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 3px; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      background: transparent;
+      border: 1px solid transparent;
+      width: 100%;
+      text-align: left;
+      transition: all 0.15s ease;
     }
-    .tab-btn {
-      display: inline-flex; align-items: center; gap: 7px;
-      padding: 9px 14px; border-radius: 9px; font-size: 13px; font-weight: 600;
-      background: transparent; border: none; color: var(--text-secondary);
-      cursor: pointer; white-space: nowrap;
+    .nav-item-left { display: flex; align-items: center; gap: 11px; }
+    .nav-item:hover { background: var(--bg-elevated); color: var(--text-primary); }
+    .nav-item.active {
+      background: linear-gradient(90deg, rgba(56, 189, 248, 0.16), rgba(99, 102, 241, 0.12));
+      border-color: rgba(56, 189, 248, 0.3);
+      color: var(--cyan);
+      font-weight: 600;
     }
-    .tab-btn.active { background: rgba(251, 191, 36, 0.16); color: var(--orange); }
+    .badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: var(--pink);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .sidebar-footer { padding: 12px; border-top: 1px solid var(--border); }
+    .sidebar-profile-card {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px; border-radius: 10px; background: var(--bg-elevated);
+      margin-bottom: 8px;
+    }
+    .sidebar-profile-card img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--cyan); }
+
+    /* Main Area & Topbar */
+    .main-area {
+      flex: 1;
+      margin-left: 256px;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      transition: margin-left 0.22s ease;
+    }
+    .sidebar.collapsed + .main-area { margin-left: 74px; }
+
+    .topbar {
+      height: 62px;
+      background: rgba(17, 26, 45, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+    [data-theme="light"] .topbar { background: rgba(255, 255, 255, 0.88); }
+
+    .stat-pills { display: flex; align-items: center; gap: 8px; overflow-x: auto; }
+    .pill {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 6px 11px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .pill .lbl { color: var(--text-secondary); font-weight: 500; }
+
+    .view-container { padding: 20px; max-width: 1520px; width: 100%; margin: 0 auto; }
+
+    /* Hero Welcome Banner */
+    .hero-banner {
+      background: linear-gradient(120deg, rgba(99, 102, 241, 0.22) 0%, rgba(56, 189, 248, 0.14) 55%, rgba(167, 139, 250, 0.18) 100%);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius);
+      padding: 18px 22px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .xp-bar-wrap { width: 240px; max-width: 100%; }
+    .progress-track {
+      height: 8px;
+      background: rgba(15, 23, 42, 0.55);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--grad-primary);
+      border-radius: 999px;
+      transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    }
 
     /* Grids & Cards */
     .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
     .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
     .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
     .card {
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow-card);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow-card);
+      transition: border-color 0.2s, transform 0.2s;
     }
+    .card:hover { border-color: rgba(148, 163, 184, 0.26); }
     .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 8px; }
     .card-title { font-family: var(--font-display); font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-    .kpi-value { font-size: 24px; font-weight: 700; margin-top: 6px; }
+    .kpi-value { font-size: 24px; font-weight: 700; margin-top: 6px; letter-spacing: -0.02em; }
     .kpi-sub { font-size: 12px; color: var(--text-secondary); margin-top: 3px; }
 
-    /* Tables */
+    /* Interactive Map & Filters */
+    .map-toolbar {
+      display: flex; flex-wrap: wrap; gap: 10px;
+      margin-bottom: 12px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .map-wrapper {
+      position: relative;
+      width: 100%;
+      height: 550px;
+      background: radial-gradient(circle at 50% 45%, #0F1A30 0%, #060913 100%);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    #world-map-svg { width: 100%; height: 100%; cursor: grab; display: block; }
+    #world-map-svg:active { cursor: grabbing; }
+    .country-path {
+      fill: #1A2742;
+      stroke: #2C3F66;
+      stroke-width: 0.65px;
+      transition: fill 0.2s, stroke 0.2s, filter 0.2s, opacity 0.2s;
+    }
+    .country-path:hover { fill: #2B4270; stroke: var(--cyan); stroke-width: 1.2px; }
+    .country-path.dimmed { opacity: 0.22; }
+    .country-path.owned-player { fill: #263875; stroke: #818CF8; }
+    .country-path.owned-self { fill: #0E586E; stroke: #38BDF8; stroke-width: 1.4px; filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.4)); }
+    .country-path.selected-country { stroke: #FBBF24; stroke-width: 1.8px; }
+    .country-path.at-war {
+      fill: #581824;
+      stroke: #EF4444;
+      stroke-width: 1.6px;
+      animation: warPulse 1.8s infinite ease-in-out;
+    }
+    @keyframes warPulse { 0%, 100% { stroke-opacity: 1; } 50% { stroke-opacity: 0.3; } }
+
+    .map-tooltip {
+      position: absolute;
+      pointer-events: none;
+      background: rgba(9, 13, 24, 0.94);
+      border: 1px solid var(--cyan);
+      color: #F8FAFC;
+      padding: 7px 11px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      z-index: 25;
+      transform: translate(12px, -12px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.45);
+    }
+    .map-controls { position: absolute; bottom: 14px; left: 14px; display: flex; gap: 6px; z-index: 15; }
+    .map-legend {
+      position: absolute; top: 14px; left: 14px;
+      background: rgba(17, 26, 45, 0.88);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 11px;
+      color: #F8FAFC;
+      display: flex; flex-wrap: wrap; gap: 12px;
+      z-index: 15;
+    }
+    .legend-dot { width: 9px; height: 9px; border-radius: 3px; display: inline-block; margin-right: 5px; }
+
+    /* Floating Country Inspector */
+    .country-drawer {
+      position: absolute;
+      top: 14px; right: 14px; bottom: 14px;
+      width: 420px;
+      max-width: calc(100% - 28px);
+      background: rgba(17, 26, 45, 0.96);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-strong);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      z-index: 30;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.7);
+      transition: transform 0.25s ease, height 0.25s ease;
+    }
+    [data-theme="light"] .country-drawer { background: rgba(255, 255, 255, 0.96); }
+    .country-drawer.minimized { height: 64px; bottom: auto; overflow: hidden; }
+    .drawer-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .drawer-tabs {
+      display: flex; overflow-x: auto;
+      border-bottom: 1px solid var(--border);
+      padding: 0 8px; gap: 4px;
+    }
+    .drawer-tab {
+      padding: 9px 10px;
+      font-size: 11px; font-weight: 600;
+      color: var(--text-secondary);
+      background: none; border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer; white-space: nowrap;
+    }
+    .drawer-tab.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+    .drawer-body { padding: 16px; overflow-y: auto; flex: 1; font-size: 13px; }
+
+    /* Rich Product Marketplace Cards with Icons */
+    .market-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(265px, 1fr));
+      gap: 14px;
+    }
+    .product-card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+      transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+    .product-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--cyan);
+      box-shadow: 0 12px 24px -10px rgba(56, 189, 248, 0.28);
+    }
+    .product-art-badge {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .product-art-badge svg { width: 26px; height: 26px; }
+    .cat-technology { background: linear-gradient(135deg, rgba(56, 189, 248, 0.22), rgba(99, 102, 241, 0.3)); color: #38BDF8; border: 1px solid rgba(56, 189, 248, 0.35); }
+    .cat-energy { background: linear-gradient(135deg, rgba(251, 191, 36, 0.22), rgba(245, 158, 11, 0.3)); color: #FBBF24; border: 1px solid rgba(251, 191, 36, 0.35); }
+    .cat-agriculture { background: linear-gradient(135deg, rgba(52, 211, 153, 0.22), rgba(16, 185, 129, 0.3)); color: #34D399; border: 1px solid rgba(52, 211, 153, 0.35); }
+    .cat-automotive { background: linear-gradient(135deg, rgba(167, 139, 250, 0.22), rgba(244, 114, 182, 0.3)); color: #A78BFA; border: 1px solid rgba(167, 139, 250, 0.35); }
+    .cat-materials { background: linear-gradient(135deg, rgba(148, 163, 184, 0.22), rgba(71, 85, 105, 0.3)); color: #CBD5E1; border: 1px solid rgba(148, 163, 184, 0.35); }
+
+    .category-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+      padding: 3px 8px; border-radius: 6px;
+      background: rgba(255,255,255,0.06); color: var(--text-secondary);
+    }
+
+    /* Achievement Rarity & Conflict Bars */
+    .rarity-common { border-left: 3px solid var(--text-secondary); }
+    .rarity-rare { border-left: 3px solid var(--cyan); }
+    .rarity-epic { border-left: 3px solid var(--purple); }
+    .rarity-legendary { border-left: 3px solid var(--orange); background: linear-gradient(135deg, rgba(251, 191, 36, 0.08), var(--bg-elevated)); }
+    .versus-bar { height: 10px; border-radius: 999px; background: var(--danger); overflow: hidden; display: flex; margin: 8px 0; }
+    .versus-fill-atk { background: var(--cyan); height: 100%; transition: width 0.4s ease; }
+
+    /* Admin Sub-tabs */
+    .sub-tab-bar { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+
+    /* Alerts, Tables & Toasts */
+    .alert-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 12px; border-radius: 10px;
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      margin-bottom: 8px; gap: 10px;
+    }
+    .alert-item.critical { background: rgba(239, 68, 68, 0.12); border-color: rgba(239, 68, 68, 0.35); }
     .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
     th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
 
+    .offline-banner { background: var(--danger); color: #fff; text-align: center; font-size: 12px; font-weight: 700; padding: 6px; }
     #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
     .toast {
-      background: var(--bg-surface); border: 1px solid var(--orange);
-      color: var(--text-primary); padding: 11px 16px; border-radius: 12px;
-      font-size: 13px; font-weight: 500; box-shadow: 0 12px 32px rgba(0,0,0,0.55);
+      background: var(--bg-surface);
+      border: 1px solid var(--cyan);
+      color: var(--text-primary);
+      padding: 11px 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.55);
       display: flex; align-items: center; gap: 8px;
     }
 
-    @media (max-width: 900px) {
+    /* Mobile Bottom Navigation + More Drawer */
+    .mobile-more-sheet {
+      position: fixed;
+      bottom: 66px; left: 10px; right: 10px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-strong);
+      border-radius: 16px;
+      padding: 12px;
+      z-index: 60;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      box-shadow: 0 -10px 40px rgba(0,0,0,0.65);
+    }
+
+    @media (max-width: 960px) {
+      .sidebar {
+        position: fixed;
+        bottom: 0; top: auto; left: 0; right: 0;
+        width: 100% !important;
+        height: 62px;
+        flex-direction: row;
+        border-right: none;
+        border-top: 1px solid var(--border);
+      }
+      .sidebar-header, .sidebar-footer { display: none; }
+      .nav-list {
+        flex-direction: row;
+        padding: 4px 6px;
+        justify-content: space-around;
+        align-items: center;
+        overflow: hidden;
+      }
+      .nav-item.desktop-only { display: none; }
+      .nav-item {
+        flex-direction: column;
+        padding: 4px 6px;
+        font-size: 10px;
+        width: auto;
+        justify-content: center;
+      }
+      .nav-item-left { flex-direction: column; gap: 3px; }
+      .main-area { margin-left: 0 !important; padding-bottom: 74px; }
       .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      .map-wrapper { height: 460px; }
+      .country-drawer {
+        top: auto; left: 8px; right: 8px; bottom: 8px;
+        width: calc(100% - 16px);
+        max-height: 68%;
+        border-radius: 18px;
+      }
+    }
+    @media (min-width: 961px) {
+      #mobile-more-btn, #mobile-more-sheet { display: none !important; }
     }
   </style>
 </head>
 <body>
+  <div id="offline-banner" class="offline-banner hidden">Connection Lost — Reconnecting to AV GAME World Servers...</div>
   <div id="toast-container"></div>
 
-  <!-- ADMIN LOGIN GATE -->
-  <section id="admin-auth-screen">
-    <div class="auth-card">
-      <div class="admin-badge"><i data-lucide="shield-alert"></i> WORLD COUNCIL ROOT ACCESS</div>
-      <h1>AV GAME Admin</h1>
-      <p>Restricted World Architect & Administrator console. Custom claim verification is enforced server-side.</p>
-      <form id="admin-login-form">
+  <!-- AUTHENTICATION & FORCED FIRST-LOGIN PASSWORD CHANGE -->
+  <section id="auth-screen">
+    <div class="auth-card" id="login-box">
+      <div class="brand-badge"><i data-lucide="globe"></i> AV GAME • WORLD SIMULATION</div>
+      <h1>Presidential Command</h1>
+      <p>Private persistent geopolitical simulation. Enter your administrator-issued username and credentials.</p>
+      <form id="login-form">
         <div class="form-group">
-          <label for="adm-login-user">Administrator Username</label>
-          <input id="adm-login-user" type="text" placeholder="Admin" autocomplete="username" required />
+          <label for="login-username">Assigned Username</label>
+          <input id="login-username" type="text" placeholder="e.g. Admin or Hanif" autocomplete="username" required />
         </div>
         <div class="form-group">
-          <label for="adm-login-pw">Password</label>
-          <input id="adm-login-pw" type="password" placeholder="••••••••" autocomplete="current-password" required />
+          <label for="login-password">Password</label>
+          <input id="login-password" type="password" placeholder="••••••••" autocomplete="current-password" required />
         </div>
-        <div id="adm-login-err" class="kpi-sub" style="color:var(--danger); margin-bottom:10px;"></div>
-        <button type="submit" class="btn btn-admin btn-full"><i data-lucide="lock"></i> Authenticate Administrator</button>
+        <div id="login-error" class="kpi-sub" style="color:var(--danger); margin-bottom:10px;"></div>
+        <button type="submit" class="btn btn-primary btn-full" id="login-btn"><i data-lucide="shield-check"></i> Enter World Simulation</button>
+      </form>
+    </div>
+
+    <div class="auth-card hidden" id="force-password-box">
+      <div class="brand-badge"><i data-lucide="key-round"></i> FIRST-LOGIN SECURITY</div>
+      <h1>Set Private Password</h1>
+      <p>Your account was provisioned with a temporary password. Create a permanent private password to unlock command.</p>
+      <form id="change-password-form">
+        <div class="form-group">
+          <label for="new-password">New Password (min 8 characters)</label>
+          <input id="new-password" type="password" minlength="8" required />
+        </div>
+        <div class="form-group">
+          <label for="confirm-password">Confirm Password</label>
+          <input id="confirm-password" type="password" minlength="8" required />
+        </div>
+        <div id="pw-error" class="kpi-sub" style="color:var(--danger); margin-bottom:10px;"></div>
+        <button type="submit" class="btn btn-primary btn-full"><i data-lucide="check-circle"></i> Activate Account</button>
       </form>
     </div>
   </section>
 
-  <!-- ADMIN DASHBOARD SHELL -->
-  <div id="admin-shell" class="hidden">
-    <header class="topbar">
-      <div style="display:flex; align-items:center; gap:12px;">
-        <span class="admin-badge" style="margin:0;"><i data-lucide="shield-check"></i> WORLD ARCHITECT</span>
-        <strong class="display-font" style="font-size:16px;">AV GAME Control Center</strong>
-      </div>
-      <div style="display:flex; align-items:center; gap:10px;">
-        <a href="index.html" class="btn btn-secondary btn-sm"><i data-lucide="globe"></i> Open World View</a>
-        <button id="admin-logout-btn" class="btn btn-danger btn-sm"><i data-lucide="log-out"></i> Sign Out</button>
-      </div>
-    </header>
-
-    <div class="container">
-      <!-- LIVE WORLD KPI STRIP -->
-      <div class="grid-4" style="margin-bottom:20px;">
-        <div class="card"><div class="kpi-sub">Registered Presidents</div><div class="kpi-value mono" id="kpi-players">0</div></div>
-        <div class="card"><div class="kpi-sub">Configured Nations</div><div class="kpi-value mono" id="kpi-countries">0</div></div>
-        <div class="card"><div class="kpi-sub">Active Companies</div><div class="kpi-value mono" id="kpi-companies">0</div></div>
-        <div class="card"><div class="kpi-sub">Open Offers & Wars</div><div class="kpi-value mono" id="kpi-events">0 / 0</div></div>
+  <!-- MAIN PERSISTENT GAME SHELL -->
+  <div id="app-shell" class="hidden">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-wrap">
+          <div class="logo-orb"><i data-lucide="globe-2"></i></div>
+          <span class="logo-label">AV GAME</span>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="sidebar-collapse-btn" title="Collapse Sidebar"><i data-lucide="panel-left-close"></i></button>
       </div>
 
-      <!-- NAVIGATION TABS -->
-      <div class="tab-bar" id="admin-tabs">
-        <button class="tab-btn active" data-tab="players"><i data-lucide="users"></i> Players & Assignments</button>
-        <button class="tab-btn" data-tab="countries"><i data-lucide="flag"></i> Countries & Inventories</button>
-        <button class="tab-btn" data-tab="companies"><i data-lucide="factory"></i> Companies & Scarcity</button>
-        <button class="tab-btn" data-tab="offers"><i data-lucide="briefcase"></i> Corporate Offers</button>
-        <button class="tab-btn" data-tab="rules"><i data-lucide="sliders"></i> Global Rules & News</button>
-        <button class="tab-btn" data-tab="audit"><i data-lucide="file-text"></i> Audit Logs</button>
-      </div>
+      <nav class="nav-list" id="main-nav">
+        <button class="nav-item active" data-view="world"><span class="nav-item-left"><i data-lucide="map"></i><span class="nav-label">World Map</span></span></button>
+        <button class="nav-item" data-view="country"><span class="nav-item-left"><i data-lucide="landmark"></i><span class="nav-label">My Country</span></span><span id="nav-alert-badge" class="badge hidden">0</span></button>
+        <button class="nav-item" data-view="market"><span class="nav-item-left"><i data-lucide="shopping-bag"></i><span class="nav-label">Global Market</span></span></button>
+        <button class="nav-item" data-view="missions"><span class="nav-item-left"><i data-lucide="target"></i><span class="nav-label">Missions</span></span></button>
+        <button class="nav-item desktop-only" data-view="diplomacy"><span class="nav-item-left"><i data-lucide="handshake"></i><span class="nav-label">Diplomacy</span></span><span id="nav-msg-badge" class="badge hidden">0</span></button>
+        <button class="nav-item desktop-only" data-view="conflicts"><span class="nav-item-left"><i data-lucide="swords"></i><span class="nav-label">Conflicts</span></span></button>
+        <button class="nav-item desktop-only" data-view="research"><span class="nav-item-left"><i data-lucide="cpu"></i><span class="nav-label">Research</span></span></button>
+        <button class="nav-item desktop-only" data-view="government"><span class="nav-item-left"><i data-lucide="building-2"></i><span class="nav-label">Government</span></span></button>
+        <button class="nav-item desktop-only" data-view="achievements"><span class="nav-item-left"><i data-lucide="award"></i><span class="nav-label">Achievements</span></span></button>
+        <button class="nav-item desktop-only" data-view="leaderboard"><span class="nav-item-left"><i data-lucide="trophy"></i><span class="nav-label">Leaderboard</span></span></button>
+        <button class="nav-item desktop-only" data-view="notifications"><span class="nav-item-left"><i data-lucide="bell"></i><span class="nav-label">Notifications</span></span><span id="nav-notif-badge" class="badge hidden">0</span></button>
+        <button class="nav-item desktop-only" data-view="profile"><span class="nav-item-left"><i data-lucide="user-circle"></i><span class="nav-label">Profile</span></span></button>
+        <button class="nav-item desktop-only" data-view="settings"><span class="nav-item-left"><i data-lucide="settings"></i><span class="nav-label">Settings</span></span></button>
+        <button class="nav-item desktop-only hidden" id="nav-admin-btn" data-view="admin" style="color:var(--orange);"><span class="nav-item-left"><i data-lucide="shield-alert"></i><span class="nav-label">Admin Console</span></span></button>
+        <button class="nav-item" id="mobile-more-btn" type="button"><span class="nav-item-left"><i data-lucide="layout-grid"></i><span class="nav-label">More</span></span></button>
+      </nav>
 
-      <!-- TAB 1: PLAYERS & ASSIGNMENTS -->
-      <section id="tab-players" class="admin-tab-panel">
-        <div class="grid-3">
-          <div class="card">
-            <div class="card-header"><span class="card-title"><i data-lucide="user-plus" style="color:var(--orange);"></i> Provision New President</span></div>
-            <form id="provision-player-form">
-              <div class="form-group"><label>Username (Login ID)</label><input id="p-username" placeholder="Hanif" required /></div>
-              <div class="form-group"><label>Temporary Initial Password</label><input id="p-temp-pw" type="text" placeholder="TempPass2026!" minlength="8" required /></div>
-              <div class="grid-2">
-                <div class="form-group"><label>Assign Country (ISO-3)</label><input id="p-iso" placeholder="USA" maxlength="3" required /></div>
-                <div class="form-group"><label>Starting Coins</label><input id="p-coins" type="number" value="50000" required /></div>
+      <div class="sidebar-footer">
+        <div class="sidebar-profile-card">
+          <img id="sidebar-avatar" src="https://api.dicebear.com/7.x/shapes/svg?seed=AV" alt="Avatar" />
+          <div class="sidebar-profile-text" style="min-width:0;">
+            <div id="sidebar-user-name" style="font-size:12px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">President</div>
+            <div id="sidebar-user-role" style="font-size:11px; color:var(--cyan);">Leader</div>
+          </div>
+        </div>
+        <button class="btn btn-secondary btn-sm btn-full" id="logout-btn"><i data-lucide="log-out"></i><span class="nav-label">Sign Out</span></button>
+      </div>
+    </aside>
+
+    <!-- MOBILE "MORE" DRAWER -->
+    <div id="mobile-more-sheet" class="mobile-more-sheet hidden">
+      <button class="btn btn-secondary btn-sm" data-mobile-view="diplomacy"><i data-lucide="handshake"></i> Diplomacy</button>
+      <button class="btn btn-secondary btn-sm" data-mobile-view="conflicts"><i data-lucide="swords"></i> Conflicts</button>
+      <button class="btn btn-secondary btn-sm" data-mobile-view="research"><i data-lucide="cpu"></i> Research</button>
+      <button class="btn btn-secondary btn-sm" data-mobile-view="government"><i data-lucide="building-2"></i> Gov</button>
+      <button class="btn btn-secondary btn-sm" data-mobile-view="achievements"><i data-lucide="award"></i> Awards</button>
+      <button class="btn btn-secondary btn-sm" data-mobile-view="leaderboard"><i data-lucide="trophy"></i> Ranks</button>
+      <button class="btn btn-secondary btn-sm" data-mobile-view="notifications"><i data-lucide="bell"></i> Alerts</button>
+      <button class="btn btn-secondary btn-sm" data-mobile-view="profile"><i data-lucide="user-circle"></i> Profile</button>
+      <button class="btn btn-secondary btn-sm" data-mobile-view="settings"><i data-lucide="settings"></i> Settings</button>
+      <button class="btn btn-secondary btn-sm hidden" id="mobile-admin-btn" data-mobile-view="admin" style="color:var(--orange);"><i data-lucide="shield-alert"></i> Admin</button>
+    </div>
+
+    <div class="main-area">
+      <header class="topbar">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span id="top-country-flag" style="font-size:24px;">🌐</span>
+          <div>
+            <div id="top-country-name" class="display-font" style="font-size:15px; font-weight:700;">Observer State</div>
+            <div id="top-role-label" style="font-size:11px; color:var(--text-secondary);">Awaiting Country Assignment</div>
+          </div>
+        </div>
+        <div class="stat-pills">
+          <div class="pill" title="National Treasury"><i data-lucide="coins" style="color:var(--orange);"></i><span class="mono" id="top-coins">0</span></div>
+          <div class="pill" title="National Level"><i data-lucide="sparkles" style="color:var(--purple);"></i><span class="lbl">Lvl</span><span class="mono" id="top-level">1</span></div>
+          <div class="pill" title="Stability"><i data-lucide="heart-pulse" style="color:var(--green);"></i><span class="mono" id="top-stability">100%</span></div>
+          <div class="pill" title="Military Score"><i data-lucide="shield" style="color:var(--cyan);"></i><span class="mono" id="top-military">0</span></div>
+        </div>
+      </header>
+
+      <main class="view-container">
+        <!-- VIEW 1: WORLD MAP & COMMAND HOME -->
+        <section id="view-world" class="game-view">
+          <div class="hero-banner">
+            <div>
+              <div class="brand-badge" style="margin-bottom:6px;"><i data-lucide="radio"></i> LIVE PERSISTENT WORLD</div>
+              <h2 class="display-font" id="welcome-headline" style="font-size:20px;">Welcome back, President</h2>
+              <p class="kpi-sub" id="welcome-sub">Your nation is active on the world stage. Monitor markets, diplomacy, and live global shifts.</p>
+            </div>
+            <div class="xp-bar-wrap">
+              <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600;">
+                <span id="hero-lvl-label">Level 1</span>
+                <span class="mono" id="hero-xp-label">0 / 500 XP</span>
               </div>
-              <div class="grid-2">
-                <div class="form-group"><label>Starting Level</label><input id="p-level" type="number" value="1" min="1" required /></div>
-                <div class="form-group"><label>Government Role</label>
-                  <select id="p-role"><option value="president">President</option><option value="minister">Minister</option></select>
-                </div>
-              </div>
-              <button type="submit" class="btn btn-admin btn-full" id="provision-btn"><i data-lucide="server"></i> Create Account via Server</button>
-            </form>
+              <div class="progress-track"><div class="progress-fill" id="hero-xp-fill" style="width:10%;"></div></div>
+            </div>
           </div>
 
-          <div class="card" style="grid-column: span 2;">
-            <div class="card-header"><span class="card-title"><i data-lucide="shield" style="color:var(--cyan);"></i> Active Player Roster & Access Control</span></div>
+          <div class="map-toolbar">
+            <div style="display:flex; gap:8px; flex:1; min-width:240px; flex-wrap:wrap;">
+              <input id="map-search-input" type="search" placeholder="Search country by name or ISO code..." style="max-width:260px;" />
+              <select id="map-filter-select" style="max-width:200px;">
+                <option value="all">All Nations</option>
+                <option value="players">Player-Controlled</option>
+                <option value="unclaimed">Unclaimed / Purchasable</option>
+                <option value="war">Active Conflicts</option>
+                <option value="high-tech">High Tech (Tier 2+)</option>
+              </select>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-secondary btn-sm" id="quick-missions-btn"><i data-lucide="target"></i> Daily Missions</button>
+              <button class="btn btn-primary btn-sm" id="quick-market-btn"><i data-lucide="shopping-bag"></i> Global Market</button>
+            </div>
+          </div>
+
+          <div class="map-wrapper">
+            <div id="map-loading" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(9,13,24,0.8); z-index:20;">
+              <span class="brand-badge"><i data-lucide="loader-2"></i> Loading Real-World Geopolitical Boundaries...</span>
+            </div>
+            <div id="map-tooltip" class="map-tooltip hidden"></div>
+            <div class="map-legend">
+              <span><i class="legend-dot" style="background:#0E586E; border:1px solid #38BDF8;"></i>Your Nation</span>
+              <span><i class="legend-dot" style="background:#263875; border:1px solid #818CF8;"></i>Player President</span>
+              <span><i class="legend-dot" style="background:#1A2742;"></i>Unclaimed / AI</span>
+              <span><i class="legend-dot" style="background:#581824; border:1px solid #EF4444;"></i>Active Conflict</span>
+            </div>
+            <svg id="world-map-svg"></svg>
+            <div class="map-controls">
+              <button class="btn btn-secondary btn-sm" id="zoom-in" title="Zoom In"><i data-lucide="plus"></i></button>
+              <button class="btn btn-secondary btn-sm" id="zoom-out" title="Zoom Out"><i data-lucide="minus"></i></button>
+              <button class="btn btn-secondary btn-sm" id="zoom-reset" title="Reset View"><i data-lucide="maximize-2"></i></button>
+            </div>
+
+            <!-- FLOATING COUNTRY INSPECTOR -->
+            <div id="country-drawer" class="country-drawer hidden">
+              <div class="drawer-header">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <span id="drawer-flag" style="font-size:26px;">🏳️</span>
+                  <div>
+                    <div id="drawer-name" class="display-font" style="font-weight:700; font-size:15px;">Country</div>
+                    <div id="drawer-president" style="font-size:11px; color:var(--cyan);">Unclaimed</div>
+                  </div>
+                </div>
+                <div style="display:flex; gap:6px;">
+                  <button class="btn btn-secondary btn-sm" id="minimize-drawer" title="Minimize"><i data-lucide="chevron-down"></i></button>
+                  <button class="btn btn-secondary btn-sm" id="close-drawer" title="Close"><i data-lucide="x"></i></button>
+                </div>
+              </div>
+              <div class="drawer-tabs" id="drawer-tabs">
+                <button class="drawer-tab active" data-dtab="overview">Overview</button>
+                <button class="drawer-tab" data-dtab="economy">Economy</button>
+                <button class="drawer-tab" data-dtab="industries">Companies</button>
+                <button class="drawer-tab" data-dtab="resources">Resources</button>
+                <button class="drawer-tab" data-dtab="diplomacy">Diplomacy</button>
+                <button class="drawer-tab" data-dtab="military">Defense</button>
+                <button class="drawer-tab" data-dtab="deals">Deals</button>
+              </div>
+              <div class="drawer-body" id="drawer-body"></div>
+            </div>
+          </div>
+
+          <div class="grid-3" style="margin-top:18px;">
+            <div class="card">
+              <div class="card-header"><span class="card-title"><i data-lucide="alert-triangle" style="color:var(--orange);"></i> Shortage & National Alerts</span></div>
+              <div id="home-alerts-list"><div class="kpi-sub">All strategic reserves nominal.</div></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><span class="card-title"><i data-lucide="newspaper" style="color:var(--cyan);"></i> Live Global News</span></div>
+              <div id="home-news-list" style="max-height:230px; overflow-y:auto;"></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><span class="card-title"><i data-lucide="trending-up" style="color:var(--green);"></i> Live Public Market & Conflicts</span></div>
+              <div id="home-deals-wars" style="max-height:230px; overflow-y:auto;"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- VIEW 2: MY COUNTRY DASHBOARD & CHARTS -->
+        <section id="view-country" class="game-view hidden">
+          <div class="grid-4" style="margin-bottom:16px;">
+            <div class="card">
+              <div class="kpi-sub" style="display:flex; align-items:center; gap:6px;"><i data-lucide="coins" style="color:var(--orange);"></i> National Treasury</div>
+              <div class="kpi-value mono" id="mc-coins">0</div>
+            </div>
+            <div class="card">
+              <div class="kpi-sub" style="display:flex; align-items:center; gap:6px;"><i data-lucide="bar-chart-3" style="color:var(--green);"></i> GDP Index</div>
+              <div class="kpi-value mono" id="mc-gdp">0</div>
+            </div>
+            <div class="card">
+              <div class="kpi-sub" style="display:flex; align-items:center; gap:6px;"><i data-lucide="users" style="color:var(--cyan);"></i> Population</div>
+              <div class="kpi-value mono" id="mc-pop">0</div>
+            </div>
+            <div class="card">
+              <div class="kpi-sub" style="display:flex; align-items:center; gap:6px;"><i data-lucide="cpu" style="color:var(--purple);"></i> Tech & XP</div>
+              <div class="kpi-value mono" id="mc-xp">Lvl 1</div>
+            </div>
+          </div>
+
+          <div class="grid-2" style="margin-bottom:16px;">
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title"><i data-lucide="factory" style="color:var(--cyan);"></i> National Industries & Server Production</span>
+                <button class="btn btn-secondary btn-sm" id="sync-production-btn"><i data-lucide="refresh-cw"></i> Sync Tick</button>
+              </div>
+              <div id="mc-companies-list"></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><span class="card-title"><i data-lucide="packages" style="color:var(--green);"></i> Strategic Inventory</span></div>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Product</th><th>Stock</th><th>Min Alert</th><th>Status</th></tr></thead>
+                  <tbody id="mc-inventory-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid-2" style="margin-bottom:16px;">
+            <div class="card">
+              <div class="card-header"><span class="card-title"><i data-lucide="line-chart" style="color:var(--purple);"></i> National Telemetry History</span></div>
+              <div id="chart-empty-state" class="kpi-sub" style="padding:24px; text-align:center;">Historical telemetry snapshots will appear here as server production and market ticks record snapshots in Firestore.</div>
+              <canvas id="country-telemetry-chart" class="hidden" height="160"></canvas>
+            </div>
+            <div class="card">
+              <div class="card-header"><span class="card-title"><i data-lucide="briefcase" style="color:var(--orange);"></i> Admin Corporate & Asset Offers</span></div>
+              <div id="mc-offers-grid" class="grid-2"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- VIEW 3: GLOBAL MARKETPLACE (ICON PRODUCT CARDS + FILTERS) -->
+        <section id="view-market" class="game-view hidden">
+          <div class="grid-3" style="margin-bottom:18px;">
+            <div class="card">
+              <div class="card-header"><span class="card-title"><i data-lucide="upload-cloud" style="color:var(--cyan);"></i> Publish Export Offer</span></div>
+              <form id="create-trade-offer-form">
+                <div class="form-group">
+                  <label>Product from National Inventory</label>
+                  <select id="trade-product-select" required></select>
+                </div>
+                <div class="form-group">
+                  <label>Product Category</label>
+                  <select id="trade-category-select">
+                    <option value="technology">Technology & Electronics</option>
+                    <option value="energy">Energy, Oil & Gas</option>
+                    <option value="agriculture">Food, Grain & Coffee</option>
+                    <option value="automotive">Automotive & Vehicles</option>
+                    <option value="materials">Industrial Metals & Materials</option>
+                  </select>
+                </div>
+                <div class="grid-2">
+                  <div class="form-group"><label>Quantity</label><input type="number" id="trade-qty" min="1" required /></div>
+                  <div class="form-group"><label>Unit Price</label><input type="number" id="trade-price" min="1" required /></div>
+                </div>
+                <div class="form-group">
+                  <label>Deal Visibility</label>
+                  <select id="trade-visibility">
+                    <option value="public">Public Global Market</option>
+                    <option value="private">Private Bilateral Offer</option>
+                  </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full"><i data-lucide="tag"></i> List on Global Market</button>
+              </form>
+            </div>
+
+            <div class="card" style="grid-column: span 2;">
+              <div class="card-header" style="flex-wrap:wrap;">
+                <span class="card-title"><i data-lucide="store" style="color:var(--green);"></i> Live International Marketplace</span>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                  <input id="market-search" type="search" placeholder="Search product or country..." style="width:180px;" />
+                  <select id="market-cat-filter" style="width:155px;">
+                    <option value="all">All Categories</option>
+                    <option value="technology">Technology</option>
+                    <option value="energy">Energy & Oil</option>
+                    <option value="agriculture">Food & Coffee</option>
+                    <option value="automotive">Automotive</option>
+                    <option value="materials">Materials</option>
+                  </select>
+                  <select id="market-sort" style="width:150px;">
+                    <option value="newest">Newest First</option>
+                    <option value="price-asc">Price: Low to High</option>
+                    <option value="price-desc">Price: High to Low</option>
+                    <option value="qty-desc">Highest Quantity</option>
+                  </select>
+                </div>
+              </div>
+              <div id="market-cards-grid" class="market-grid"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><span class="card-title"><i data-lucide="receipt" style="color:var(--purple);"></i> Verified International Trade Ledger</span></div>
             <div class="table-wrap">
               <table>
-                <thead><tr><th>Username</th><th>Country</th><th>Role</th><th>First Login</th><th>Status</th><th>Actions</th></tr></thead>
-                <tbody id="players-tbody"></tbody>
+                <thead><tr><th>Product</th><th>Buyer</th><th>Seller</th><th>Quantity</th><th>Total Settled</th></tr></thead>
+                <tbody id="market-history-tbody"></tbody>
               </table>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- TAB 2: COUNTRIES & STARTING INVENTORIES -->
-      <section id="tab-countries" class="admin-tab-panel hidden">
-        <div class="grid-3" style="margin-bottom:16px;">
-          <div class="card">
-            <div class="card-header"><span class="card-title"><i data-lucide="globe" style="color:var(--cyan);"></i> Configure Nation</span></div>
-            <form id="country-config-form">
-              <div class="grid-3">
-                <div class="form-group"><label>ISO-3</label><input id="c-iso" placeholder="USA" maxlength="3" required /></div>
-                <div class="form-group"><label>Country Name</label><input id="c-name" placeholder="United States" required /></div>
-                <div class="form-group"><label>Flag</label><input id="c-flag" placeholder="🇺🇸" required /></div>
-              </div>
-              <div class="grid-3">
-                <div class="form-group"><label>Treasury</label><input id="c-coins" type="number" value="100000" required /></div>
-                <div class="form-group"><label>Military</label><input id="c-mil" type="number" value="80" required /></div>
-                <div class="form-group"><label>Tech Tier</label><input id="c-tech" type="number" value="2" min="1" required /></div>
-              </div>
-              <div class="grid-2">
-                <div class="form-group"><label>Unclaimed Purchasable?</label>
-                  <select id="c-purchasable"><option value="false">No</option><option value="true">Yes</option></select>
+        <!-- VIEW 4: MISSIONS & DAILY CHALLENGES -->
+        <section id="view-missions" class="game-view hidden">
+          <div class="card-header">
+            <span class="card-title" style="font-size:18px;"><i data-lucide="target" style="color:var(--cyan);"></i> Presidential Missions & Daily Challenges</span>
+          </div>
+          <div id="missions-grid" class="grid-3"></div>
+        </section>
+
+        <!-- VIEW 5: ACHIEVEMENTS & COLLECTIBLE AWARDS -->
+        <section id="view-achievements" class="game-view hidden">
+          <div class="card-header">
+            <span class="card-title" style="font-size:18px;"><i data-lucide="award" style="color:var(--orange);"></i> Presidential Achievements & Honors</span>
+          </div>
+          <div id="achievements-grid" class="grid-3"></div>
+        </section>
+
+        <!-- VIEW 6: RESEARCH & TECHNOLOGY TREE -->
+        <section id="view-research" class="game-view hidden">
+          <div class="card-header">
+            <span class="card-title" style="font-size:18px;"><i data-lucide="cpu" style="color:var(--purple);"></i> National Research & Innovation</span>
+          </div>
+          <div id="research-grid" class="grid-3"></div>
+        </section>
+
+        <!-- VIEW 7: DIPLOMACY & SOCIAL MESSAGING -->
+        <section id="view-diplomacy" class="game-view hidden">
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header"><span class="card-title"><i data-lucide="send" style="color:var(--cyan);"></i> Diplomatic Dispatch & Treaties</span></div>
+              <form id="diplomacy-form">
+                <div class="form-group"><label>Recipient Nation</label><select id="diplo-target-country" required></select></div>
+                <div class="form-group">
+                  <label>Treaty / Dispatch Type</label>
+                  <select id="diplo-type">
+                    <option value="message">Diplomatic Message</option>
+                    <option value="trade_pact">Bilateral Trade Agreement</option>
+                    <option value="alliance">Mutual Defense Alliance</option>
+                    <option value="peace">Peace Accord</option>
+                    <option value="aid">Allied Assistance Request</option>
+                  </select>
                 </div>
-                <div class="form-group"><label>Acquisition Price</label><input id="c-price" type="number" value="50000" /></div>
-              </div>
-              <button type="submit" class="btn btn-primary btn-full"><i data-lucide="save"></i> Save Nation Parameters</button>
-            </form>
+                <div class="form-group"><label>Terms & Proposal</label><textarea id="diplo-content" rows="3" required></textarea></div>
+                <button type="submit" class="btn btn-primary btn-full"><i data-lucide="mail-check"></i> Transmit Dispatch</button>
+              </form>
+            </div>
+            <div class="card">
+              <div class="card-header"><span class="card-title"><i data-lucide="inbox" style="color:var(--green);"></i> Diplomatic Inbox & Active Treaties</span></div>
+              <div id="diplomacy-feed" style="max-height:430px; overflow-y:auto;"></div>
+            </div>
           </div>
+        </section>
 
+        <!-- VIEW 8: ABSTRACT CONFLICTS -->
+        <section id="view-conflicts" class="game-view hidden">
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header"><span class="card-title"><i data-lucide="swords" style="color:var(--danger);"></i> Formal Conflict Declaration</span></div>
+              <p class="kpi-sub" style="margin-bottom:12px;">Abstract strategic simulation regulated by World Council rules. Outcomes weigh Military Score, Defense Bonus, Tech Level, Alliances, and Stability.</p>
+              <form id="declare-conflict-form">
+                <div class="form-group"><label>Target Country</label><select id="conflict-target" required></select></div>
+                <div class="form-group"><label>Strategic Objective</label><input type="text" id="conflict-reason" placeholder="e.g. Trade Route Dispute" required /></div>
+                <button type="submit" class="btn btn-danger btn-full"><i data-lucide="flag"></i> File Formal Declaration</button>
+              </form>
+            </div>
+            <div class="card">
+              <div class="card-header"><span class="card-title"><i data-lucide="activity" style="color:var(--orange);"></i> Active Global Conflicts</span></div>
+              <div id="active-conflicts-list"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- VIEW 9: GOVERNMENT & MINISTERS -->
+        <section id="view-government" class="game-view hidden">
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header"><span class="card-title"><i data-lucide="landmark" style="color:var(--cyan);"></i> State Charter & Political Identity</span></div>
+              <form id="gov-identity-form">
+                <div class="form-group"><label>Official Government Name</label><input id="gov-state-name" placeholder="e.g. Federal Republic" /></div>
+                <div class="form-group"><label>Ideology / Ruling Party</label><input id="gov-party" placeholder="e.g. Innovation Coalition" /></div>
+                <button type="submit" class="btn btn-primary"><i data-lucide="save"></i> Update Charter</button>
+              </form>
+            </div>
+            <div class="card">
+              <div class="card-header"><span class="card-title"><i data-lucide="users" style="color:var(--purple);"></i> Cabinet Ministries</span></div>
+              <div id="cabinet-list" class="grid-2"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- VIEW 10: LEADERBOARD -->
+        <section id="view-leaderboard" class="game-view hidden">
           <div class="card">
-            <div class="card-header"><span class="card-title"><i data-lucide="package-plus" style="color:var(--green);"></i> Grant / Set Country Stock</span></div>
-            <form id="grant-inventory-form">
-              <div class="form-group"><label>Target Country ISO-3</label><input id="inv-iso" placeholder="USA" maxlength="3" required /></div>
-              <div class="form-group"><label>Product / Resource Name</label><input id="inv-product" placeholder="Oil" required /></div>
-              <div class="grid-2">
-                <div class="form-group"><label>Stock Quantity</label><input id="inv-qty" type="number" value="250" required /></div>
-                <div class="form-group"><label>Shortage Threshold</label><input id="inv-threshold" type="number" value="50" required /></div>
-              </div>
-              <button type="submit" class="btn btn-success btn-full"><i data-lucide="plus-circle"></i> Update Strategic Stock</button>
-            </form>
-          </div>
-
-          <div class="card">
-            <div class="card-header"><span class="card-title"><i data-lucide="target" style="color:var(--purple);"></i> Assign Presidential Mission</span></div>
-            <form id="assign-mission-form">
-              <div class="form-group"><label>Target Country ISO-3</label><input id="m-iso" placeholder="USA" maxlength="3" required /></div>
-              <div class="form-group"><label>Mission Title</label><input id="m-title" placeholder="International Exporter" required /></div>
-              <div class="form-group"><label>Description</label><input id="m-desc" placeholder="Complete 1 export deal on the Global Market" required /></div>
-              <div class="grid-2">
-                <div class="form-group"><label>Target Count</label><input id="m-target" type="number" value="1" min="1" required /></div>
-                <div class="form-group"><label>XP Reward</label><input id="m-xp" type="number" value="250" required /></div>
-              </div>
-              <button type="submit" class="btn btn-secondary btn-full"><i data-lucide="send"></i> Deploy Mission</button>
-            </form>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-header"><span class="card-title"><i data-lucide="map-pin" style="color:var(--orange);"></i> World Nations Directory</span></div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Flag</th><th>ISO</th><th>Name</th><th>President</th><th>Treasury</th><th>Military</th><th>Tech</th><th>Purchasable</th></tr></thead>
-              <tbody id="countries-tbody"></tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- TAB 3: COMPANIES & SCARCITY PRODUCTION -->
-      <section id="tab-companies" class="admin-tab-panel hidden">
-        <div class="grid-3">
-          <div class="card">
-            <div class="card-header"><span class="card-title"><i data-lucide="factory" style="color:var(--green);"></i> Register Scarcity Producer</span></div>
-            <form id="company-create-form">
-              <div class="form-group"><label>Company Name</label><input id="comp-name" placeholder="Aramco" required /></div>
-              <div class="grid-2">
-                <div class="form-group"><label>Country ISO-3</label><input id="comp-iso" placeholder="SAU" maxlength="3" required /></div>
-                <div class="form-group"><label>Industry Sector</label><input id="comp-sector" placeholder="Energy & Oil" required /></div>
-              </div>
-              <div class="form-group"><label>Product Produced</label><input id="comp-product" placeholder="Crude Oil" required /></div>
-              <div class="grid-2">
-                <div class="form-group"><label>Units / Interval</label><input id="comp-rate" type="number" value="25" min="1" required /></div>
-                <div class="form-group"><label>Interval (Minutes)</label><input id="comp-mins" type="number" value="15" min="1" required /></div>
-              </div>
-              <button type="submit" class="btn btn-admin btn-full"><i data-lucide="plus"></i> Register Company</button>
-            </form>
-          </div>
-
-          <div class="card" style="grid-column: span 2;">
             <div class="card-header">
-              <span class="card-title"><i data-lucide="cpu" style="color:var(--cyan);"></i> Active Global Production Registry</span>
-              <button class="btn btn-secondary btn-sm" id="force-global-tick-btn"><i data-lucide="refresh-cw"></i> Trigger Global Production Tick</button>
+              <span class="card-title"><i data-lucide="trophy" style="color:var(--orange);"></i> Global Power Rankings</span>
+              <select id="lb-category" style="width:210px;">
+                <option value="overall">Overall Power Index</option>
+                <option value="coins">Treasury Wealth</option>
+                <option value="militaryScore">Military Score</option>
+                <option value="techLevel">Technology Level</option>
+                <option value="level">National Level</option>
+              </select>
             </div>
             <div class="table-wrap">
               <table>
-                <thead><tr><th>Company</th><th>Nation</th><th>Product</th><th>Output Rate</th><th>Status</th><th>Toggle</th></tr></thead>
-                <tbody id="companies-tbody"></tbody>
+                <thead><tr><th>Rank</th><th>Nation</th><th>President</th><th>Level</th><th>Score</th></tr></thead>
+                <tbody id="leaderboard-tbody"></tbody>
               </table>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- TAB 4: CORPORATE & ASSET OFFERS -->
-      <section id="tab-offers" class="admin-tab-panel hidden">
-        <div class="grid-3">
+        <!-- VIEW 11: NOTIFICATION CENTER -->
+        <section id="view-notifications" class="game-view hidden">
           <div class="card">
-            <div class="card-header"><span class="card-title"><i data-lucide="briefcase" style="color:var(--purple);"></i> Publish Asset Offer</span></div>
-            <form id="offer-create-form">
-              <div class="form-group"><label>Offer Title</label><input id="off-title" placeholder="Mercedes-Benz Assembly Plant" required /></div>
-              <div class="form-group"><label>Description</label><textarea id="off-desc" rows="2" placeholder="Grants industrial automotive capacity and +150 GDP."></textarea></div>
-              <div class="grid-2">
-                <div class="form-group"><label>Restrict to ISO (Blank = Global)</label><input id="off-iso" placeholder="DEU" maxlength="3" /></div>
-                <div class="form-group"><label>Price (Coins)</label><input id="off-price" type="number" value="35000" min="1" required /></div>
+            <div class="card-header">
+              <span class="card-title"><i data-lucide="bell-ring" style="color:var(--cyan);"></i> Presidential Notification Center</span>
+              <button class="btn btn-secondary btn-sm" id="mark-all-read-btn"><i data-lucide="check-check"></i> Mark All Read</button>
+            </div>
+            <div id="notifications-list"></div>
+          </div>
+        </section>
+
+        <!-- VIEW 12: PRESIDENTIAL PROFILE (SUPABASE AVATAR STORAGE) -->
+        <section id="view-profile" class="game-view hidden">
+          <div class="card" style="max-width:640px;">
+            <div class="card-header"><span class="card-title"><i data-lucide="user-check" style="color:var(--cyan);"></i> Presidential Dossier</span></div>
+            <div style="display:flex; align-items:center; gap:16px; margin-bottom:18px;">
+              <img id="profile-avatar-img" src="https://api.dicebear.com/7.x/shapes/svg?seed=AV" alt="Portrait" style="width:76px; height:76px; border-radius:50%; object-fit:cover; border:2px solid var(--cyan);" />
+              <div>
+                <label class="btn btn-secondary btn-sm" style="cursor:pointer;">
+                  <i data-lucide="camera"></i> Upload Portrait (Supabase)
+                  <input type="file" id="avatar-file-input" accept="image/png,image/jpeg,image/webp" class="hidden" />
+                </label>
+                <div class="kpi-sub" style="margin-top:6px;">PNG/JPG/WEBP up to 2MB • Stored in Supabase Storage; URL saved in Firestore.</div>
               </div>
-              <div class="grid-2">
-                <div class="form-group"><label>Quantity</label><input id="off-qty" type="number" value="1" min="1" required /></div>
-                <div class="form-group"><label>Unique One-Time?</label>
-                  <select id="off-unique"><option value="true">Yes (Unique)</option><option value="false">No</option></select>
+            </div>
+            <form id="profile-form">
+              <div class="form-group"><label>Presidential Display Name</label><input id="prof-display-name" required /></div>
+              <div class="form-group"><label>Biography & Vision</label><textarea id="prof-bio" rows="3"></textarea></div>
+              <button type="submit" class="btn btn-primary"><i data-lucide="save"></i> Save Profile</button>
+            </form>
+          </div>
+        </section>
+
+        <!-- VIEW 13: SETTINGS (THEME, SOUND & REDUCED MOTION) -->
+        <section id="view-settings" class="game-view hidden">
+          <div class="card" style="max-width:540px;">
+            <div class="card-header"><span class="card-title"><i data-lucide="sliders" style="color:var(--cyan);"></i> Interface & Audio Preferences</span></div>
+            <div class="form-group" style="display:flex; justify-content:space-between; align-items:center;">
+              <div><strong>Visual Theme</strong><div class="kpi-sub">Switch between Midnight Navy Dark and Daylight modes</div></div>
+              <button class="btn btn-secondary btn-sm" id="settings-theme-btn"><i data-lucide="sun-moon"></i> Toggle Theme</button>
+            </div>
+            <div class="form-group" style="display:flex; justify-content:space-between; align-items:center;">
+              <div><strong>Tactile UI Sound Effects</strong><div class="kpi-sub">Subtle chimes for purchases, missions, and level-ups (Off by default)</div></div>
+              <input type="checkbox" id="setting-sound" style="width:20px; height:20px;" />
+            </div>
+            <div class="form-group" style="display:flex; justify-content:space-between; align-items:center;">
+              <div><strong>Reduced Motion</strong><div class="kpi-sub">Disable map border pulses and card hover lifts</div></div>
+              <input type="checkbox" id="setting-motion" style="width:20px; height:20px;" />
+            </div>
+          </div>
+        </section>
+
+        <!-- VIEW 14: FULL WORLD ADMINISTRATOR CONSOLE (ROLE-GATED) -->
+        <section id="view-admin" class="game-view hidden">
+          <div class="card-header">
+            <span class="card-title" style="font-size:18px;"><i data-lucide="shield-alert" style="color:var(--orange);"></i> World Administrator Command Console</span>
+            <span class="admin-badge">SERVER-VERIFIED ROOT</span>
+          </div>
+
+          <div class="sub-tab-bar" id="admin-subtabs">
+            <button class="btn btn-admin btn-sm" data-admtab="players"><i data-lucide="users"></i> Players & Assignments</button>
+            <button class="btn btn-secondary btn-sm" data-admtab="countries"><i data-lucide="flag"></i> Countries & Stock</button>
+            <button class="btn btn-secondary btn-sm" data-admtab="companies"><i data-lucide="factory"></i> Companies & Production</button>
+            <button class="btn btn-secondary btn-sm" data-admtab="offers"><i data-lucide="briefcase"></i> Corporate Offers</button>
+            <button class="btn btn-secondary btn-sm" data-admtab="rules"><i data-lucide="megaphone"></i> Decrees & Rules</button>
+            <button class="btn btn-secondary btn-sm" data-admtab="audit"><i data-lucide="scroll-text"></i> Audit Log</button>
+          </div>
+
+          <!-- ADMIN SUBTAB 1: PLAYERS -->
+          <div id="admpanel-players" class="admin-subpanel">
+            <div class="grid-3">
+              <div class="card">
+                <div class="card-header"><span class="card-title">Provision New President</span></div>
+                <form id="admin-create-player-form">
+                  <div class="form-group"><label>Username</label><input id="adm-username" placeholder="Hanif" required /></div>
+                  <div class="form-group"><label>Initial Temp Password</label><input id="adm-temp-pw" type="text" placeholder="TempPass2026!" minlength="8" required /></div>
+                  <div class="grid-2">
+                    <div class="form-group"><label>Country ISO-3</label><input id="adm-iso" placeholder="USA" maxlength="3" required /></div>
+                    <div class="form-group"><label>Starting Coins</label><input id="adm-coins" type="number" value="50000" required /></div>
+                  </div>
+                  <button type="submit" class="btn btn-admin btn-full"><i data-lucide="server"></i> Provision Account</button>
+                </form>
+              </div>
+              <div class="card" style="grid-column: span 2;">
+                <div class="card-header"><span class="card-title">Registered Player Roster</span></div>
+                <div class="table-wrap">
+                  <table>
+                    <thead><tr><th>Username</th><th>Country</th><th>Role</th><th>Password State</th><th>Status</th><th>Action</th></tr></thead>
+                    <tbody id="adm-players-tbody"></tbody>
+                  </table>
                 </div>
               </div>
-              <button type="submit" class="btn btn-primary btn-full"><i data-lucide="send"></i> Publish Offer</button>
-            </form>
-          </div>
-
-          <div class="card" style="grid-column: span 2;">
-            <div class="card-header"><span class="card-title"><i data-lucide="tag" style="color:var(--orange);"></i> Published Corporate Offers</span></div>
-            <div class="table-wrap">
-              <table>
-                <thead><tr><th>Title</th><th>Target</th><th>Price</th><th>Qty</th><th>Status</th><th>Purchased By</th><th>Action</th></tr></thead>
-                <tbody id="offers-tbody"></tbody>
-              </table>
             </div>
           </div>
-        </div>
-      </section>
 
-      <!-- TAB 5: GLOBAL RULES & WORLD COUNCIL ANNOUNCEMENTS -->
-      <section id="tab-rules" class="admin-tab-panel hidden">
-        <div class="grid-2">
-          <div class="card">
-            <div class="card-header"><span class="card-title"><i data-lucide="megaphone" style="color:var(--orange);"></i> Broadcast World Council Event</span></div>
-            <form id="news-broadcast-form">
-              <div class="form-group">
-                <label>Announcement Category</label>
-                <select id="news-type">
-                  <option value="WORLD COUNCIL">World Council Decree</option>
-                  <option value="ECONOMY">Global Market Shift</option>
-                  <option value="DIPLOMACY">International Summit</option>
-                  <option value="LAW">International Law Update</option>
-                </select>
+          <!-- ADMIN SUBTAB 2: COUNTRIES & INVENTORY -->
+          <div id="admpanel-countries" class="admin-subpanel hidden">
+            <div class="grid-3">
+              <div class="card">
+                <div class="card-header"><span class="card-title">Configure Country</span></div>
+                <form id="admin-country-form">
+                  <div class="grid-3">
+                    <div class="form-group"><label>ISO-3</label><input id="adm-c-iso" placeholder="USA" maxlength="3" required /></div>
+                    <div class="form-group"><label>Name</label><input id="adm-c-name" placeholder="United States" required /></div>
+                    <div class="form-group"><label>Flag</label><input id="adm-c-flag" placeholder="🇺🇸" required /></div>
+                  </div>
+                  <div class="grid-3">
+                    <div class="form-group"><label>Treasury</label><input id="adm-c-coins" type="number" value="100000" /></div>
+                    <div class="form-group"><label>Military</label><input id="adm-c-mil" type="number" value="80" /></div>
+                    <div class="form-group"><label>Purchasable?</label><select id="adm-c-purchasable"><option value="false">No</option><option value="true">Yes</option></select></div>
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-full">Save Country</button>
+                </form>
               </div>
-              <div class="form-group"><label>Public Dispatch Message</label><textarea id="news-msg" rows="3" required placeholder="Announce global trade rules, oil crises, or tournament milestones..."></textarea></div>
-              <button type="submit" class="btn btn-admin btn-full"><i data-lucide="radio"></i> Publish to Live News Feed</button>
-            </form>
+              <div class="card">
+                <div class="card-header"><span class="card-title">Set Country Stock</span></div>
+                <form id="adm-grant-inv-form">
+                  <div class="form-group"><label>Country ISO-3</label><input id="adm-inv-iso" placeholder="USA" maxlength="3" required /></div>
+                  <div class="form-group"><label>Product</label><input id="adm-inv-prod" placeholder="Oil" required /></div>
+                  <div class="grid-2">
+                    <div class="form-group"><label>Quantity</label><input id="adm-inv-qty" type="number" value="250" required /></div>
+                    <div class="form-group"><label>Min Alert</label><input id="adm-inv-min" type="number" value="50" required /></div>
+                  </div>
+                  <button type="submit" class="btn btn-success btn-full">Update Inventory</button>
+                </form>
+              </div>
+              <div class="card">
+                <div class="card-header"><span class="card-title">Deploy Country Mission</span></div>
+                <form id="adm-mission-form">
+                  <div class="form-group"><label>Target ISO-3</label><input id="adm-m-iso" placeholder="USA" maxlength="3" required /></div>
+                  <div class="form-group"><label>Title</label><input id="adm-m-title" placeholder="Global Exporter" required /></div>
+                  <div class="form-group"><label>Description</label><input id="adm-m-desc" placeholder="Complete 1 trade deal" required /></div>
+                  <div class="grid-2">
+                    <div class="form-group"><label>Target</label><input id="adm-m-target" type="number" value="1" required /></div>
+                    <div class="form-group"><label>XP Reward</label><input id="adm-m-xp" type="number" value="250" required /></div>
+                  </div>
+                  <button type="submit" class="btn btn-secondary btn-full">Assign Mission</button>
+                </form>
+              </div>
+            </div>
           </div>
 
-          <div class="card">
-            <div class="card-header"><span class="card-title"><i data-lucide="scale" style="color:var(--cyan);"></i> Global Simulation Parameters</span></div>
-            <form id="global-rules-form">
-              <div class="grid-2">
-                <div class="form-group"><label>Default Tax Rate (%)</label><input id="rule-tax" type="number" value="15" /></div>
-                <div class="form-group"><label>Base Inflation (%)</label><input id="rule-inflation" type="number" step="0.1" value="2.0" /></div>
+          <!-- ADMIN SUBTAB 3: COMPANIES -->
+          <div id="admpanel-companies" class="admin-subpanel hidden">
+            <div class="grid-3">
+              <div class="card">
+                <div class="card-header"><span class="card-title">Register Scarcity Company</span></div>
+                <form id="admin-company-form">
+                  <div class="grid-2">
+                    <div class="form-group"><label>Company</label><input id="adm-comp-name" placeholder="Apple" required /></div>
+                    <div class="form-group"><label>ISO-3</label><input id="adm-comp-iso" placeholder="USA" maxlength="3" required /></div>
+                  </div>
+                  <div class="grid-3">
+                    <div class="form-group"><label>Product</label><input id="adm-comp-prod" placeholder="Smartphones" required /></div>
+                    <div class="form-group"><label>Units</label><input id="adm-comp-rate" type="number" value="10" required /></div>
+                    <div class="form-group"><label>Mins</label><input id="adm-comp-mins" type="number" value="20" required /></div>
+                  </div>
+                  <button type="submit" class="btn btn-admin btn-full">Add Company</button>
+                </form>
               </div>
-              <div class="grid-2">
-                <div class="form-group"><label>Allow Unclaimed Purchases</label><select id="rule-unclaimed"><option value="true">Enabled</option><option value="false">Disabled</option></select></div>
-                <div class="form-group"><label>Conflict Declarations</label><select id="rule-conflicts"><option value="true">Permitted</option><option value="false">World Council Freeze</option></select></div>
+              <div class="card" style="grid-column: span 2;">
+                <div class="card-header"><span class="card-title">Global Companies</span></div>
+                <div class="table-wrap">
+                  <table>
+                    <thead><tr><th>Company</th><th>ISO</th><th>Product</th><th>Rate</th><th>Status</th><th>Action</th></tr></thead>
+                    <tbody id="adm-companies-tbody"></tbody>
+                  </table>
+                </div>
               </div>
-              <button type="submit" class="btn btn-primary btn-full"><i data-lucide="save"></i> Save World Rules</button>
-            </form>
+            </div>
           </div>
-        </div>
-      </section>
 
-      <!-- TAB 6: IMMUTABLE ADMIN AUDIT LOG -->
-      <section id="tab-audit" class="admin-tab-panel hidden">
-        <div class="card">
-          <div class="card-header"><span class="card-title"><i data-lucide="scroll-text" style="color:var(--orange);"></i> Administrator Action Audit Trail</span></div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Action</th><th>Details</th><th>Executed By</th><th>Timestamp</th></tr></thead>
-              <tbody id="audit-tbody"></tbody>
-            </table>
+          <!-- ADMIN SUBTAB 4: OFFERS -->
+          <div id="admpanel-offers" class="admin-subpanel hidden">
+            <div class="grid-3">
+              <div class="card">
+                <div class="card-header"><span class="card-title">Publish Corporate Offer</span></div>
+                <form id="admin-offer-form">
+                  <div class="grid-2">
+                    <div class="form-group"><label>Title</label><input id="adm-off-title" placeholder="Aramco Refinery Stake" required /></div>
+                    <div class="form-group"><label>Target ISO (Optional)</label><input id="adm-off-iso" placeholder="SAU" maxlength="3" /></div>
+                  </div>
+                  <div class="grid-3">
+                    <div class="form-group"><label>Price</label><input id="adm-off-price" type="number" value="25000" required /></div>
+                    <div class="form-group"><label>Qty</label><input id="adm-off-qty" type="number" value="1" required /></div>
+                    <div class="form-group"><label>Unique?</label><select id="adm-off-unique"><option value="true">Yes</option><option value="false">No</option></select></div>
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-full">Publish Offer</button>
+                </form>
+              </div>
+              <div class="card" style="grid-column: span 2;">
+                <div class="card-header"><span class="card-title">Active & Sold Corporate Offers</span></div>
+                <div class="table-wrap">
+                  <table>
+                    <thead><tr><th>Title</th><th>Target</th><th>Price</th><th>Status</th><th>Buyer</th><th>Action</th></tr></thead>
+                    <tbody id="adm-offers-tbody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
+
+          <!-- ADMIN SUBTAB 5: DECREES & RULES -->
+          <div id="admpanel-rules" class="admin-subpanel hidden">
+            <div class="card">
+              <div class="card-header"><span class="card-title">Broadcast World Council Decree</span></div>
+              <form id="admin-news-form" style="display:flex; gap:10px;">
+                <input id="adm-news-text" placeholder="Publish global World Council event..." required />
+                <button type="submit" class="btn btn-admin">Broadcast</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- ADMIN SUBTAB 6: AUDIT LOG -->
+          <div id="admpanel-audit" class="admin-subpanel hidden">
+            <div class="card">
+              <div class="card-header"><span class="card-title">Administrator Action Audit Log</span></div>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Action</th><th>Details</th><th>By</th><th>Time</th></tr></thead>
+                  <tbody id="adm-audit-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, updatePassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import {
-      getFirestore, doc, getDoc, setDoc, collection, addDoc, updateDoc, deleteDoc,
-      onSnapshot, query, orderBy, limit, serverTimestamp
+      getFirestore, doc, getDoc, setDoc, collection, addDoc, updateDoc, deleteDoc, writeBatch,
+      onSnapshot, query, where, orderBy, limit, serverTimestamp
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js";
 
-    // PRESERVED EXISTING FIREBASE CONFIGURATION
+    // PRESERVED EXISTING CONFIGURATION
     const firebaseConfig = {
       apiKey: "AIzaSyCayGcfnpCAGNDph3YTyEA9_KDdD2C5Fg0",
       authDomain: "my-tiktok-cbd6f.firebaseapp.com",
@@ -463,373 +1281,1186 @@
       measurementId: "G-RYBWW6XB10"
     };
 
+    const SUPABASE_CONFIG = {
+      storageUrl: "https://akoddbuemubeorwfwonv.supabase.co/storage/v1",
+      publishableKey: "sb_publishable_e433Ao5lccy9spSTVpMqOw_hw25ae_f",
+      bucket: "campaign-images"
+    };
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
     const functions = getFunctions(app);
 
-    let currentAdminUid = null;
-    let unsubscribers = [];
+    const state = {
+      user: null,
+      profile: null,
+      isAdmin: false,
+      countries: {},
+      companies: [],
+      marketOffers: [],
+      unreadNotifIds: [],
+      selectedIso: null,
+      activeDrawerTab: 'overview',
+      unsubscribers: [],
+      soundEnabled: localStorage.getItem('av_sound') === 'true',
+      chartInstance: null
+    };
+
+    const NUM_TO_ISO3 = {
+      "840": "USA", "643": "RUS", "156": "CHN", "276": "DEU", "392": "JPN",
+      "682": "SAU", "231": "ETH", "076": "BRA", "170": "COL", "826": "GBR",
+      "250": "FRA", "356": "IND", "818": "EGY", "710": "ZAF", "792": "TUR",
+      "410": "KOR", "036": "AUS", "124": "CAN", "484": "MEX", "380": "ITA"
+    };
+
+    function getProductVisual(productName = '', category = '') {
+      const key = `${productName} ${category}`.toLowerCase();
+      if (key.includes('phone') || key.includes('chip') || key.includes('semi') || key.includes('tech')) {
+        return { icon: 'smartphone', catClass: 'cat-technology', label: 'Technology' };
+      }
+      if (key.includes('oil') || key.includes('gas') || key.includes('energy') || key.includes('fuel') || key.includes('solar')) {
+        return { icon: 'flame', catClass: 'cat-energy', label: 'Energy' };
+      }
+      if (key.includes('car') || key.includes('auto') || key.includes('vehicle') || key.includes('ev')) {
+        return { icon: 'car-front', catClass: 'cat-automotive', label: 'Automotive' };
+      }
+      if (key.includes('coffee') || key.includes('bean')) {
+        return { icon: 'coffee', catClass: 'cat-agriculture', label: 'Agriculture' };
+      }
+      if (key.includes('food') || key.includes('wheat') || key.includes('grain') || key.includes('agri')) {
+        return { icon: 'wheat', catClass: 'cat-agriculture', label: 'Food & Agri' };
+      }
+      if (key.includes('steel') || key.includes('iron') || key.includes('lithium') || key.includes('material')) {
+        return { icon: 'anvil', catClass: 'cat-materials', label: 'Materials' };
+      }
+      return { icon: 'package-check', catClass: 'cat-technology', label: category || 'Commodity' };
+    }
 
     function escapeHtml(str = '') {
       return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
     }
 
-    function toast(msg) {
+    function playChime(freq = 580) {
+      if (!state.soundEnabled) return;
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        gain.gain.setValueAtTime(0.05, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.18);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.18);
+      } catch (_) {}
+    }
+
+    function toast(msg, chimeFreq = 580) {
+      playChime(chimeFreq);
       const el = document.createElement('div');
       el.className = 'toast';
-      el.innerHTML = `<i data-lucide="shield-check" style="color:var(--orange);"></i><span>${escapeHtml(msg)}</span>`;
+      el.innerHTML = `<i data-lucide="sparkles" style="color:var(--cyan);"></i><span>${escapeHtml(msg)}</span>`;
       document.getElementById('toast-container').appendChild(el);
       lucide.createIcons({ root: el });
       setTimeout(() => el.remove(), 3600);
     }
 
-    async function logAdminAction(action, details) {
-      await addDoc(collection(db, 'adminAuditLogs'), {
-        action,
-        details,
-        by: currentAdminUid,
-        at: serverTimestamp()
-      });
+    // Theme & Motion Settings
+    const savedTheme = localStorage.getItem('av_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    document.getElementById('settings-theme-btn').onclick = () => {
+      const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('av_theme', next);
+    };
+    document.getElementById('setting-sound').checked = state.soundEnabled;
+    document.getElementById('setting-sound').onchange = (e) => {
+      state.soundEnabled = e.target.checked;
+      localStorage.setItem('av_sound', String(state.soundEnabled));
+    };
+    const savedMotion = localStorage.getItem('av_reduced_motion') === 'true';
+    if (savedMotion) document.body.classList.add('reduced-motion');
+    document.getElementById('setting-motion').checked = savedMotion;
+    document.getElementById('setting-motion').onchange = (e) => {
+      document.body.classList.toggle('reduced-motion', e.target.checked);
+      localStorage.setItem('av_reduced_motion', String(e.target.checked));
+    };
+
+    // Navigation & Admin Subtabs
+    document.getElementById('sidebar-collapse-btn').onclick = () => document.getElementById('sidebar').classList.toggle('collapsed');
+    document.getElementById('mobile-more-btn').onclick = () => document.getElementById('mobile-more-sheet').classList.toggle('hidden');
+
+    function switchView(view) {
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+      document.querySelectorAll('.game-view').forEach(v => v.classList.add('hidden'));
+      const target = document.getElementById(`view-${view}`);
+      if (target) target.classList.remove('hidden');
+      document.getElementById('mobile-more-sheet').classList.add('hidden');
     }
 
-    // Tab Switching
-    document.getElementById('admin-tabs').addEventListener('click', (e) => {
-      const btn = e.target.closest('.tab-btn');
+    document.getElementById('main-nav').addEventListener('click', (e) => {
+      const btn = e.target.closest('.nav-item[data-view]');
+      if (btn) switchView(btn.dataset.view);
+    });
+    document.getElementById('mobile-more-sheet').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-mobile-view]');
+      if (btn) switchView(btn.dataset.mobileView);
+    });
+    document.getElementById('quick-missions-btn').onclick = () => switchView('missions');
+    document.getElementById('quick-market-btn').onclick = () => switchView('market');
+
+    document.getElementById('admin-subtabs').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-admtab]');
       if (!btn) return;
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      document.querySelectorAll('.admin-tab-panel').forEach(p => p.classList.add('hidden'));
-      document.getElementById(`tab-${btn.dataset.tab}`).classList.remove('hidden');
+      document.querySelectorAll('#admin-subtabs button').forEach(b => {
+        b.className = b === btn ? 'btn btn-admin btn-sm' : 'btn btn-secondary btn-sm';
+      });
+      document.querySelectorAll('.admin-subpanel').forEach(p => p.classList.add('hidden'));
+      document.getElementById(`admpanel-${btn.dataset.admtab}`).classList.remove('hidden');
     });
 
-    // Admin Auth
+    window.addEventListener('offline', () => document.getElementById('offline-banner').classList.remove('hidden'));
+    window.addEventListener('online', () => document.getElementById('offline-banner').classList.add('hidden'));
+
+    // AUTH FLOW
     function usernameToAuthEmail(username) {
       return `${username.trim().toLowerCase().replace(/[^a-z0-9._-]/g, '')}@avgame.internal`;
     }
 
-    document.getElementById('admin-login-form').addEventListener('submit', async (e) => {
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      document.getElementById('adm-login-err').textContent = '';
+      document.getElementById('login-error').textContent = '';
       try {
         await signInWithEmailAndPassword(
           auth,
-          usernameToAuthEmail(document.getElementById('adm-login-user').value),
-          document.getElementById('adm-login-pw').value
+          usernameToAuthEmail(document.getElementById('login-username').value),
+          document.getElementById('login-password').value
         );
       } catch (_) {
-        document.getElementById('adm-login-err').textContent = 'Invalid administrator credentials.';
+        document.getElementById('login-error').textContent = 'Invalid username or password.';
       }
     });
 
-    document.getElementById('admin-logout-btn').onclick = async () => {
-      unsubscribers.forEach(u => u());
-      unsubscribers = [];
+    document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const p1 = document.getElementById('new-password').value;
+      const p2 = document.getElementById('confirm-password').value;
+      if (p1 !== p2) { document.getElementById('pw-error').textContent = 'Passwords do not match.'; return; }
+      try {
+        await updatePassword(auth.currentUser, p1);
+        await updateDoc(doc(db, 'users', auth.currentUser.uid), { mustChangePassword: false, updatedAt: serverTimestamp() });
+        toast('Credentials activated.');
+        bootGame(auth.currentUser);
+      } catch (err) {
+        document.getElementById('pw-error').textContent = err.message;
+      }
+    });
+
+    document.getElementById('logout-btn').onclick = async () => {
+      state.unsubscribers.forEach(u => u());
+      state.unsubscribers = [];
       await signOut(auth);
     };
 
     onAuthStateChanged(auth, async (user) => {
       lucide.createIcons();
       if (!user) {
-        document.getElementById('admin-auth-screen').classList.remove('hidden');
-        document.getElementById('admin-shell').classList.add('hidden');
+        document.getElementById('auth-screen').classList.remove('hidden');
+        document.getElementById('login-box').classList.remove('hidden');
+        document.getElementById('force-password-box').classList.add('hidden');
+        document.getElementById('app-shell').classList.add('hidden');
         return;
       }
+      state.user = user;
       const tokenRes = await user.getIdTokenResult(true);
       const userSnap = await getDoc(doc(db, 'users', user.uid));
-      const isVerifiedAdmin = tokenRes.claims.admin === true || userSnap.data()?.role === 'admin';
-
-      if (!isVerifiedAdmin) {
-        document.getElementById('adm-login-err').textContent = 'Access denied: Administrator custom claim required.';
+      if (!userSnap.exists() || userSnap.data().suspended) {
         await signOut(auth);
         return;
       }
+      state.profile = userSnap.data();
+      state.isAdmin = tokenRes.claims.admin === true || state.profile.role === 'admin';
 
-      currentAdminUid = user.uid;
-      document.getElementById('admin-auth-screen').classList.add('hidden');
-      document.getElementById('admin-shell').classList.remove('hidden');
-      attachAdminListeners();
+      if (state.profile.mustChangePassword) {
+        document.getElementById('auth-screen').classList.remove('hidden');
+        document.getElementById('login-box').classList.add('hidden');
+        document.getElementById('force-password-box').classList.remove('hidden');
+        return;
+      }
+      bootGame(user);
     });
 
-    function attachAdminListeners() {
-      // 1. Players
-      unsubscribers.push(onSnapshot(collection(db, 'users'), (snap) => {
-        document.getElementById('kpi-players').textContent = snap.size;
-        const tbody = document.getElementById('players-tbody');
-        tbody.innerHTML = '';
-        snap.forEach(d => {
-          const u = d.data();
-          tbody.insertAdjacentHTML('beforeend', `
-            <tr>
-              <td><strong>${escapeHtml(u.username)}</strong></td>
-              <td class="mono">${escapeHtml(u.countryIso || 'NONE')}</td>
-              <td>${escapeHtml(u.role || 'president')}</td>
-              <td>${u.mustChangePassword ? '<span style="color:var(--orange);">Temp PW Pending</span>' : '<span style="color:var(--green);">Active</span>'}</td>
-              <td>${u.suspended ? '<span style="color:var(--danger);">SUSPENDED</span>' : 'Enabled'}</td>
-              <td>
-                <button class="btn btn-secondary btn-sm" data-toggle-suspend="${d.id}" data-cur="${Boolean(u.suspended)}">
-                  ${u.suspended ? 'Restore' : 'Suspend'}
-                </button>
-              </td>
-            </tr>
-          `);
+    async function bootGame(user) {
+      document.getElementById('auth-screen').classList.add('hidden');
+      document.getElementById('app-shell').classList.remove('hidden');
+
+      if (state.isAdmin) {
+        document.getElementById('nav-admin-btn').classList.remove('hidden');
+        document.getElementById('mobile-admin-btn').classList.remove('hidden');
+      }
+
+      const name = state.profile.displayName || state.profile.username;
+      document.getElementById('sidebar-user-name').textContent = name;
+      document.getElementById('sidebar-user-role').textContent = state.isAdmin ? 'World Administrator' : 'President';
+      document.getElementById('welcome-headline').textContent = `Welcome back, ${state.isAdmin ? 'Administrator' : 'President'} ${name}`;
+      document.getElementById('prof-display-name').value = name;
+      document.getElementById('prof-bio').value = state.profile.bio || '';
+      if (state.profile.avatarUrl) {
+        document.getElementById('profile-avatar-img').src = state.profile.avatarUrl;
+        document.getElementById('sidebar-avatar').src = state.profile.avatarUrl;
+      }
+
+      lucide.createIcons();
+      await initWorldMap();
+      attachRealtimeListeners();
+    }
+
+    // INTERACTIVE VECTOR WORLD MAP
+    let mapSvg, mapG, zoomBehavior;
+    async function initWorldMap() {
+      if (mapSvg) return;
+      const container = document.querySelector('.map-wrapper');
+      const width = container.clientWidth || 960;
+      const height = container.clientHeight || 550;
+
+      mapSvg = d3.select('#world-map-svg').attr('viewBox', `0 0 ${width} ${height}`);
+      mapG = mapSvg.append('g');
+      zoomBehavior = d3.zoom().scaleExtent([1, 8]).on('zoom', (e) => mapG.attr('transform', e.transform));
+      mapSvg.call(zoomBehavior);
+
+      document.getElementById('zoom-in').onclick = () => mapSvg.transition().call(zoomBehavior.scaleBy, 1.5);
+      document.getElementById('zoom-out').onclick = () => mapSvg.transition().call(zoomBehavior.scaleBy, 0.67);
+      document.getElementById('zoom-reset').onclick = () => mapSvg.transition().call(zoomBehavior.transform, d3.zoomIdentity);
+
+      const worldData = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json').then(r => r.json());
+      document.getElementById('map-loading').classList.add('hidden');
+      const countriesGeo = topojson.feature(worldData, worldData.objects.countries).features;
+      const projection = d3.geoNaturalEarth1().fitSize([width, height], { type: "FeatureCollection", features: countriesGeo });
+      const pathGen = d3.geoPath().projection(projection);
+      const tooltip = document.getElementById('map-tooltip');
+
+      mapG.selectAll('path')
+        .data(countriesGeo)
+        .enter()
+        .append('path')
+        .attr('d', pathGen)
+        .attr('class', 'country-path')
+        .attr('data-iso', d => NUM_TO_ISO3[String(d.id).padStart(3, '0')] || d.properties.name)
+        .attr('data-name', d => d.properties.name)
+        .on('mousemove', (event, d) => {
+          const iso = NUM_TO_ISO3[String(d.id).padStart(3, '0')] || '';
+          const c = state.countries[iso];
+          tooltip.classList.remove('hidden');
+          tooltip.style.left = `${event.offsetX}px`;
+          tooltip.style.top = `${event.offsetY}px`;
+          tooltip.textContent = `${c?.flag || '🏳️'} ${c?.name || d.properties.name} ${c?.presidentName ? `• Pres. ${c.presidentName}` : ''}`;
+        })
+        .on('mouseleave', () => tooltip.classList.add('hidden'))
+        .on('click', (event, d) => {
+          const iso = NUM_TO_ISO3[String(d.id).padStart(3, '0')] || String(d.id);
+          openCountryDrawer(iso, d.properties.name);
         });
+
+      refreshMapVisuals();
+    }
+
+    function refreshMapVisuals() {
+      if (!mapG) return;
+      const myIso = state.profile?.countryIso;
+      const term = document.getElementById('map-search-input').value.trim().toLowerCase();
+      const filter = document.getElementById('map-filter-select').value;
+
+      mapG.selectAll('.country-path').each(function() {
+        const el = d3.select(this);
+        const iso = el.attr('data-iso');
+        const name = (el.attr('data-name') || '').toLowerCase();
+        const c = state.countries[iso];
+
+        el.classed('owned-self', iso === myIso)
+          .classed('owned-player', Boolean(c && c.presidentUid && iso !== myIso))
+          .classed('selected-country', iso === state.selectedIso)
+          .classed('at-war', Boolean(c && c.atWar));
+
+        let matches = true;
+        if (term && !iso.toLowerCase().includes(term) && !name.includes(term)) matches = false;
+        if (filter === 'players' && !c?.presidentUid) matches = false;
+        if (filter === 'unclaimed' && (c?.presidentUid || !c?.purchasable)) matches = false;
+        if (filter === 'war' && !c?.atWar) matches = false;
+        if (filter === 'high-tech' && (c?.techLevel || 1) < 2) matches = false;
+        el.classed('dimmed', !matches);
+      });
+    }
+
+    document.getElementById('map-search-input').addEventListener('input', refreshMapVisuals);
+    document.getElementById('map-filter-select').addEventListener('change', refreshMapVisuals);
+
+    // FLOATING COUNTRY INSPECTOR
+    function openCountryDrawer(iso, fallbackName = '') {
+      state.selectedIso = iso;
+      const c = state.countries[iso] || { iso, name: fallbackName || iso, flag: '🏳️' };
+      document.getElementById('drawer-flag').textContent = c.flag || '🏳️';
+      document.getElementById('drawer-name').textContent = `${c.name} (${iso})`;
+      document.getElementById('drawer-president').textContent = c.presidentName ? `President ${c.presidentName}` : 'Unclaimed Territory';
+      const drawer = document.getElementById('country-drawer');
+      drawer.classList.remove('hidden', 'minimized');
+      refreshMapVisuals();
+      renderDrawerTab();
+    }
+
+    document.getElementById('close-drawer').onclick = () => {
+      state.selectedIso = null;
+      document.getElementById('country-drawer').classList.add('hidden');
+      refreshMapVisuals();
+    };
+    document.getElementById('minimize-drawer').onclick = () => document.getElementById('country-drawer').classList.toggle('minimized');
+    document.getElementById('drawer-tabs').addEventListener('click', (e) => {
+      const tab = e.target.closest('.drawer-tab');
+      if (!tab) return;
+      document.querySelectorAll('.drawer-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      state.activeDrawerTab = tab.dataset.dtab;
+      renderDrawerTab();
+    });
+
+    function renderDrawerTab() {
+      const iso = state.selectedIso;
+      const c = state.countries[iso] || { iso, name: iso };
+      const body = document.getElementById('drawer-body');
+      const isMine = iso === state.profile?.countryIso;
+      const t = state.activeDrawerTab;
+
+      if (t === 'overview') {
+        body.innerHTML = `
+          <div class="grid-2" style="gap:8px; margin-bottom:12px;">
+            <div class="card" style="padding:10px;"><div class="kpi-sub">Level</div><div class="mono" style="font-weight:700;">Lvl ${c.level || 1}</div></div>
+            <div class="card" style="padding:10px;"><div class="kpi-sub">Stability</div><div class="mono" style="font-weight:700; color:var(--green);">${c.stability ?? 100}%</div></div>
+            <div class="card" style="padding:10px;"><div class="kpi-sub">Treasury</div><div class="mono" style="font-weight:700;">${isMine || state.isAdmin ? (c.coins || 0).toLocaleString() : 'Classified'}</div></div>
+            <div class="card" style="padding:10px;"><div class="kpi-sub">Tech Tier</div><div class="mono" style="font-weight:700; color:var(--purple);">Tier ${c.techLevel || 1}</div></div>
+          </div>
+          ${(!c.presidentUid && c.purchasable) ? `<button class="btn btn-primary btn-full" id="claim-country-btn"><i data-lucide="flag"></i> Acquire Mandate (${(c.purchasePrice || 50000).toLocaleString()} Coins)</button>` : ''}
+        `;
+        const claimBtn = document.getElementById('claim-country-btn');
+        if (claimBtn) {
+          claimBtn.onclick = async () => {
+            try {
+              const fn = httpsCallable(functions, 'claimUnclaimedCountry');
+              await fn({ targetIso: iso });
+              toast(`Sovereign mandate over ${c.name} acquired!`, 760);
+            } catch (err) { toast(err.message, 240); }
+          };
+        }
+      } else if (t === 'economy') {
+        body.innerHTML = `<p>GDP Index: <strong class="mono">${(c.gdp || 1000).toLocaleString()}</strong></p>
+          <p class="kpi-sub" style="margin-top:6px;">Treasury Access: ${isMine || state.isAdmin ? `${(c.coins || 0).toLocaleString()} Coins` : 'Restricted to President & Finance Minister'}</p>`;
+      } else if (t === 'industries') {
+        const comps = state.companies.filter(comp => comp.countryIso === iso);
+        body.innerHTML = comps.length
+          ? comps.map(comp => `<div style="padding:8px 0; border-bottom:1px solid var(--border);"><strong>${escapeHtml(comp.name)}</strong> • Produces ${escapeHtml(comp.product)} (${comp.outputRate}/${comp.intervalMinutes}m)</div>`).join('')
+          : `<p class="kpi-sub">No major industries registered in ${escapeHtml(c.name || iso)}.</p>`;
+      } else if (t === 'deals') {
+        const deals = state.marketOffers.filter(o => o.sellerIso === iso && o.visibility === 'public');
+        body.innerHTML = deals.length
+          ? deals.map(d => `<div style="padding:8px 0; border-bottom:1px solid var(--border);"><strong>${escapeHtml(d.product)}</strong>: ${d.quantity} units @ ${d.unitPrice} coins</div>`).join('')
+          : `<p class="kpi-sub">No public export deals listed by ${escapeHtml(c.name || iso)}.</p>`;
+      } else if (t === 'military') {
+        body.innerHTML = `<p>Abstract Defense & Military Score: <strong class="mono">${c.militaryScore || 10}</strong></p>
+          <p class="kpi-sub" style="margin-top:6px;">Status: ${c.atWar ? 'Active Strategic Conflict' : 'Peacetime Readiness'}</p>`;
+      } else {
+        body.innerHTML = `<p class="kpi-sub">Real-time ${escapeHtml(t)} telemetry for <strong>${escapeHtml(c.name || iso)}</strong>.</p>`;
+      }
+      lucide.createIcons({ root: body });
+    }
+
+    // REAL-TIME FIRESTORE LISTENERS
+    function attachRealtimeListeners() {
+      const myIso = state.profile.countryIso;
+
+      // 1. Countries
+      state.unsubscribers.push(onSnapshot(collection(db, 'countries'), (snap) => {
+        const diploSel = document.getElementById('diplo-target-country');
+        const warSel = document.getElementById('conflict-target');
+        diploSel.innerHTML = '';
+        warSel.innerHTML = '';
+        const lbRows = [];
+
+        snap.forEach(d => {
+          const data = { iso: d.id, ...d.data() };
+          state.countries[d.id] = data;
+          lbRows.push(data);
+          if (d.id !== myIso) {
+            const opt = `<option value="${d.id}">${data.flag || ''} ${escapeHtml(data.name)} (${d.id})</option>`;
+            diploSel.insertAdjacentHTML('beforeend', opt);
+            warSel.insertAdjacentHTML('beforeend', opt);
+          }
+        });
+
+        if (myIso && state.countries[myIso]) {
+          const mc = state.countries[myIso];
+          document.getElementById('top-country-flag').textContent = mc.flag || '🏳️';
+          document.getElementById('top-country-name').textContent = mc.name;
+          document.getElementById('top-role-label').textContent = `President ${state.profile.displayName || state.profile.username}`;
+          document.getElementById('top-coins').textContent = (mc.coins || 0).toLocaleString();
+          document.getElementById('top-level').textContent = mc.level || 1;
+          document.getElementById('top-stability').textContent = `${mc.stability ?? 100}%`;
+          document.getElementById('top-military').textContent = mc.militaryScore || 10;
+
+          const nextXp = (mc.level || 1) * 500;
+          const curXp = mc.xp || 0;
+          document.getElementById('hero-lvl-label').textContent = `Level ${mc.level || 1}`;
+          document.getElementById('hero-xp-label').textContent = `${curXp} / ${nextXp} XP`;
+          document.getElementById('hero-xp-fill').style.width = `${Math.min(100, Math.round((curXp % 500) / 5))}%`;
+
+          document.getElementById('mc-coins').textContent = (mc.coins || 0).toLocaleString();
+          document.getElementById('mc-gdp').textContent = (mc.gdp || 1000).toLocaleString();
+          document.getElementById('mc-pop').textContent = `${(mc.population || 10).toFixed(1)}M`;
+          document.getElementById('mc-xp').textContent = `Lvl ${mc.level || 1} • Tier ${mc.techLevel || 1}`;
+
+          renderTelemetryChart(mc.telemetryHistory || []);
+        }
+
+        renderLeaderboard(lbRows);
+        refreshMapVisuals();
+        if (state.selectedIso) renderDrawerTab();
       }));
 
-      // 2. Countries
-      unsubscribers.push(onSnapshot(collection(db, 'countries'), (snap) => {
-        document.getElementById('kpi-countries').textContent = snap.size;
-        const tbody = document.getElementById('countries-tbody');
-        tbody.innerHTML = '';
-        snap.forEach(d => {
-          const c = d.data();
-          tbody.insertAdjacentHTML('beforeend', `
-            <tr>
-              <td style="font-size:18px;">${c.flag || '🏳️'}</td>
-              <td class="mono"><strong>${escapeHtml(d.id)}</strong></td>
-              <td>${escapeHtml(c.name)}</td>
-              <td>${escapeHtml(c.presidentName || 'Unclaimed')}</td>
-              <td class="mono">${(c.coins || 0).toLocaleString()}</td>
-              <td class="mono">${c.militaryScore || 10}</td>
-              <td class="mono">Tier ${c.techLevel || 1}</td>
-              <td>${c.purchasable ? 'Yes' : 'No'}</td>
-            </tr>
+      // 2. Companies (Player + Admin)
+      state.unsubscribers.push(onSnapshot(collection(db, 'companies'), (snap) => {
+        state.companies = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const list = document.getElementById('mc-companies-list');
+        const mine = state.companies.filter(c => c.countryIso === myIso);
+        list.innerHTML = mine.length ? '' : '<div class="kpi-sub">No companies assigned to your country yet.</div>';
+        mine.forEach(comp => {
+          const vis = getProductVisual(comp.product);
+          list.insertAdjacentHTML('beforeend', `
+            <div style="padding:12px; border:1px solid var(--border); border-radius:12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; background:var(--bg-elevated);">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div class="product-art-badge ${vis.catClass}"><i data-lucide="${vis.icon}"></i></div>
+                <div>
+                  <strong>${escapeHtml(comp.name)}</strong> <span class="kpi-sub">• ${escapeHtml(comp.product)}</span>
+                  <div class="kpi-sub">Output: ${comp.outputRate} units / ${comp.intervalMinutes} mins</div>
+                </div>
+              </div>
+              <span class="brand-badge" style="margin:0;">${escapeHtml(comp.status || 'ACTIVE')}</span>
+            </div>
           `);
         });
-      }));
+        lucide.createIcons({ root: list });
 
-      // 3. Companies
-      unsubscribers.push(onSnapshot(collection(db, 'companies'), (snap) => {
-        document.getElementById('kpi-companies').textContent = snap.size;
-        const tbody = document.getElementById('companies-tbody');
-        tbody.innerHTML = '';
-        snap.forEach(d => {
-          const comp = d.data();
-          tbody.insertAdjacentHTML('beforeend', `
+        if (state.isAdmin) {
+          document.getElementById('adm-companies-tbody').innerHTML = state.companies.map(comp => `
             <tr>
               <td><strong>${escapeHtml(comp.name)}</strong></td>
               <td class="mono">${escapeHtml(comp.countryIso)}</td>
               <td>${escapeHtml(comp.product)}</td>
-              <td class="mono">${comp.outputRate} / ${comp.intervalMinutes}m</td>
-              <td><span style="color:${comp.status === 'ACTIVE' ? 'var(--green)' : 'var(--orange)'}; font-weight:700;">${escapeHtml(comp.status)}</span></td>
-              <td>
-                <button class="btn btn-secondary btn-sm" data-toggle-comp="${d.id}" data-status="${comp.status}">
-                  ${comp.status === 'ACTIVE' ? 'Pause' : 'Resume'}
-                </button>
-              </td>
+              <td class="mono">${comp.outputRate}/${comp.intervalMinutes}m</td>
+              <td>${escapeHtml(comp.status)}</td>
+              <td><button class="btn btn-secondary btn-sm" data-toggle-comp="${comp.id}" data-status="${comp.status}">${comp.status === 'ACTIVE' ? 'Pause' : 'Resume'}</button></td>
             </tr>
+          `).join('');
+        }
+      }));
+
+      // 3. Global News
+      state.unsubscribers.push(onSnapshot(query(collection(db, 'announcements'), orderBy('createdAt', 'desc'), limit(20)), (snap) => {
+        const el = document.getElementById('home-news-list');
+        el.innerHTML = snap.empty ? '<div class="kpi-sub">No world dispatches recorded yet.</div>' : '';
+        snap.forEach(d => {
+          const n = d.data();
+          el.insertAdjacentHTML('beforeend', `
+            <div style="padding:8px 0; border-bottom:1px solid var(--border); font-size:12px;">
+              <span style="color:var(--cyan); font-weight:700;">[${escapeHtml(n.type || 'WORLD')}]</span> ${escapeHtml(n.message)}
+            </div>
           `);
         });
       }));
 
-      // 4. Corporate Offers & Wars
-      let openOffersCount = 0;
-      unsubscribers.push(onSnapshot(collection(db, 'companyOffers'), (snap) => {
-        openOffersCount = 0;
-        const tbody = document.getElementById('offers-tbody');
-        tbody.innerHTML = '';
+      // 4. Global Market Offers & History
+      state.unsubscribers.push(onSnapshot(query(collection(db, 'tradeOffers'), where('status', '==', 'open')), (snap) => {
+        state.marketOffers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderMarketCards();
+      }));
+
+      state.unsubscribers.push(onSnapshot(query(collection(db, 'tradeOffers'), where('status', '==', 'completed'), limit(20)), (snap) => {
+        const tbody = document.getElementById('market-history-tbody');
+        tbody.innerHTML = snap.empty ? '<tr><td colspan="5" class="kpi-sub">No completed international trades yet.</td></tr>' : '';
         snap.forEach(d => {
           const o = d.data();
-          if (o.status === 'available') openOffersCount++;
+          const vis = getProductVisual(o.product, o.category);
           tbody.insertAdjacentHTML('beforeend', `
             <tr>
+              <td style="display:flex; align-items:center; gap:8px;"><i data-lucide="${vis.icon}" style="color:var(--cyan);"></i><strong>${escapeHtml(o.product)}</strong></td>
+              <td>${escapeHtml(o.buyerIso || '-')}</td>
+              <td>${escapeHtml(o.sellerIso)}</td>
+              <td class="mono">${o.quantity}</td>
+              <td class="mono">${(o.quantity * o.unitPrice).toLocaleString()}</td>
+            </tr>
+          `);
+        });
+        lucide.createIcons({ root: tbody });
+      }));
+
+      // 5. Admin-Only Live Tables
+      if (state.isAdmin) {
+        state.unsubscribers.push(onSnapshot(collection(db, 'users'), (snap) => {
+          document.getElementById('adm-players-tbody').innerHTML = snap.docs.map(d => {
+            const u = d.data();
+            return `<tr>
+              <td><strong>${escapeHtml(u.username)}</strong></td>
+              <td class="mono">${escapeHtml(u.countryIso || 'NONE')}</td>
+              <td>${escapeHtml(u.role || 'president')}</td>
+              <td>${u.mustChangePassword ? 'Temp Pending' : 'Activated'}</td>
+              <td>${u.suspended ? 'Suspended' : 'Active'}</td>
+              <td><button class="btn btn-secondary btn-sm" data-toggle-suspend="${d.id}" data-cur="${Boolean(u.suspended)}">${u.suspended ? 'Restore' : 'Suspend'}</button></td>
+            </tr>`;
+          }).join('');
+        }));
+
+        state.unsubscribers.push(onSnapshot(collection(db, 'companyOffers'), (snap) => {
+          document.getElementById('adm-offers-tbody').innerHTML = snap.docs.map(d => {
+            const o = d.data();
+            return `<tr>
               <td><strong>${escapeHtml(o.title)}</strong></td>
               <td class="mono">${escapeHtml(o.targetIso || 'GLOBAL')}</td>
               <td class="mono">${(o.price || 0).toLocaleString()}</td>
-              <td class="mono">${o.quantity}</td>
               <td>${escapeHtml(o.status)}</td>
               <td class="mono">${escapeHtml(o.purchasedBy || '-')}</td>
               <td><button class="btn btn-danger btn-sm" data-del-offer="${d.id}">Delete</button></td>
-            </tr>
-          `);
-        });
-        document.getElementById('kpi-events').textContent = `${openOffersCount} Offers`;
-      }));
+            </tr>`;
+          }).join('');
+        }));
 
-      // 5. Audit Logs
-      unsubscribers.push(onSnapshot(query(collection(db, 'adminAuditLogs'), orderBy('at', 'desc'), limit(40)), (snap) => {
-        const tbody = document.getElementById('audit-tbody');
+        state.unsubscribers.push(onSnapshot(query(collection(db, 'adminAuditLogs'), orderBy('at', 'desc'), limit(30)), (snap) => {
+          document.getElementById('adm-audit-tbody').innerHTML = snap.docs.map(d => {
+            const a = d.data();
+            return `<tr><td>${escapeHtml(a.action)}</td><td>${escapeHtml(a.details || '')}</td><td class="mono">${escapeHtml(a.by || '')}</td><td>${a.at?.toDate ? a.at.toDate().toLocaleString() : 'Now'}</td></tr>`;
+          }).join('');
+        }));
+      }
+
+      if (!myIso) return;
+
+      // 6. My Country Inventory & Shortages
+      state.unsubscribers.push(onSnapshot(collection(db, 'countries', myIso, 'inventory'), (snap) => {
+        const tbody = document.getElementById('mc-inventory-tbody');
+        const select = document.getElementById('trade-product-select');
+        const alertsEl = document.getElementById('home-alerts-list');
         tbody.innerHTML = '';
+        select.innerHTML = '';
+        alertsEl.innerHTML = '';
+        let alertCount = 0;
+
         snap.forEach(d => {
-          const a = d.data();
-          const ts = a.at?.toDate ? a.at.toDate().toLocaleString() : 'Just now';
+          const item = d.data();
+          const min = item.minThreshold || 20;
+          const low = item.quantity < min;
+          const vis = getProductVisual(d.id);
+          if (low) {
+            alertCount++;
+            alertsEl.insertAdjacentHTML('beforeend', `
+              <div class="alert-item critical">
+                <div><strong>${escapeHtml(d.id)} Shortage</strong><div class="kpi-sub">Stock: ${item.quantity} / Min: ${min}</div></div>
+                <button class="btn btn-secondary btn-sm" onclick="document.querySelector('[data-view=market]').click()">Source</button>
+              </div>
+            `);
+          }
           tbody.insertAdjacentHTML('beforeend', `
             <tr>
-              <td><span class="admin-badge" style="margin:0;">${escapeHtml(a.action)}</span></td>
-              <td>${escapeHtml(a.details || `${a.targetUser || ''} ${a.countryIso || ''}`)}</td>
-              <td class="mono" style="font-size:11px;">${escapeHtml(a.by || '')}</td>
-              <td style="font-size:12px; color:var(--text-secondary);">${ts}</td>
+              <td style="display:flex; align-items:center; gap:8px;"><i data-lucide="${vis.icon}" style="color:var(--cyan);"></i><strong>${escapeHtml(d.id)}</strong></td>
+              <td class="mono">${item.quantity}</td>
+              <td class="mono">${min}</td>
+              <td style="color:${low ? 'var(--danger)' : 'var(--green)'}; font-weight:700;">${low ? 'SHORTAGE' : 'OPTIMAL'}</td>
             </tr>
           `);
+          if (item.quantity > 0) {
+            select.insertAdjacentHTML('beforeend', `<option value="${escapeHtml(d.id)}">${escapeHtml(d.id)} (${item.quantity} in stock)</option>`);
+          }
+        });
+        lucide.createIcons({ root: tbody });
+        const badge = document.getElementById('nav-alert-badge');
+        badge.textContent = alertCount;
+        badge.classList.toggle('hidden', alertCount === 0);
+      }));
+
+      // 7. Corporate Offers for My Country
+      state.unsubscribers.push(onSnapshot(query(collection(db, 'companyOffers'), where('status', '==', 'available')), (snap) => {
+        const grid = document.getElementById('mc-offers-grid');
+        grid.innerHTML = snap.empty ? '<div class="kpi-sub">No corporate offers available right now.</div>' : '';
+        snap.forEach(d => {
+          const off = { id: d.id, ...d.data() };
+          if (off.targetIso && off.targetIso !== myIso) return;
+          grid.insertAdjacentHTML('beforeend', `
+            <div class="product-card">
+              <div>
+                <div class="card-title"><i data-lucide="building" style="color:var(--orange);"></i> ${escapeHtml(off.title)}</div>
+                <div class="kpi-sub" style="margin-top:6px;">Price: <strong class="mono">${off.price.toLocaleString()}</strong> Coins • Qty: ${off.quantity}</div>
+              </div>
+              <button class="btn btn-primary btn-sm btn-full" data-purchase-corp="${off.id}">Acquire Corporate Asset</button>
+            </div>
+          `);
+        });
+        lucide.createIcons({ root: grid });
+      }));
+
+      // 8. Missions, Achievements & Notifications
+      state.unsubscribers.push(onSnapshot(collection(db, 'countries', myIso, 'missions'), (snap) => {
+        const grid = document.getElementById('missions-grid');
+        grid.innerHTML = snap.empty ? '<div class="kpi-sub">No active missions assigned yet.</div>' : '';
+        snap.forEach(d => {
+          const m = { id: d.id, ...d.data() };
+          const pct = Math.min(100, Math.round(((m.progress || 0) / (m.target || 1)) * 100));
+          grid.insertAdjacentHTML('beforeend', `
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title"><i data-lucide="${escapeHtml(m.icon || 'target')}" style="color:var(--cyan);"></i> ${escapeHtml(m.title)}</span>
+                <span class="brand-badge" style="margin:0;">+${m.rewardXp || 100} XP</span>
+              </div>
+              <p class="kpi-sub" style="margin-bottom:10px;">${escapeHtml(m.description)}</p>
+              <div class="progress-track"><div class="progress-fill" style="width:${pct}%;"></div></div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+                <span class="mono" style="font-size:12px;">${m.progress || 0} / ${m.target || 1}</span>
+                ${(pct >= 100 && !m.claimed) ? `<button class="btn btn-success btn-sm" data-claim-mission="${m.id}">Claim Reward</button>` : `<span class="kpi-sub">${m.claimed ? 'Completed' : 'In Progress'}</span>`}
+              </div>
+            </div>
+          `);
+        });
+        lucide.createIcons({ root: grid });
+      }));
+
+      state.unsubscribers.push(onSnapshot(collection(db, 'countries', myIso, 'achievements'), (snap) => {
+        const grid = document.getElementById('achievements-grid');
+        grid.innerHTML = snap.empty ? '<div class="kpi-sub">Complete trades, treaties, and milestones to unlock achievements.</div>' : '';
+        snap.forEach(d => {
+          const a = d.data();
+          grid.insertAdjacentHTML('beforeend', `
+            <div class="card rarity-${escapeHtml(a.rarity || 'rare')}">
+              <div class="card-header">
+                <span class="card-title"><i data-lucide="${escapeHtml(a.icon || 'award')}" style="color:var(--orange);"></i> ${escapeHtml(a.name)}</span>
+                <span class="brand-badge" style="margin:0;">${escapeHtml((a.rarity || 'RARE').toUpperCase())}</span>
+              </div>
+              <p class="kpi-sub">${escapeHtml(a.description)}</p>
+            </div>
+          `);
+        });
+        lucide.createIcons({ root: grid });
+      }));
+
+      state.unsubscribers.push(onSnapshot(collection(db, 'countries', myIso, 'notifications'), (snap) => {
+        const list = document.getElementById('notifications-list');
+        list.innerHTML = snap.empty ? '<div class="kpi-sub">No notifications yet.</div>' : '';
+        state.unreadNotifIds = [];
+        snap.forEach(d => {
+          const n = d.data();
+          if (!n.read) state.unreadNotifIds.push(d.id);
+          list.insertAdjacentHTML('beforeend', `
+            <div style="padding:10px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; opacity:${n.read ? '0.65' : '1'};">
+              <div><strong>${escapeHtml(n.title || 'World Update')}</strong><div class="kpi-sub">${escapeHtml(n.body || '')}</div></div>
+              ${!n.read ? '<span class="badge">NEW</span>' : ''}
+            </div>
+          `);
+        });
+        const badge = document.getElementById('nav-notif-badge');
+        badge.textContent = state.unreadNotifIds.length;
+        badge.classList.toggle('hidden', state.unreadNotifIds.length === 0);
+      }));
+
+      // 9. Diplomacy & Conflicts
+      state.unsubscribers.push(onSnapshot(query(collection(db, 'messages'), where('toIso', '==', myIso)), (snap) => {
+        const feed = document.getElementById('diplomacy-feed');
+        feed.innerHTML = snap.empty ? '<div class="kpi-sub">No incoming diplomatic dispatches.</div>' : '';
+        let pending = 0;
+        snap.forEach(d => {
+          const m = { id: d.id, ...d.data() };
+          if (m.status === 'pending') pending++;
+          const senderFlag = state.countries[m.fromIso]?.flag || '🏳️';
+          feed.insertAdjacentHTML('beforeend', `
+            <div class="product-card" style="margin-bottom:10px;">
+              <div style="display:flex; justify-content:space-between; font-size:12px;">
+                <strong>${senderFlag} ${escapeHtml(m.fromIso)} • ${escapeHtml(m.type)}</strong>
+                <span class="brand-badge" style="margin:0;">${escapeHtml(m.status)}</span>
+              </div>
+              <p style="font-size:13px;">${escapeHtml(m.content)}</p>
+              ${m.status === 'pending' ? `<button class="btn btn-success btn-sm" data-accept-diplo="${m.id}">Ratify Agreement</button>` : ''}
+            </div>
+          `);
+        });
+        const badge = document.getElementById('nav-msg-badge');
+        badge.textContent = pending;
+        badge.classList.toggle('hidden', pending === 0);
+      }));
+
+      state.unsubscribers.push(onSnapshot(collection(db, 'conflicts'), (snap) => {
+        const list = document.getElementById('active-conflicts-list');
+        const homeDeals = document.getElementById('home-deals-wars');
+        list.innerHTML = snap.empty ? '<div class="kpi-sub">No active conflicts on the world map.</div>' : '';
+        snap.forEach(d => {
+          const w = { id: d.id, ...d.data() };
+          const a = state.countries[w.attackerIso] || { name: w.attackerIso, militaryScore: 10 };
+          const def = state.countries[w.defenderIso] || { name: w.defenderIso, militaryScore: 10 };
+          const atkScore = a.militaryScore || 10;
+          const defScore = def.militaryScore || 10;
+          const atkPct = Math.round((atkScore / (atkScore + defScore)) * 100);
+
+          list.insertAdjacentHTML('beforeend', `
+            <div class="alert-item critical" style="flex-direction:column; align-items:stretch;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong>${a.flag || '🏳️'} ${escapeHtml(w.attackerIso)} vs ${def.flag || '🏳️'} ${escapeHtml(w.defenderIso)}</strong>
+                <span class="badge">${escapeHtml(w.status.toUpperCase())}</span>
+              </div>
+              <div class="kpi-sub">${escapeHtml(w.reason)} • Strength: ${atkScore} vs ${defScore}</div>
+              <div class="versus-bar"><div class="versus-fill-atk" style="width:${atkPct}%;"></div></div>
+              ${(w.status === 'active' && (w.attackerIso === myIso || w.defenderIso === myIso))
+                ? `<button class="btn btn-primary btn-sm" data-resolve-war="${w.id}">Resolve Strategic Turn</button>` : ''}
+            </div>
+          `);
+          if (w.status === 'active') {
+            homeDeals.insertAdjacentHTML('afterbegin', `<div style="font-size:12px; padding:6px 0; color:#FCA5A5;">⚔️ <strong>${escapeHtml(w.attackerIso)}</strong> vs <strong>${escapeHtml(w.defenderIso)}</strong> (${escapeHtml(w.reason)})</div>`);
+          }
         });
       }));
+
+      renderResearchAndCabinet();
     }
 
-    // ACTION HANDLERS
-    document.getElementById('provision-player-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const btn = document.getElementById('provision-btn');
+    // MARKETPLACE CARD RENDERER
+    function renderMarketCards() {
+      const myIso = state.profile?.countryIso;
+      const grid = document.getElementById('market-cards-grid');
+      const homeDeals = document.getElementById('home-deals-wars');
+      const term = document.getElementById('market-search').value.trim().toLowerCase();
+      const cat = document.getElementById('market-cat-filter').value;
+      const sort = document.getElementById('market-sort').value;
+
+      let items = [...state.marketOffers].filter(o => {
+        if (term && !o.product.toLowerCase().includes(term) && !o.sellerIso.toLowerCase().includes(term)) return false;
+        if (cat !== 'all' && (o.category || 'materials') !== cat) return false;
+        return true;
+      });
+
+      if (sort === 'price-asc') items.sort((a, b) => a.unitPrice - b.unitPrice);
+      if (sort === 'price-desc') items.sort((a, b) => b.unitPrice - a.unitPrice);
+      if (sort === 'qty-desc') items.sort((a, b) => b.quantity - a.quantity);
+
+      grid.innerHTML = items.length ? '' : '<div class="kpi-sub">No matching international market offers available.</div>';
+      homeDeals.innerHTML = '';
+
+      items.forEach(o => {
+        const seller = state.countries[o.sellerIso] || { flag: '🏳️', name: o.sellerIso };
+        const vis = getProductVisual(o.product, o.category);
+        const total = o.quantity * o.unitPrice;
+        const canBuy = myIso && o.sellerIso !== myIso;
+
+        grid.insertAdjacentHTML('beforeend', `
+          <div class="product-card">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+              <div class="product-art-badge ${vis.catClass}"><i data-lucide="${vis.icon}"></i></div>
+              <div style="text-align:right;">
+                <span class="brand-badge" style="margin:0 0 4px 0;">${seller.flag || '🏳️'} ${escapeHtml(o.sellerIso)}</span>
+                <div><span class="category-chip">${escapeHtml(vis.label)}</span></div>
+              </div>
+            </div>
+            <div>
+              <div class="display-font" style="font-size:16px; font-weight:700;">${escapeHtml(o.product)}</div>
+              <div class="kpi-sub">Stock: <strong class="mono">${o.quantity}</strong> units @ <strong class="mono">${o.unitPrice}</strong>/unit</div>
+            </div>
+            <div style="border-top:1px solid var(--border); padding-top:10px; display:flex; justify-content:space-between; align-items:center;">
+              <div><div class="kpi-sub">Total Price</div><div class="mono" style="font-weight:700; color:var(--orange);">${total.toLocaleString()}</div></div>
+              ${canBuy
+                ? `<button class="btn btn-primary btn-sm" data-buy-offer="${o.id}"><i data-lucide="shopping-cart"></i> Buy Now</button>`
+                : `<span class="kpi-sub">Your Export</span>`}
+            </div>
+          </div>
+        `);
+
+        if (o.visibility === 'public') {
+          homeDeals.insertAdjacentHTML('beforeend', `
+            <div style="font-size:12px; padding:6px 0; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:6px;">
+              <i data-lucide="${vis.icon}" style="color:var(--cyan);"></i>
+              <span><strong>${escapeHtml(o.sellerIso)}</strong> listed ${o.quantity} ${escapeHtml(o.product)} (${total.toLocaleString()} coins)</span>
+            </div>
+          `);
+        }
+      });
+      lucide.createIcons({ root: grid });
+      lucide.createIcons({ root: homeDeals });
+    }
+
+    document.getElementById('market-search').addEventListener('input', renderMarketCards);
+    document.getElementById('market-cat-filter').addEventListener('change', renderMarketCards);
+    document.getElementById('market-sort').addEventListener('change', renderMarketCards);
+
+    // SERVER-AUTHORITATIVE ACTIONS
+    document.getElementById('market-cards-grid').addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-buy-offer]');
+      if (!btn) return;
       btn.disabled = true;
       try {
-        const provisionFn = httpsCallable(functions, 'adminProvisionPlayer');
-        await provisionFn({
-          username: document.getElementById('p-username').value.trim(),
-          tempPassword: document.getElementById('p-temp-pw').value,
-          countryIso: document.getElementById('p-iso').value.trim().toUpperCase(),
-          startingCoins: Number(document.getElementById('p-coins').value),
-          startingLevel: Number(document.getElementById('p-level').value),
-          role: document.getElementById('p-role').value
-        });
-        toast('Player provisioned via Cloud Function!');
-        e.target.reset();
+        const tradeFn = httpsCallable(functions, 'executeMarketTrade');
+        await tradeFn({ offerId: btn.dataset.buyOffer });
+        toast('International trade settled atomically!', 720);
       } catch (err) {
-        toast(err.message);
-      } finally {
+        toast(err.message, 240);
         btn.disabled = false;
       }
     });
 
-    document.getElementById('players-tbody').addEventListener('click', async (e) => {
+    document.getElementById('create-trade-offer-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const listFn = httpsCallable(functions, 'publishMarketOffer');
+        await listFn({
+          product: document.getElementById('trade-product-select').value,
+          category: document.getElementById('trade-category-select').value,
+          quantity: Number(document.getElementById('trade-qty').value),
+          unitPrice: Number(document.getElementById('trade-price').value),
+          visibility: document.getElementById('trade-visibility').value
+        });
+        toast('Export offer published to Global Market.');
+      } catch (err) { toast(err.message, 240); }
+    });
+
+    document.getElementById('mc-offers-grid').addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-purchase-corp]');
+      if (!btn) return;
+      btn.disabled = true;
+      try {
+        const buyCorpFn = httpsCallable(functions, 'purchaseCorporateOffer');
+        await buyCorpFn({ offerId: btn.dataset.purchaseCorp });
+        toast('Corporate asset acquired!', 740);
+      } catch (err) {
+        toast(err.message, 240);
+        btn.disabled = false;
+      }
+    });
+
+    document.getElementById('missions-grid').addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-claim-mission]');
+      if (!btn) return;
+      btn.disabled = true;
+      try {
+        const claimFn = httpsCallable(functions, 'claimMissionReward');
+        await claimFn({ missionId: btn.dataset.claimMission });
+        toast('Mission reward claimed!', 820);
+      } catch (err) {
+        toast(err.message, 240);
+        btn.disabled = false;
+      }
+    });
+
+    document.getElementById('mark-all-read-btn').onclick = async () => {
+      const myIso = state.profile?.countryIso;
+      if (!myIso || !state.unreadNotifIds.length) return;
+      const batch = writeBatch(db);
+      state.unreadNotifIds.forEach(id => batch.update(doc(db, 'countries', myIso, 'notifications', id), { read: true }));
+      await batch.commit();
+      toast('All notifications marked read.');
+    };
+
+    document.getElementById('diplomacy-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await addDoc(collection(db, 'messages'), {
+        fromIso: state.profile.countryIso,
+        toIso: document.getElementById('diplo-target-country').value,
+        type: document.getElementById('diplo-type').value,
+        content: document.getElementById('diplo-content').value.trim(),
+        status: 'pending',
+        createdAt: serverTimestamp()
+      });
+      e.target.reset();
+      toast('Diplomatic dispatch transmitted.');
+    });
+
+    document.getElementById('diplomacy-feed').addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-accept-diplo]');
+      if (!btn) return;
+      await updateDoc(doc(db, 'messages', btn.dataset.acceptDiplo), { status: 'ratified' });
+      toast('Treaty ratified!');
+    });
+
+    document.getElementById('declare-conflict-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const fn = httpsCallable(functions, 'declareConflict');
+        await fn({
+          targetIso: document.getElementById('conflict-target').value,
+          reason: document.getElementById('conflict-reason').value.trim()
+        });
+        toast('Formal conflict declaration registered.');
+      } catch (err) { toast(err.message, 240); }
+    });
+
+    document.getElementById('active-conflicts-list').addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-resolve-war]');
+      if (!btn) return;
+      try {
+        const fn = httpsCallable(functions, 'resolveConflictTurn');
+        const res = await fn({ conflictId: btn.dataset.resolveWar });
+        toast(`Conflict outcome: ${res.data.summary}`, 660);
+      } catch (err) { toast(err.message, 240); }
+    });
+
+    document.getElementById('sync-production-btn').onclick = async () => {
+      try {
+        const fn = httpsCallable(functions, 'processProductionTick');
+        await fn({ countryIso: state.profile.countryIso });
+        toast('Server production cycles synchronized.');
+      } catch (err) { toast(err.message, 240); }
+    };
+
+    function renderResearchAndCabinet() {
+      const rGrid = document.getElementById('research-grid');
+      const techs = [
+        { id: 'ind_auto', title: 'Automated Smart Factories', desc: '+15% national industrial output efficiency.', cost: 15000, icon: 'cpu' },
+        { id: 'agri_hydro', title: 'Hydroponic Food Reserves', desc: '+25% agricultural yield & stability protection.', cost: 12000, icon: 'sprout' },
+        { id: 'cyber_def', title: 'Sovereign Defense Grid', desc: '+20% national defensive score.', cost: 20000, icon: 'shield-check' }
+      ];
+      rGrid.innerHTML = techs.map(t => `
+        <div class="product-card">
+          <div>
+            <div class="product-art-badge cat-technology" style="margin-bottom:10px;"><i data-lucide="${t.icon}"></i></div>
+            <div class="card-title">${t.title}</div>
+            <p class="kpi-sub" style="margin-top:6px;">${t.desc}</p>
+          </div>
+          <button class="btn btn-primary btn-sm btn-full" data-research="${t.id}">Research (${t.cost.toLocaleString()} Coins)</button>
+        </div>
+      `).join('');
+      lucide.createIcons({ root: rGrid });
+
+      const roles = ['Minister of Finance', 'Minister of Defense', 'Minister of Agriculture', 'Minister of Foreign Affairs', 'Minister of Technology', 'Minister of Trade'];
+      document.getElementById('cabinet-list').innerHTML = roles.map(r => `
+        <div class="card" style="padding:12px;">
+          <div style="font-weight:700; font-size:13px;">${r}</div>
+          <div class="kpi-sub">AI Advisor Active • Delegated Scope</div>
+        </div>
+      `).join('');
+    }
+
+    document.getElementById('research-grid').addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-research]');
+      if (!btn) return;
+      try {
+        const fn = httpsCallable(functions, 'unlockResearchNode');
+        await fn({ nodeId: btn.dataset.research });
+        toast('Technology breakthrough unlocked!', 780);
+      } catch (err) { toast(err.message, 240); }
+    });
+
+    function renderTelemetryChart(history) {
+      const emptyEl = document.getElementById('chart-empty-state');
+      const canvas = document.getElementById('country-telemetry-chart');
+      if (!history || history.length < 2) {
+        emptyEl.classList.remove('hidden');
+        canvas.classList.add('hidden');
+        return;
+      }
+      emptyEl.classList.add('hidden');
+      canvas.classList.remove('hidden');
+      if (state.chartInstance) state.chartInstance.destroy();
+      state.chartInstance = new Chart(canvas, {
+        type: 'line',
+        data: {
+          labels: history.map(h => h.label),
+          datasets: [{
+            label: 'Treasury',
+            data: history.map(h => h.coins),
+            borderColor: '#38BDF8',
+            backgroundColor: 'rgba(56, 189, 248, 0.15)',
+            fill: true,
+            tension: 0.35
+          }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+      });
+    }
+
+    // SUPABASE AVATAR UPLOAD
+    document.getElementById('avatar-file-input').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (file.size > 2 * 1024 * 1024) { toast('Maximum avatar size is 2MB.', 240); return; }
+      const ext = file.name.split('.').pop();
+      const path = `avatars/${state.user.uid}_${Date.now()}.${ext}`;
+      const uploadUrl = `${SUPABASE_CONFIG.storageUrl}/object/${SUPABASE_CONFIG.bucket}/${path}`;
+      try {
+        const res = await fetch(uploadUrl, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_CONFIG.publishableKey,
+            'Authorization': `Bearer ${SUPABASE_CONFIG.publishableKey}`,
+            'Content-Type': file.type
+          },
+          body: file
+        });
+        if (!res.ok) throw new Error('Supabase upload failed.');
+        const publicUrl = `${SUPABASE_CONFIG.storageUrl}/object/public/${SUPABASE_CONFIG.bucket}/${path}`;
+        await updateDoc(doc(db, 'users', state.user.uid), { avatarUrl: publicUrl });
+        document.getElementById('profile-avatar-img').src = publicUrl;
+        document.getElementById('sidebar-avatar').src = publicUrl;
+        toast('Presidential portrait updated!');
+      } catch (err) { toast(err.message, 240); }
+    });
+
+    document.getElementById('profile-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await updateDoc(doc(db, 'users', state.user.uid), {
+        displayName: document.getElementById('prof-display-name').value.trim(),
+        bio: document.getElementById('prof-bio').value.trim()
+      });
+      toast('Presidential profile saved.');
+    });
+
+    function renderLeaderboard(rows) {
+      const cat = document.getElementById('lb-category').value;
+      const calc = (c) => cat === 'overall'
+        ? Math.round((c.coins || 0) / 1000 + (c.militaryScore || 0) * 10 + (c.level || 1) * 100)
+        : (c[cat] || 0);
+      const sorted = [...rows].sort((a, b) => calc(b) - calc(a));
+      document.getElementById('leaderboard-tbody').innerHTML = sorted.slice(0, 25).map((c, i) => `
+        <tr>
+          <td class="mono">#${i + 1}</td>
+          <td>${c.flag || '🏳️'} <strong>${escapeHtml(c.name)}</strong></td>
+          <td>${escapeHtml(c.presidentName || 'AI State')}</td>
+          <td class="mono">Lvl ${c.level || 1}</td>
+          <td class="mono">${calc(c).toLocaleString()}</td>
+        </tr>
+      `).join('');
+    }
+    document.getElementById('lb-category').addEventListener('change', () => renderLeaderboard(Object.values(state.countries)));
+
+    // ADMIN CONSOLE HANDLERS
+    async function logAdmin(action, details) {
+      await addDoc(collection(db, 'adminAuditLogs'), { action, details, by: state.user.uid, at: serverTimestamp() });
+    }
+
+    document.getElementById('admin-create-player-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const fn = httpsCallable(functions, 'adminProvisionPlayer');
+        await fn({
+          username: document.getElementById('adm-username').value.trim(),
+          tempPassword: document.getElementById('adm-temp-pw').value,
+          countryIso: document.getElementById('adm-iso').value.trim().toUpperCase(),
+          startingCoins: Number(document.getElementById('adm-coins').value)
+        });
+        toast('Player provisioned & assigned!');
+        e.target.reset();
+      } catch (err) { toast(err.message, 240); }
+    });
+
+    document.getElementById('adm-players-tbody').addEventListener('click', async (e) => {
       const btn = e.target.closest('[data-toggle-suspend]');
       if (!btn) return;
       const next = btn.dataset.cur !== 'true';
       await updateDoc(doc(db, 'users', btn.dataset.toggleSuspend), { suspended: next });
-      await logAdminAction('TOGGLE_SUSPENSION', `UID ${btn.dataset.toggleSuspend} suspended=${next}`);
-      toast(next ? 'Player account suspended.' : 'Player account restored.');
+      await logAdmin('TOGGLE_SUSPEND', `UID ${btn.dataset.toggleSuspend} -> ${next}`);
+      toast(next ? 'Player suspended.' : 'Player restored.');
     });
 
-    document.getElementById('country-config-form').addEventListener('submit', async (e) => {
+    document.getElementById('admin-country-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const iso = document.getElementById('c-iso').value.trim().toUpperCase();
+      const iso = document.getElementById('adm-c-iso').value.trim().toUpperCase();
       await setDoc(doc(db, 'countries', iso), {
-        name: document.getElementById('c-name').value.trim(),
-        flag: document.getElementById('c-flag').value.trim(),
-        coins: Number(document.getElementById('c-coins').value),
-        militaryScore: Number(document.getElementById('c-mil').value),
-        techLevel: Number(document.getElementById('c-tech').value),
-        purchasable: document.getElementById('c-purchasable').value === 'true',
-        purchasePrice: Number(document.getElementById('c-price').value) || 50000,
-        level: 1, xp: 0, stability: 100
+        name: document.getElementById('adm-c-name').value.trim(),
+        flag: document.getElementById('adm-c-flag').value.trim(),
+        coins: Number(document.getElementById('adm-c-coins').value),
+        militaryScore: Number(document.getElementById('adm-c-mil').value),
+        purchasable: document.getElementById('adm-c-purchasable').value === 'true',
+        level: 1, xp: 0, stability: 100, techLevel: 1
       }, { merge: true });
-      await logAdminAction('CONFIGURE_COUNTRY', `Updated ${iso}`);
-      toast(`Country ${iso} saved.`);
+      await logAdmin('SAVE_COUNTRY', iso);
+      toast(`Country ${iso} updated.`);
     });
 
-    document.getElementById('grant-inventory-form').addEventListener('submit', async (e) => {
+    document.getElementById('adm-grant-inv-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const iso = document.getElementById('inv-iso').value.trim().toUpperCase();
-      const product = document.getElementById('inv-product').value.trim();
-      const qty = Number(document.getElementById('inv-qty').value);
-      const minThreshold = Number(document.getElementById('inv-threshold').value);
-      await setDoc(doc(db, 'countries', iso, 'inventory', product), { quantity: qty, minThreshold }, { merge: true });
-      await logAdminAction('SET_INVENTORY', `${iso}: ${product} = ${qty}`);
-      toast(`Updated ${product} stock for ${iso}.`);
+      const iso = document.getElementById('adm-inv-iso').value.trim().toUpperCase();
+      const prod = document.getElementById('adm-inv-prod').value.trim();
+      await setDoc(doc(db, 'countries', iso, 'inventory', prod), {
+        quantity: Number(document.getElementById('adm-inv-qty').value),
+        minThreshold: Number(document.getElementById('adm-inv-min').value)
+      }, { merge: true });
+      await logAdmin('SET_STOCK', `${iso}: ${prod}`);
+      toast(`Inventory updated for ${iso}.`);
     });
 
-    document.getElementById('assign-mission-form').addEventListener('submit', async (e) => {
+    document.getElementById('adm-mission-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const iso = document.getElementById('m-iso').value.trim().toUpperCase();
+      const iso = document.getElementById('adm-m-iso').value.trim().toUpperCase();
       await addDoc(collection(db, 'countries', iso, 'missions'), {
-        title: document.getElementById('m-title').value.trim(),
-        description: document.getElementById('m-desc').value.trim(),
-        target: Number(document.getElementById('m-target').value),
+        title: document.getElementById('adm-m-title').value.trim(),
+        description: document.getElementById('adm-m-desc').value.trim(),
+        target: Number(document.getElementById('adm-m-target').value),
         progress: 0,
-        rewardXp: Number(document.getElementById('m-xp').value),
+        rewardXp: Number(document.getElementById('adm-m-xp').value),
         claimed: false,
         icon: 'target',
         createdAt: serverTimestamp()
       });
-      await logAdminAction('ASSIGN_MISSION', `Mission deployed to ${iso}`);
+      await logAdmin('ASSIGN_MISSION', iso);
       toast(`Mission assigned to ${iso}.`);
       e.target.reset();
     });
 
-    document.getElementById('company-create-form').addEventListener('submit', async (e) => {
+    document.getElementById('admin-company-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const name = document.getElementById('comp-name').value.trim();
-      const countryIso = document.getElementById('comp-iso').value.trim().toUpperCase();
+      const name = document.getElementById('adm-comp-name').value.trim();
       await addDoc(collection(db, 'companies'), {
         name,
-        countryIso,
-        sector: document.getElementById('comp-sector').value.trim(),
-        product: document.getElementById('comp-product').value.trim(),
-        outputRate: Number(document.getElementById('comp-rate').value),
-        intervalMinutes: Number(document.getElementById('comp-mins').value),
+        countryIso: document.getElementById('adm-comp-iso').value.trim().toUpperCase(),
+        product: document.getElementById('adm-comp-prod').value.trim(),
+        outputRate: Number(document.getElementById('adm-comp-rate').value),
+        intervalMinutes: Number(document.getElementById('adm-comp-mins').value),
         lastProducedAt: serverTimestamp(),
         status: 'ACTIVE'
       });
-      await logAdminAction('CREATE_COMPANY', `${name} (${countryIso})`);
-      toast(`${name} registered.`);
-      e.target.reset();
+      await logAdmin('ADD_COMPANY', name);
+      toast('Company registered.');
     });
 
-    document.getElementById('companies-tbody').addEventListener('click', async (e) => {
+    document.getElementById('adm-companies-tbody').addEventListener('click', async (e) => {
       const btn = e.target.closest('[data-toggle-comp]');
       if (!btn) return;
       const next = btn.dataset.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
       await updateDoc(doc(db, 'companies', btn.dataset.toggleComp), { status: next });
-      await logAdminAction('TOGGLE_COMPANY', `${btn.dataset.toggleComp} -> ${next}`);
-      toast(`Company status set to ${next}.`);
+      await logAdmin('TOGGLE_COMPANY', `${btn.dataset.toggleComp} -> ${next}`);
     });
 
-    document.getElementById('force-global-tick-btn').onclick = async () => {
-      try {
-        const tickFn = httpsCallable(functions, 'processProductionTick');
-        await tickFn({});
-        toast('Global production tick executed.');
-      } catch (err) { toast(err.message); }
-    };
-
-    document.getElementById('offer-create-form').addEventListener('submit', async (e) => {
+    document.getElementById('admin-offer-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const title = document.getElementById('off-title').value.trim();
+      const title = document.getElementById('adm-off-title').value.trim();
       await addDoc(collection(db, 'companyOffers'), {
         title,
-        description: document.getElementById('off-desc').value.trim(),
-        targetIso: document.getElementById('off-iso').value.trim().toUpperCase(),
-        price: Number(document.getElementById('off-price').value),
-        quantity: Number(document.getElementById('off-qty').value),
-        unique: document.getElementById('off-unique').value === 'true',
+        targetIso: document.getElementById('adm-off-iso').value.trim().toUpperCase(),
+        price: Number(document.getElementById('adm-off-price').value),
+        quantity: Number(document.getElementById('adm-off-qty').value),
+        unique: document.getElementById('adm-off-unique').value === 'true',
         status: 'available',
         createdAt: serverTimestamp()
       });
-      await logAdminAction('PUBLISH_OFFER', title);
+      await logAdmin('PUBLISH_OFFER', title);
       toast('Corporate offer published.');
-      e.target.reset();
     });
 
-    document.getElementById('offers-tbody').addEventListener('click', async (e) => {
+    document.getElementById('adm-offers-tbody').addEventListener('click', async (e) => {
       const btn = e.target.closest('[data-del-offer]');
       if (!btn) return;
       await deleteDoc(doc(db, 'companyOffers', btn.dataset.delOffer));
-      await logAdminAction('DELETE_OFFER', btn.dataset.delOffer);
-      toast('Offer removed.');
+      await logAdmin('DELETE_OFFER', btn.dataset.delOffer);
     });
 
-    document.getElementById('news-broadcast-form').addEventListener('submit', async (e) => {
+    document.getElementById('admin-news-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const message = document.getElementById('news-msg').value.trim();
+      const message = document.getElementById('adm-news-text').value.trim();
       await addDoc(collection(db, 'announcements'), {
-        type: document.getElementById('news-type').value,
+        type: 'WORLD COUNCIL',
         message,
         createdAt: serverTimestamp()
       });
-      await logAdminAction('BROADCAST_NEWS', message);
-      toast('World Council announcement published.');
+      await logAdmin('BROADCAST_NEWS', message);
       e.target.reset();
-    });
-
-    document.getElementById('global-rules-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      await setDoc(doc(db, 'worldSettings', 'global'), {
-        defaultTaxRate: Number(document.getElementById('rule-tax').value),
-        baseInflation: Number(document.getElementById('rule-inflation').value),
-        allowUnclaimedPurchases: document.getElementById('rule-unclaimed').value === 'true',
-        allowConflicts: document.getElementById('rule-conflicts').value === 'true',
-        updatedAt: serverTimestamp()
-      }, { merge: true });
-      await logAdminAction('UPDATE_WORLD_RULES', 'Updated global simulation settings');
-      toast('Global simulation rules saved.');
+      toast('World decree broadcast.');
     });
   </script>
 </body>
