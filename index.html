@@ -35,42 +35,7 @@ svg.lucide{width:16px;height:16px;stroke-width:2;flex-shrink:0}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
 @keyframes pulseGlow{0%,100%{box-shadow:0 0 8px rgba(251,191,36,.4)}50%{box-shadow:0 0 24px rgba(251,191,36,.9)}}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-
-/* AUTH */
-#auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
-  background:radial-gradient(circle at 20% 20%,rgba(251,191,36,.15) 0%,transparent 45%),
-  radial-gradient(circle at 80% 80%,rgba(244,63,94,.15) 0%,transparent 45%),var(--bg-base)}
-.auth-card{width:100%;max-width:430px;background:var(--bg-surface);border:1px solid var(--border-strong);
-  border-radius:20px;padding:36px;box-shadow:0 28px 70px rgba(0,0,0,.7)}
-.brand-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;
-  letter-spacing:.08em;text-transform:uppercase;color:var(--orange);background:rgba(251,191,36,.12);
-  border:1px solid rgba(251,191,36,.3);padding:5px 12px;border-radius:999px;margin-bottom:14px}
-.auth-card h1{font-family:var(--font-display);font-size:28px;font-weight:800;margin-bottom:6px;
-  background:var(--grad-admin);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.auth-card p{font-size:13px;color:var(--text-secondary);margin-bottom:22px;line-height:1.5}
-.form-group{margin-bottom:14px}
-.form-group label{display:block;font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:6px}
-input,select,textarea{width:100%;background:var(--bg-elevated);border:1px solid var(--border);
-  color:var(--text-primary);padding:11px 13px;border-radius:10px;font-size:14px;
-  font-family:var(--font-sans);outline:none;transition:border-color .15s,box-shadow .15s}
-input:focus,select:focus,textarea:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(251,191,36,.18)}
-input[type="checkbox"]{width:auto;height:20px;width:20px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 16px;
-  border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid transparent;
-  transition:transform .12s,filter .15s;font-family:var(--font-sans)}
-.btn:active:not(:disabled){transform:scale(.97)}
-.btn:disabled{opacity:.45;cursor:not-allowed}
-.btn-primary{background:var(--grad-primary);color:#fff;box-shadow:0 4px 14px rgba(99,102,241,.4)}
-.btn-primary:hover:not(:disabled){filter:brightness(1.1)}
-.btn-admin{background:var(--grad-admin);color:#fff;box-shadow:0 4px 14px rgba(244,63,94,.4)}
-.btn-admin:hover:not(:disabled){filter:brightness(1.1)}
-.btn-secondary{background:var(--bg-elevated);border-color:var(--border);color:var(--text-primary)}
-.btn-secondary:hover:not(:disabled){background:var(--bg-hover);border-color:var(--border-strong)}
-.btn-success{background:rgba(74,222,128,.15);border-color:rgba(74,222,128,.4);color:var(--green)}
-.btn-danger{background:rgba(244,63,94,.15);border-color:rgba(244,63,94,.4);color:#FCA5A5}
-.btn-sm{padding:6px 12px;font-size:12px;border-radius:8px}
-.btn-full{width:100%}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
 /* SHELL */
 #app-shell{display:flex;min-height:100vh}
@@ -116,8 +81,33 @@ input[type="checkbox"]{width:auto;height:20px;width:20px}
 
 .badge{font-size:10px;padding:2px 7px;border-radius:999px;background:var(--pink);
   color:#fff;font-weight:800}
-.badge.green{background:var(--green)}
+.badge.green{background:var(--green);color:#000}
 .badge.orange{background:var(--orange);color:#000}
+.badge.red{background:var(--danger)}
+
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:6px}
+input,select,textarea{width:100%;background:var(--bg-elevated);border:1px solid var(--border);
+  color:var(--text-primary);padding:11px 13px;border-radius:10px;font-size:14px;
+  font-family:var(--font-sans);outline:none;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(251,191,36,.18)}
+input[type="checkbox"]{width:20px;height:20px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 16px;
+  border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid transparent;
+  transition:transform .12s,filter .15s;font-family:var(--font-sans)}
+.btn:active:not(:disabled){transform:scale(.97)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-primary{background:var(--grad-primary);color:#fff;box-shadow:0 4px 14px rgba(99,102,241,.4)}
+.btn-primary:hover:not(:disabled){filter:brightness(1.1)}
+.btn-admin{background:var(--grad-admin);color:#fff;box-shadow:0 4px 14px rgba(244,63,94,.4)}
+.btn-admin:hover:not(:disabled){filter:brightness(1.1)}
+.btn-secondary{background:var(--bg-elevated);border-color:var(--border);color:var(--text-primary)}
+.btn-secondary:hover:not(:disabled){background:var(--bg-hover);border-color:var(--border-strong)}
+.btn-success{background:rgba(74,222,128,.15);border-color:rgba(74,222,128,.4);color:var(--green)}
+.btn-danger{background:rgba(244,63,94,.15);border-color:rgba(244,63,94,.4);color:#FCA5A5}
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:8px}
+.btn-full{width:100%}
 
 .table-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:13px}
@@ -138,13 +128,12 @@ tr:hover td{background:rgba(255,255,255,.02)}
   background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3)}
 .alert-item.critical{background:rgba(244,63,94,.12);border-color:rgba(244,63,94,.35)}
 
-.skeleton{background:linear-gradient(90deg,var(--bg-elevated) 25%,var(--bg-hover) 50%,var(--bg-elevated) 75%);
-  background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:8px;height:16px}
-@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-
 .user-row{display:flex;align-items:center;justify-content:space-between;padding:10px;
-  border-bottom:1px solid var(--border);gap:10px}
+  border-bottom:1px solid var(--border);gap:10px;flex-wrap:wrap}
 .user-row:last-child{border-bottom:none}
+
+.offline-banner{background:var(--danger);color:#fff;text-align:center;font-size:12px;
+  font-weight:800;padding:6px}
 
 @media(max-width:960px){
   .sidebar{position:fixed;bottom:0;top:auto;left:0;right:0;width:100%!important;
@@ -160,37 +149,10 @@ tr:hover td{background:rgba(255,255,255,.02)}
 </style>
 </head>
 <body>
+<div id="offline-banner" class="offline-banner hidden">⚠️ Connection Lost — Reconnecting...</div>
 <div id="toast-container"></div>
 
-<!-- AUTH -->
-<section id="auth-screen">
-  <div class="auth-card">
-    <div class="brand-badge"><i data-lucide="shield-alert"></i> ADMIN CONSOLE</div>
-    <h1>World Administrator</h1>
-    <p>Restricted access. Only users with the <code>admin: true</code> custom claim can log in here.</p>
-    <form id="admin-login-form">
-      <div class="form-group">
-        <label for="admin-username">Admin Username</label>
-        <input id="admin-username" type="text" placeholder="e.g. admin" autocomplete="username" required />
-      </div>
-      <div class="form-group">
-        <label for="admin-password">Password</label>
-        <input id="admin-password" type="password" placeholder="••••••••" autocomplete="current-password" required />
-      </div>
-      <div id="login-error" class="kpi-sub" style="color:var(--danger);margin-bottom:10px;min-height:16px"></div>
-      <button type="submit" class="btn btn-admin btn-full" id="login-btn">
-        <i data-lucide="shield-check"></i> Access Admin Console
-      </button>
-    </form>
-    <div class="kpi-sub" style="margin-top:14px;text-align:center;font-size:11px">
-      <i data-lucide="info" style="width:12px;height:12px"></i>
-      First-time setup? Read the setup guide at the bottom of this page.
-    </div>
-  </div>
-</section>
-
-<!-- APP SHELL -->
-<div id="app-shell" class="hidden">
+<div id="app-shell">
   <aside class="sidebar">
     <div class="sidebar-header">
       <div class="logo-wrap">
@@ -212,15 +174,12 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
     <div class="sidebar-footer">
       <div class="sidebar-profile-card">
-        <img id="sidebar-avatar" src="https://api.dicebear.com/7.x/shapes/svg?seed=ADMIN" alt="Admin" />
+        <img src="https://api.dicebear.com/7.x/shapes/svg?seed=ADMIN" alt="Admin" />
         <div style="min-width:0">
-          <div id="sidebar-user-name" style="font-size:12px;font-weight:700">Admin</div>
-          <div style="font-size:11px;color:var(--orange)">World Administrator</div>
+          <div style="font-size:12px;font-weight:700">Administrator</div>
+          <div style="font-size:11px;color:var(--orange)">Open Access Mode</div>
         </div>
       </div>
-      <button class="btn btn-secondary btn-sm btn-full" id="logout-btn">
-        <i data-lucide="log-out"></i> Sign Out
-      </button>
     </div>
   </aside>
 
@@ -230,7 +189,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
         <span style="font-size:24px">🛡️</span>
         <div>
           <div class="display-font" style="font-size:15px;font-weight:800">Admin Console</div>
-          <div id="top-role" style="font-size:11px;color:var(--text-secondary)">World Administrator</div>
+          <div style="font-size:11px;color:var(--text-secondary)">Open Access Mode — No Login Required</div>
         </div>
       </div>
       <div style="display:flex;gap:8px">
@@ -292,7 +251,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
                   <input id="new-username" placeholder="e.g. alex" required />
                 </div>
                 <div class="form-group">
-                  <label>Temporary Password</label>
+                  <label>Password</label>
                   <input id="new-password" type="text" placeholder="Pass2026!" minlength="8" required />
                 </div>
               </div>
@@ -323,8 +282,8 @@ tr:hover td{background:rgba(255,255,255,.02)}
             </form>
             <div class="alert-item" style="margin-top:14px">
               <div style="font-size:12px">
-                <strong>ℹ️ How it works:</strong> Creates Firebase Auth user with email <code>{username}@avgame.internal</code>.
-                User will be prompted to change password on first login.
+                <strong>ℹ️ Creates Firebase Auth user:</strong> <code>{username}@avgame.internal</code>.
+                User will be prompted to change password on first login in index.html.
               </div>
             </div>
           </div>
@@ -332,7 +291,6 @@ tr:hover td{background:rgba(255,255,255,.02)}
           <div class="card">
             <div class="card-header">
               <span class="card-title"><i data-lucide="list" style="color:var(--cyan)"></i> All Users</span>
-              <button class="btn btn-secondary btn-sm" id="refresh-users-btn"><i data-lucide="refresh-cw"></i></button>
             </div>
             <div id="users-list" style="max-height:500px;overflow-y:auto"></div>
           </div>
@@ -348,36 +306,15 @@ tr:hover td{background:rgba(255,255,255,.02)}
           </div>
           <form id="country-edit-form">
             <div class="grid-3">
-              <div class="form-group">
-                <label>Coins (Treasury)</label>
-                <input id="c-coins" type="number" value="0" />
-              </div>
-              <div class="form-group">
-                <label>Military Score</label>
-                <input id="c-military" type="number" value="10" />
-              </div>
-              <div class="form-group">
-                <label>Nuclear Warheads</label>
-                <input id="c-nukes" type="number" value="0" min="0" />
-              </div>
-              <div class="form-group">
-                <label>Stability (%)</label>
-                <input id="c-stability" type="number" value="100" min="0" max="100" />
-              </div>
-              <div class="form-group">
-                <label>Tech Level</label>
-                <input id="c-tech" type="number" value="1" min="1" />
-              </div>
-              <div class="form-group">
-                <label>Level</label>
-                <input id="c-level" type="number" value="1" min="1" />
-              </div>
+              <div class="form-group"><label>Coins</label><input id="c-coins" type="number" value="0" /></div>
+              <div class="form-group"><label>Military Score</label><input id="c-military" type="number" value="10" /></div>
+              <div class="form-group"><label>Nuclear Warheads</label><input id="c-nukes" type="number" value="0" min="0" /></div>
+              <div class="form-group"><label>Stability (%)</label><input id="c-stability" type="number" value="100" min="0" max="100" /></div>
+              <div class="form-group"><label>Tech Level</label><input id="c-tech" type="number" value="1" min="1" /></div>
+              <div class="form-group"><label>Level</label><input id="c-level" type="number" value="1" min="1" /></div>
             </div>
             <div class="grid-3">
-              <div class="form-group">
-                <label>GDP Index</label>
-                <input id="c-gdp" type="number" value="1000" />
-              </div>
+              <div class="form-group"><label>GDP Index</label><input id="c-gdp" type="number" value="1000" /></div>
               <div class="form-group">
                 <label>Nuclear Status</label>
                 <select id="c-nuke-status">
@@ -413,10 +350,8 @@ tr:hover td{background:rgba(255,255,255,.02)}
           <div class="table-wrap">
             <table>
               <thead>
-                <tr>
-                  <th>ISO</th><th>Name</th><th>President</th><th>Coins</th>
-                  <th>Military</th><th>Nukes</th><th>Stability</th><th>Status</th>
-                </tr>
+                <tr><th>ISO</th><th>Name</th><th>President</th><th>Coins</th>
+                <th>Military</th><th>Nukes</th><th>Stability</th><th>Status</th></tr>
               </thead>
               <tbody id="countries-tbody"></tbody>
             </table>
@@ -433,28 +368,13 @@ tr:hover td{background:rgba(255,255,255,.02)}
             </div>
             <form id="create-company-form">
               <div class="grid-2">
-                <div class="form-group">
-                  <label>Company Name</label>
-                  <input id="comp-name" placeholder="e.g. Apple Inc." required />
-                </div>
-                <div class="form-group">
-                  <label>Owner Country</label>
-                  <select id="comp-country" required></select>
-                </div>
+                <div class="form-group"><label>Company Name</label><input id="comp-name" placeholder="Apple Inc." required /></div>
+                <div class="form-group"><label>Owner Country</label><select id="comp-country" required></select></div>
               </div>
               <div class="grid-3">
-                <div class="form-group">
-                  <label>Product</label>
-                  <input id="comp-product" placeholder="Smartphones" required />
-                </div>
-                <div class="form-group">
-                  <label>Units / Tick</label>
-                  <input id="comp-rate" type="number" value="10" required />
-                </div>
-                <div class="form-group">
-                  <label>Interval (min)</label>
-                  <input id="comp-interval" type="number" value="20" required />
-                </div>
+                <div class="form-group"><label>Product</label><input id="comp-product" placeholder="Smartphones" required /></div>
+                <div class="form-group"><label>Units / Tick</label><input id="comp-rate" type="number" value="10" required /></div>
+                <div class="form-group"><label>Interval (min)</label><input id="comp-interval" type="number" value="20" required /></div>
               </div>
               <button type="submit" class="btn btn-admin btn-full">
                 <i data-lucide="plus-circle"></i> Add Company
@@ -479,30 +399,15 @@ tr:hover td{background:rgba(255,255,255,.02)}
           </div>
           <form id="create-offer-form">
             <div class="grid-2">
-              <div class="form-group">
-                <label>Offer Title</label>
-                <input id="offer-title" placeholder="e.g. Aramco Refinery Stake" required />
-              </div>
-              <div class="form-group">
-                <label>Target Country (optional)</label>
-                <select id="offer-target"></select>
-              </div>
+              <div class="form-group"><label>Offer Title</label><input id="offer-title" placeholder="Aramco Refinery Stake" required /></div>
+              <div class="form-group"><label>Target Country (optional)</label><select id="offer-target"></select></div>
             </div>
             <div class="grid-3">
-              <div class="form-group">
-                <label>Price (Coins)</label>
-                <input id="offer-price" type="number" value="25000" required />
-              </div>
-              <div class="form-group">
-                <label>Quantity</label>
-                <input id="offer-qty" type="number" value="1" required />
-              </div>
+              <div class="form-group"><label>Price (Coins)</label><input id="offer-price" type="number" value="25000" required /></div>
+              <div class="form-group"><label>Quantity</label><input id="offer-qty" type="number" value="1" required /></div>
               <div class="form-group">
                 <label>Unique?</label>
-                <select id="offer-unique">
-                  <option value="true">Yes</option>
-                  <option value="false">No</option>
-                </select>
+                <select id="offer-unique"><option value="true">Yes</option><option value="false">No</option></select>
               </div>
             </div>
             <button type="submit" class="btn btn-admin btn-full">
@@ -559,9 +464,6 @@ tr:hover td{background:rgba(255,255,255,.02)}
         <div class="card">
           <div class="card-header">
             <span class="card-title"><i data-lucide="swords" style="color:var(--danger)"></i> Active Conflicts</span>
-            <button class="btn btn-secondary btn-sm" id="refresh-wars-btn">
-              <i data-lucide="refresh-cw"></i>
-            </button>
           </div>
           <div id="wars-list"></div>
         </div>
@@ -602,15 +504,13 @@ tr:hover td{background:rgba(255,255,255,.02)}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import {
-  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged,
-  createUserWithEmailAndPassword, updatePassword
+  getAuth, signOut, createUserWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import {
   getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc,
   collection, addDoc, writeBatch, serverTimestamp,
-  onSnapshot, query, where, orderBy, limit, getDocs
+  onSnapshot, query, orderBy, limit, getDocs
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js";
 
 // ============ CONFIG (matches index.html) ============
 const firebaseConfig = {
@@ -661,10 +561,8 @@ const CATALOG_BY_ISO = Object.fromEntries(WORLD_COUNTRIES.map(c => [c.iso, c]));
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const functions = getFunctions(app);
 
 const state = {
-  user: null, profile: null, isAdmin: false,
   users: [], countries: {}, companies: [], offers: [], wars: [],
   unsubscribers: []
 };
@@ -707,81 +605,12 @@ $('main-nav').addEventListener('click', e => {
   if (btn) switchView(btn.dataset.view);
 });
 
-// ============ AUTH ============
-function usernameToEmail(u){
-  return `${u.trim().toLowerCase().replace(/[^a-z0-9._-]/g,'')}@avgame.internal`;
-}
-
-$('admin-login-form').addEventListener('submit', async e => {
-  e.preventDefault();
-  $('login-error').textContent = '';
-  const btn = $('login-btn');
-  btn.disabled = true;
-  btn.innerHTML = '<i data-lucide="loader-2" style="animation:spin 1s linear infinite"></i> Authenticating...';
-  lucide.createIcons();
-  try {
-    const email = usernameToEmail($('admin-username').value);
-    await signInWithEmailAndPassword(auth, email, $('admin-password').value);
-  } catch (err) {
-    console.error('Login error:', err.code, err.message);
-    let msg = 'Invalid username or password.';
-    if (err.code === 'auth/user-not-found') msg = 'No admin account with that username.';
-    else if (err.code === 'auth/wrong-password') msg = 'Wrong password.';
-    else if (err.code === 'auth/invalid-credential') msg = 'Invalid credentials.';
-    else if (err.code === 'auth/too-many-requests') msg = 'Too many attempts. Wait a minute.';
-    $('login-error').textContent = msg;
-    btn.disabled = false;
-    btn.innerHTML = '<i data-lucide="shield-check"></i> Access Admin Console';
-    lucide.createIcons();
-  }
-});
-
-$('logout-btn').onclick = async () => {
-  state.unsubscribers.forEach(u => u());
-  state.unsubscribers = [];
-  await signOut(auth);
-};
-
-onAuthStateChanged(auth, async user => {
-  lucide.createIcons();
-  if (!user){
-    $('auth-screen').classList.remove('hidden');
-    $('app-shell').classList.add('hidden');
-    return;
-  }
-  state.user = user;
-  try {
-    const tokenRes = await user.getIdTokenResult(true);
-    state.isAdmin = tokenRes.claims.admin === true;
-    const userSnap = await getDoc(doc(db,'users',user.uid));
-    if (!userSnap.exists()){
-      await signOut(auth);
-      toast('User doc not found.', 'error');
-      return;
-    }
-    state.profile = userSnap.data();
-    // Allow if either claim OR role field says admin
-    if (!state.isAdmin && state.profile.role !== 'admin'){
-      await signOut(auth);
-      toast('Access denied: admin privileges required.', 'error');
-      return;
-    }
-    bootAdmin(user);
-  } catch (err) {
-    console.error(err);
-    toast('Error: ' + err.message, 'error');
-  }
-});
-
-async function bootAdmin(user){
-  $('auth-screen').classList.add('hidden');
-  $('app-shell').classList.remove('hidden');
-  const name = state.profile.displayName || state.profile.username || 'Admin';
-  $('sidebar-user-name').textContent = name;
-  $('top-role').textContent = `World Administrator • ${name}`;
+// ============ BOOT (no auth needed) ============
+function boot(){
   lucide.createIcons();
   attachListeners();
 }
+boot();
 
 // ============ REAL-TIME LISTENERS ============
 function attachListeners(){
@@ -792,6 +621,7 @@ function attachListeners(){
     $('top-user-count').textContent = `${state.users.length} users`;
     renderUsersList();
     renderRecentUsers();
+    renderHealth();
   }));
 
   // Countries
@@ -803,6 +633,7 @@ function attachListeners(){
     $('dash-countries').textContent = snap.size;
     $('top-country-count').textContent = `${snap.size} countries`;
     renderCountriesTable();
+    renderHealth();
   }));
 
   // Companies
@@ -821,12 +652,11 @@ function attachListeners(){
   // Wars
   state.unsubscribers.push(onSnapshot(collection(db,'conflicts'), snap => {
     state.wars = snap.docs.map(d => ({id:d.id, ...d.data()}));
-    const active = state.wars.filter(w => w.status === 'active');
-    $('dash-wars').textContent = active.length;
+    $('dash-wars').textContent = state.wars.filter(w => w.status === 'active').length;
     renderWarsList();
   }));
 
-  // Announcements
+  // Announcements history
   state.unsubscribers.push(onSnapshot(
     query(collection(db,'announcements'), orderBy('createdAt','desc'), limit(20)),
     snap => {
@@ -847,8 +677,6 @@ function attachListeners(){
       });
     }
   ));
-
-  renderHealth();
 }
 
 // ============ RENDER: USERS ============
@@ -862,28 +690,28 @@ function renderUsersList(){
     el.insertAdjacentHTML('beforeend', `
       <div class="user-row">
         <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:6px">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
             <strong>${esc(u.username || u.displayName || 'Unknown')}</strong>
             ${isAdmin ? '<span class="badge orange">ADMIN</span>' : ''}
             ${u.mustChangePassword ? '<span class="badge">PENDING PW</span>' : ''}
-            ${u.suspended ? '<span class="badge" style="background:var(--danger)">SUSPENDED</span>' : ''}
+            ${u.suspended ? '<span class="badge red">SUSPENDED</span>' : ''}
           </div>
           <div class="kpi-sub">${country} • ${esc(u.email || u.uid?.slice(0,8))}</div>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <button class="btn btn-secondary btn-sm" data-reset-pw="${u.uid}">🔑 Reset PW</button>
           <button class="btn btn-danger btn-sm" data-suspend="${u.uid}" data-suspended="${u.suspended||false}">
             ${u.suspended ? '✅ Unsuspend' : '🚫 Suspend'}
           </button>
+          <button class="btn btn-secondary btn-sm" data-del-user="${u.uid}">🗑️</button>
         </div>
       </div>
     `);
   });
-  el.querySelectorAll('[data-reset-pw]').forEach(btn => {
-    btn.onclick = () => resetUserPassword(btn.dataset.resetPw);
-  });
   el.querySelectorAll('[data-suspend]').forEach(btn => {
     btn.onclick = () => toggleSuspend(btn.dataset.suspend, btn.dataset.suspended === 'true');
+  });
+  el.querySelectorAll('[data-del-user]').forEach(btn => {
+    btn.onclick = () => deleteUserDoc(btn.dataset.delUser);
   });
   lucide.createIcons({root:el});
 }
@@ -905,22 +733,6 @@ function renderRecentUsers(){
   });
 }
 
-async function resetUserPassword(uid){
-  const newPw = prompt('Enter new temporary password (min 8 chars):');
-  if (!newPw || newPw.length < 8){ toast('Password must be ≥8 chars', 'error'); return; }
-  try {
-    // Note: Cannot update another user's password client-side.
-    // Best practice: mark for reset + send via Cloud Function (not implemented here).
-    // For now, we update mustChangePassword flag so user must reset on login.
-    await updateDoc(doc(db,'users',uid), {
-      mustChangePassword: true,
-      tempPasswordHint: newPw,
-      updatedAt: serverTimestamp()
-    });
-    toast(`User flagged for password reset. Tell them to use: ${newPw}`, 'success');
-  } catch (err){ toast(err.message, 'error'); }
-}
-
 async function toggleSuspend(uid, suspended){
   try {
     await updateDoc(doc(db,'users',uid), {
@@ -931,7 +743,13 @@ async function toggleSuspend(uid, suspended){
   } catch (err){ toast(err.message, 'error'); }
 }
 
-$('refresh-users-btn').onclick = () => toast('Live data auto-refreshes.', 'info');
+async function deleteUserDoc(uid){
+  if (!confirm('Delete this user document? (Does NOT delete Firebase Auth account)')) return;
+  try {
+    await deleteDoc(doc(db,'users',uid));
+    toast('User document deleted.', 'success');
+  } catch (err){ toast(err.message, 'error'); }
+}
 
 // ============ RENDER: COUNTRIES ============
 function renderCountriesTable(){
@@ -951,7 +769,7 @@ function renderCountriesTable(){
         <td class="mono">${c.stability??100}%</td>
         <td>
           ${c.presidentUid ? '<span class="badge green">CLAIMED</span>' : c.purchasable ? '<span class="badge orange">FOR SALE</span>' : '<span class="badge">AI</span>'}
-          ${c.atWar ? '<span class="badge" style="background:var(--danger)">WAR</span>' : ''}
+          ${c.atWar ? '<span class="badge red">WAR</span>' : ''}
         </td>
       </tr>
     `);
@@ -1011,7 +829,7 @@ $('country-edit-form').addEventListener('submit', async e => {
 $('release-country-btn').onclick = async () => {
   const iso = $('country-picker').value;
   if (!iso) return;
-  if (!confirm(`Release ${iso}? This removes the current president but keeps stats.`)) return;
+  if (!confirm(`Release ${iso}? Removes the current president but keeps stats.`)) return;
   try {
     await updateDoc(doc(db,'countries',iso), {
       presidentUid: null,
@@ -1131,7 +949,7 @@ function renderWarsList(){
     const a = CATALOG_BY_ISO[w.attackerIso], def = CATALOG_BY_ISO[w.defenderIso];
     el.insertAdjacentHTML('beforeend', `
       <div class="alert-item critical">
-        <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
           <div>
             <strong>${a?.flag||'🏳️'} ${esc(w.attackerIso)} vs ${def?.flag||'🏳️'} ${esc(w.defenderIso)}</strong>
             <div class="kpi-sub">${esc(w.reason||'')}</div>
@@ -1155,16 +973,16 @@ function renderWarsList(){
     };
   });
 }
-$('refresh-wars-btn').onclick = () => toast('Live data auto-refreshes.', 'info');
 
 // ============ HEALTH ============
 function renderHealth(){
   const el = $('dash-health');
+  if (!el) return;
   const totalUsers = state.users.length;
   const totalCountries = Object.keys(state.countries).length;
   const claimed = Object.values(state.countries).filter(c => c.presidentUid).length;
   const issues = [];
-  if (totalCountries === 0) issues.push('⚠️ No countries in database — run Seed Data');
+  if (totalCountries === 0) issues.push('⚠️ No countries — run Seed Data');
   if (totalUsers === 0) issues.push('⚠️ No users — create one via Users tab');
   if (claimed === 0 && totalUsers > 0) issues.push('⚠️ No users assigned to countries');
   el.innerHTML = issues.length
@@ -1193,29 +1011,19 @@ $('seed-countries-btn').onclick = async () => {
       if (existing.has(c.iso)){ skipped++; continue; }
       const ref = doc(db,'countries',c.iso);
       batch.set(ref, {
-        iso: c.iso,
-        name: c.name,
-        flag: c.flag,
-        presidentUid: null,
-        presidentName: null,
-        coins: 50000,
-        militaryScore: 10,
-        nuclearWarheads: 0,
-        nuclearStatus: 'Non-Nuclear',
-        stability: 100,
-        techLevel: 1,
-        level: 1,
-        gdp: 1000,
-        purchasable: true,
-        purchasePrice: 50000,
+        iso: c.iso, name: c.name, flag: c.flag,
+        presidentUid: null, presidentName: null,
+        coins: 50000, militaryScore: 10, nuclearWarheads: 0,
+        nuclearStatus: 'Non-Nuclear', stability: 100,
+        techLevel: 1, level: 1, gdp: 1000,
+        purchasable: true, purchasePrice: 50000,
         atWar: false,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        createdAt: serverTimestamp(), updatedAt: serverTimestamp()
       });
       created++;
     }
     if (created > 0) await batch.commit();
-    status.innerHTML = `<strong style="color:var(--green)">✅ Done!</strong> Created ${created} countries, skipped ${skipped} existing.`;
+    status.innerHTML = `<strong style="color:var(--green)">✅ Done!</strong> Created ${created} countries, skipped ${skipped}.`;
     toast(`Seeded ${created} countries.`, 'success');
   } catch (err){
     console.error(err);
@@ -1294,7 +1102,8 @@ $('create-user-form').addEventListener('submit', async e => {
   const email = `${username}@avgame.internal`;
 
   try {
-    // Step 1: Create Auth user (this signs them in temporarily)
+    // Step 1: Create the Firebase Auth user
+    // NOTE: This will sign us in as the new user (we're not logged in as admin here, so it doesn't matter)
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     const uid = cred.user.uid;
 
@@ -1344,18 +1153,21 @@ $('create-user-form').addEventListener('submit', async e => {
       }, {merge:true});
     }
 
-    // Step 5: Sign back into admin account
-    // PROBLEM: createUserWithEmailAndPassword signs us in as the NEW user.
-    // We need to sign out and re-auth as admin.
+    // Step 5: Sign out (so the new user isn't logged in anywhere)
     await signOut(auth);
-    toast(`User ${username} created! Sign in again as admin.`, 'success');
-    setTimeout(() => window.location.reload(), 2000);
+
+    toast(`✅ User "${username}" created! They can now log in at index.html`, 'success');
+    $('new-username').value = '';
+    $('new-password').value = '';
+    btn.disabled = false;
+    btn.innerHTML = '<i data-lucide="user-plus"></i> Create User & Assign Country';
+    lucide.createIcons();
 
   } catch (err) {
     console.error('Create user error:', err);
     let msg = err.message;
     if (err.code === 'auth/email-already-in-use') msg = 'That username is already taken.';
-    else if (err.code === 'auth/weak-password') msg = 'Password too weak.';
+    else if (err.code === 'auth/weak-password') msg = 'Password too weak (min 6 chars).';
     else if (err.code === 'auth/invalid-email') msg = 'Username has invalid characters (use a-z, 0-9, . _ -).';
     toast(msg, 'error');
     btn.disabled = false;
@@ -1364,7 +1176,11 @@ $('create-user-form').addEventListener('submit', async e => {
   }
 });
 
-// ============ INIT ============
+// ============ OFFLINE BANNER ============
+window.addEventListener('offline', () => $('offline-banner').classList.remove('hidden'));
+window.addEventListener('online', () => $('offline-banner').classList.add('hidden'));
+
+// Init icons
 lucide.createIcons();
 </script>
 </body>
